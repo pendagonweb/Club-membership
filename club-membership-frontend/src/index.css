@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+.text-color{
+    color: #c8ad01;
+}
+
+.profile-border{
+    border-color: rgba(13, 13, 150, 0.626);
+}
+
+.NID{
+    top:80px;
+    left:126px;
+}
