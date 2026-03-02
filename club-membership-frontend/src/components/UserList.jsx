@@ -23,7 +23,7 @@ export default function AdminUserList() {
     try {
       if (!token) throw new Error("Admin token not found");
       const res = await axios.get(
-        "https://club-membership.vercel.app/api/admin/all-users",
+        "http://localhost:5000/api/admin/all-users",
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const users = res.data.users || [];
@@ -45,7 +45,7 @@ export default function AdminUserList() {
   const approveUser = async (id) => {
     if (!window.confirm("Approve this user?")) return;
     await axios.put(
-      `https://club-membership.vercel.app/api/admin/approve/${id}`,
+      `http://localhost:5000/api/admin/approve/${id}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -55,7 +55,7 @@ export default function AdminUserList() {
   const rejectUser = async (id) => {
     if (!window.confirm("Reject this user?")) return;
     await axios.put(
-      `https://club-membership.vercel.app/api/admin/reject/${id}`,
+      `http://localhost:5000/api/admin/reject/${id}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -65,7 +65,7 @@ export default function AdminUserList() {
   const deleteUser = async (id) => {
     if (!window.confirm("Delete this user permanently?")) return;
     await axios.delete(
-      `https://club-membership.vercel.app/api/admin/user/${id}`,
+      `http://localhost:5000/api/admin/user/${id}`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
     fetchUsers();
@@ -82,6 +82,7 @@ export default function AdminUserList() {
       bloodGroup: user.bloodGroup || "",
       place: user.place || "",
       gender: user.gender || "",
+      nri: user.nri || "No",
     });
   };
 
@@ -89,7 +90,7 @@ export default function AdminUserList() {
     try {
       setActionLoading(true);
       await axios.put(
-        `https://club-membership.vercel.app/api/admin/user/${editingUser._id}`,
+        `http://localhost:5000/api/admin/user/${editingUser._id}`,
         editForm,
         { headers: { Authorization: `Bearer ${token}` } },
       );
@@ -124,7 +125,7 @@ Member Details:
 • Full Name: ${user.name}
 • Display / Nick Name: ${user.nickname || "—"}
 • Father’s Name: ${user.fatherName || "—"}
-• Place: ${user.address || "—"}
+• Place: ${user.address || "—"}   
 • Blood Group: ${user.bloodGroup || "—"}
 • Valid Upto: 31/03/2027
 
@@ -236,6 +237,16 @@ Kingstar Arts & Sports Club`;
             <h2 className="text-lg sm:text-xl font-bold text-center">
               Edit User
             </h2>
+            <select
+  className="w-full border p-2 rounded"
+  value={editForm.nri}
+  onChange={(e) =>
+    setEditForm({ ...editForm, nri: e.target.value })
+  }
+>
+  <option value="No">NRI - No</option>
+  <option value="Yes">NRI - Yes</option>
+</select>
             <input
               className="w-full border p-2 rounded"
               placeholder="Name"
@@ -336,6 +347,12 @@ function UserCard({
   <div className="flex flex-col">
     <p className="font-semibold text-lg">{user.name}</p>
     <p className="text-xs text-gray-600">ID: {user.membershipId}</p>
+    {user.nri === "Yes" && (
+    <p className="text-xs font-semibold text-green-600">
+      NRI
+    </p>
+  )}
+
     {user.photo && (
       <a
         href={user.photo}
@@ -382,7 +399,9 @@ function UserCard({
           <p>
             <b>Place:</b> {user.place || "—"}
           </p>
-
+          <p>
+  <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
+</p>
           <div className="flex gap-2 flex-wrap pt-2">
             {user.membershipStatus === "approved" ? (
               <>

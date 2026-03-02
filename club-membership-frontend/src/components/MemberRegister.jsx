@@ -24,6 +24,7 @@ export default function MemberRegister() {
     phone: "",
     whatsappCode: "+91",
     whatsapp: "",
+    nri: "", 
   });
 
   const countryCodes = [
@@ -118,6 +119,9 @@ export default function MemberRegister() {
       newErrors.dob = "Enter Age or select Date of Birth";
     }
 
+    if (!formData.nri)
+    newErrors.nri = "Please select NRI status";
+
     // If age is entered, validate it
     if (formData.age && Number(formData.age) < 1) {
       newErrors.age = "Enter a valid age";
@@ -174,6 +178,7 @@ export default function MemberRegister() {
       data.append("age", Number(formData.age));
       data.append("bloodGroup", formData.bloodGroup);
       data.append("address", formData.address);
+      data.append("nri", formData.nri);
       if (formData.dob) data.append("dob", formData.dob);
 
       // PHONE (with country code)
@@ -186,7 +191,7 @@ export default function MemberRegister() {
       data.append("paymentProof", paymentScreenshot);
 
       await axios.post(
-        "https://club-membership.vercel.app/api/auth/register",
+        "http://localhost:5000/api/auth/register",
         data,
         { headers: { "Content-Type": "multipart/form-data" } },
       );
@@ -380,7 +385,7 @@ export default function MemberRegister() {
               Basic Information
             </h3>
 
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-4 gap-4">
               <div>
                 <input
                   type="number"
@@ -435,6 +440,22 @@ export default function MemberRegister() {
                   <p className="text-red-500 text-xs">{errors.bloodGroup}</p>
                 )}
               </div>
+
+              <div>
+  <select
+    name="nri"
+    value={formData.nri}
+    onChange={handleChange}
+    className={inputClass("nri")}
+  >
+    <option value="">Select NRI Status</option>
+    <option value="Yes">NRI - Yes</option>
+    <option value="No">NRI - No</option>
+  </select>
+  {errors.nri && (
+  <p className="text-red-500 text-xs">{errors.nri}</p>
+)}
+</div>
             </div>
           </div>
 

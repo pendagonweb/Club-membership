@@ -30,7 +30,7 @@ const [membersCount, setMembersCount] = useState(0); // if fetched elsewhere
     setLoading(true);
     setError("");
     const res = await axios.get(
-      "https://club-membership.vercel.app/api/admin/pending-users",
+      "http://localhost:5000/api/admin/pending-users",
       authHeader
     );
     const fetchedUsers = res.data.users || [];
@@ -63,7 +63,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       const res = await axios.put(
-        `https://club-membership.vercel.app/api/admin/approve/${id}`,
+        `http://localhost:5000/api/admin/approve/${id}`,
         {},
         authHeader
       );
@@ -81,7 +81,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       await axios.put(
-        `https://club-membership.vercel.app/api/admin/reject/${id}`,
+        `http://localhost:5000/api/admin/reject/${id}`,
         {},
         authHeader
       );
@@ -169,6 +169,11 @@ const handleLogout = () => {
                     <div>
                       <p className="font-bold text-lg">{user.name}</p>
                       <p className="text-sm text-gray-600">{user.phone}</p>
+                       {user.nri === "Yes" && (
+    <span className="inline-block mt-1 px-2 py-0.5 text-[11px] font-semibold bg-green-100 text-green-700 rounded-full">
+      NRI MEMBER
+    </span>
+  )}
                     </div>
                   </div>
 

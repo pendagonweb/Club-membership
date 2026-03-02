@@ -12,7 +12,7 @@ export default function UploadPayment() {
     const formData = new FormData();
     formData.append("paymentProof", file);
 
-    const res = await axios.post(`https://club-membership.vercel.app/api/user/upload-payment/${userId}`, formData);
+    const res = await axios.post(`http://localhost:5000/api/user/upload-payment/${userId}`, formData);
     if (res.data.success) {
       alert("Payment uploaded!");
       setUploadedFile(res.data.filename || file.name);
@@ -29,7 +29,7 @@ export default function UploadPayment() {
       {uploadedFile && (
         <div className="mt-3">
           <p>Uploaded File: {uploadedFile}</p>
-          <a href={`https://club-membership.vercel.app/uploads/${uploadedFile}`} target="_blank" rel="noreferrer" className="text-blue-600">View File</a>
+          <a href={`http://localhost:5000/uploads/${uploadedFile}`} target="_blank" rel="noreferrer" className="text-blue-600">View File</a>
         </div>
       )}
     </div>
