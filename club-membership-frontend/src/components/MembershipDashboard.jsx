@@ -20,7 +20,7 @@ export default function MemberDashboard() {
     }
 
     axios
-      .get(`http://localhost:5000/api/user/${userId}`, {
+      .get(`https://club-membership.vercel.app/api/user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

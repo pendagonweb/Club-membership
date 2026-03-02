@@ -191,7 +191,7 @@ export default function MemberRegister() {
       data.append("paymentProof", paymentScreenshot);
 
       await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "https://club-membership.vercel.app/api/auth/register",
         data,
         { headers: { "Content-Type": "multipart/form-data" } },
       );

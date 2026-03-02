@@ -21,7 +21,7 @@ export default function AdminLayout({ children }) {
     try {
       setLoading(true);
       const res = await axios.get(
-        "http://localhost:5000/api/admin/all-users",
+        "https://club-membership.vercel.app/api/admin/all-users",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const allUsers = res.data.users || [];

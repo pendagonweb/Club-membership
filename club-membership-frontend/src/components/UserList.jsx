@@ -23,7 +23,7 @@ export default function AdminUserList() {
     try {
       if (!token) throw new Error("Admin token not found");
       const res = await axios.get(
-        "http://localhost:5000/api/admin/all-users",
+        "https://club-membership.vercel.app/api/admin/all-users",
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const users = res.data.users || [];
@@ -45,7 +45,7 @@ export default function AdminUserList() {
   const approveUser = async (id) => {
     if (!window.confirm("Approve this user?")) return;
     await axios.put(
-      `http://localhost:5000/api/admin/approve/${id}`,
+      `https://club-membership.vercel.app/api/admin/approve/${id}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -55,7 +55,7 @@ export default function AdminUserList() {
   const rejectUser = async (id) => {
     if (!window.confirm("Reject this user?")) return;
     await axios.put(
-      `http://localhost:5000/api/admin/reject/${id}`,
+      `https://club-membership.vercel.app/api/admin/reject/${id}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -65,7 +65,7 @@ export default function AdminUserList() {
   const deleteUser = async (id) => {
     if (!window.confirm("Delete this user permanently?")) return;
     await axios.delete(
-      `http://localhost:5000/api/admin/user/${id}`,
+      `https://club-membership.vercel.app/api/admin/user/${id}`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
     fetchUsers();
@@ -90,7 +90,7 @@ export default function AdminUserList() {
     try {
       setActionLoading(true);
       await axios.put(
-        `http://localhost:5000/api/admin/user/${editingUser._id}`,
+        `https://club-membership.vercel.app/api/admin/user/${editingUser._id}`,
         editForm,
         { headers: { Authorization: `Bearer ${token}` } },
       );

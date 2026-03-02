@@ -30,7 +30,7 @@ const [membersCount, setMembersCount] = useState(0); // if fetched elsewhere
     setLoading(true);
     setError("");
     const res = await axios.get(
-      "http://localhost:5000/api/admin/pending-users",
+      "https://club-membership.vercel.app/api/admin/pending-users",
       authHeader
     );
     const fetchedUsers = res.data.users || [];
@@ -63,7 +63,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       const res = await axios.put(
-        `http://localhost:5000/api/admin/approve/${id}`,
+        `https://club-membership.vercel.app/api/admin/approve/${id}`,
         {},
         authHeader
       );
@@ -81,7 +81,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       await axios.put(
-        `http://localhost:5000/api/admin/reject/${id}`,
+        `https://club-membership.vercel.app/api/admin/reject/${id}`,
         {},
         authHeader
       );
