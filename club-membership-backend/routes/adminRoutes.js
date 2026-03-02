@@ -163,6 +163,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
       "bloodGroup",
       "gender",
       "place",
+      "nri",
     ];
 
     const updates = {};

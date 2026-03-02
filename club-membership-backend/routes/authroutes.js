@@ -26,6 +26,7 @@ router.post(
         bloodGroup,
         address,
         dob,
+        nri,
       } = req.body;
 
       /* ======================
@@ -53,6 +54,13 @@ router.post(
           message: "Photo and payment proof are required",
         });
       }
+      if (nri === undefined) {
+  return res.status(400).json({
+    success: false,
+    message: "NRI status is required",
+  });
+}
+
 
       /* ======================
          PHONE NORMALIZATION
@@ -103,8 +111,9 @@ router.post(
         age,
         phone: cleanPhone,
         whatsapp: cleanWhatsapp,
+        nri, //
         bloodGroup:
-          bloodGroup.toUpperCase() === "NIL" ? "Nil" : bloodGroup,
+        bloodGroup.toUpperCase() === "NIL" ? "Nil" : bloodGroup,
         address,
         dob: dob || null,
 

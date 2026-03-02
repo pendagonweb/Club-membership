@@ -39,6 +39,12 @@ const userSchema = new mongoose.Schema(
       max: 100,
     },
 
+    nri: {
+  type: String,
+  enum: ["Yes", "No"],
+  required: true,
+},
+
     bloodGroup: {
       type: String,
       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" , "Nil"],
