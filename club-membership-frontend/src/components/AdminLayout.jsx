@@ -10,39 +10,61 @@ export default function AdminLayout({ children }) {
   const [users, setUsers] = useState([]); // pending users for AdminPage
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("adminToken");
+const [token, setToken] = useState(null);
 
-  const fetchUsers = async () => {
-    if (!token) {
-      navigate("/admin-login");
-      return;
-    }
+useEffect(() => {
+  const storedToken = localStorage.getItem("adminToken");
 
-    try {
-      setLoading(true);
-      const res = await axios.get(
-        "https://club-membership.vercel.app/api/admin/all-users",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const allUsers = res.data.users || [];
+  if (!storedToken) {
+    navigate("/admin-login");
+  } else {
+    setToken(storedToken);
+  }
+}, [navigate]);
 
-      setMembersCount(allUsers.filter(u => u.membershipStatus === "approved").length);
-      const pending = allUsers.filter(u => u.membershipStatus === "pending");
-      setPendingCount(pending.length);
+const fetchUsers = async (authToken = token) => {
+  if (!authToken) return;
 
-      setUsers(pending); // pass to children
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
 
-  useEffect(() => {
-    fetchUsers();
-    const interval = setInterval(fetchUsers, 30000); // refresh every 30s
-    return () => clearInterval(interval);
-  }, [token]);
+    const res = await axios.get(
+      "https://club-membership-chi.vercel.app/api/admin/all-users",
+      { headers: { Authorization: `Bearer ${authToken}` } }
+    );
+
+    const allUsers = res.data.users || [];
+
+    setMembersCount(
+      allUsers.filter(u => u.membershipStatus === "approved").length
+    );
+
+    const pending = allUsers.filter(
+      u => u.membershipStatus === "pending_approval"
+    );
+
+    setPendingCount(pending.length);
+    setUsers(pending);
+
+  } catch (err) {
+    console.error("Failed to fetch users:", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  if (!token) return;
+
+  fetchUsers(token);
+
+  const interval = setInterval(() => {
+    fetchUsers(token);
+  }, 10000);
+
+  return () => clearInterval(interval);
+
+}, [token]);
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout from Admin Panel?")) {

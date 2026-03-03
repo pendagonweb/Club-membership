@@ -49,11 +49,6 @@ export default function MembershipCard({ user }) {
       <div className="absolute  NID uppercase">
         <p className=" font-bold text-color toUpperCase() text-[15px]">{user.nickname}</p>
         <p className="text-color toUpperCase() text-[10px]">{user.membershipId}</p>
-        {user.nri === "Yes" && (
-    <p className="text-color text-[9px] font-semibold">
-      NRI
-    </p>
-  )}
       </div>
 
       {/* Member Details */}

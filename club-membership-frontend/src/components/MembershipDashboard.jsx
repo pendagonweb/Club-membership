@@ -20,7 +20,7 @@ export default function MemberDashboard() {
     }
 
     axios
-      .get(`https://club-membership.vercel.app/api/user/${userId}`, {
+      .get(`https://club-membership-chi.vercel.app/api/user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -92,17 +92,18 @@ export default function MemberDashboard() {
             <h1 className="text-xl font-extrabold uppercase text-indigo-600 tracking-wide">
               {member.nickname}
             </h1>
-
-            <p className="text-gray-600 mt-1 text-lg">{member.phone}</p>
-
-            <span className="inline-block mt-2 px-5 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-700">
-              {member.membershipId?.toUpperCase()}
-            </span>
-              {member.nri === "Yes" && (
-    <span className="inline-block ml-2 mt-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+            {member.nri === "Yes" && (
+    <span className="inline-block  py-1 text-xl font-bold  text-green-700">
       NRI
     </span>
   )}
+
+            <p className="text-gray-600 mt-1 text-lg">{member.phone}</p>
+
+            <span className="inline-block mt-2 px-3 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-indigo-100 to-blue-100 text-indigo-700">
+              {member.membershipId?.toUpperCase()}
+            </span>
+
           </div>
         </div>
 

@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
-import AdminSidebar from "../components/AdminSidebar"; // adjust path if needed
+
 
 export default function AdminPage() {
   const STATIC_VALID_UPTO = "31/03/2027";
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [pendingCount, setPendingCount] = useState(0);
-const [membersCount, setMembersCount] = useState(0); // if fetched elsewhere
+  const [loading, setLoading] = useState(true); // if fetched elsewhere
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
   const [previewImage, setPreviewImage] = useState(null);
@@ -30,14 +28,13 @@ const [membersCount, setMembersCount] = useState(0); // if fetched elsewhere
     setLoading(true);
     setError("");
     const res = await axios.get(
-      "https://club-membership.vercel.app/api/admin/pending-users",
+      "https://club-membership-chi.vercel.app/api/admin/pending-users",
       authHeader
     );
     const fetchedUsers = res.data.users || [];
     setUsers(fetchedUsers);
 
     // Compute pendingCount
-    setPendingCount(fetchedUsers.length);
   } catch (err) {
     console.error(err);
     if (err.response?.status === 401 || err.response?.status === 403) {
@@ -51,6 +48,8 @@ const [membersCount, setMembersCount] = useState(0); // if fetched elsewhere
   }
 };
 
+
+
 const handleLogout = () => {
   localStorage.removeItem("adminToken"); // remove token
   navigate("/admin-login"); // redirect to login page
@@ -63,7 +62,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       const res = await axios.put(
-        `https://club-membership.vercel.app/api/admin/approve/${id}`,
+        `https://club-membership-chi.vercel.app/api/admin/approve/${id}`,
         {},
         authHeader
       );
@@ -81,7 +80,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       await axios.put(
-        `https://club-membership.vercel.app/api/admin/reject/${id}`,
+        `https://club-membership-chi.vercel.app/api/admin/reject/${id}`,
         {},
         authHeader
       );
@@ -95,9 +94,12 @@ const handleLogout = () => {
 
 
   useEffect(() => {
-    if (!token) navigate("/admin-login");
-    else fetchUsers();
-  }, [token]);
+  if (!token) {
+    navigate("/admin-login");
+  } else {
+    fetchUsers(); // 👈 ADD THIS
+  }
+}, [token]);
 
   const formatDate = (date) => {
     if (!date) return "—";
@@ -131,8 +133,6 @@ const handleLogout = () => {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
 
-      
-
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-6 overflow-x-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center md:text-left text-indigo-700">
@@ -153,99 +153,93 @@ const handleLogout = () => {
           <div className="space-y-6">
             {users.map((user) => (
               <div
-                key={user._id}
-                className="bg-white shadow-lg rounded-3xl p-5 transition-transform hover:scale-[1.01]"
-              >
-                {/* Top Row: photo + name + expand button */}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <img
-                      src={user.photo || "/no-user.png"}
-                      alt={user.name}
-                      onError={(e) => (e.target.src = "/no-user.png")}
-                      className="w-20 h-20 rounded-full object-cover border-2 border-indigo-300 shadow-md cursor-pointer"
-                      onClick={() => setPreviewImage(user.photo)}
-                    />
-                    <div>
-                      <p className="font-bold text-lg">{user.name}</p>
-                      <p className="text-sm text-gray-600">{user.phone}</p>
-                       {user.nri === "Yes" && (
-    <span className="inline-block mt-1 px-2 py-0.5 text-[11px] font-semibold bg-green-100 text-green-700 rounded-full">
-      NRI MEMBER
-    </span>
+  key={user._id}
+  className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 w-full flex flex-col"
+>
+  {/* Top Row */}
+  <div className="flex items-center justify-between gap-3">
+    <div className="flex items-center gap-3">
+      <img
+        src={user.photo || "/no-user.png"}
+        alt={user.name}
+        onError={(e) => (e.target.src = "/no-user.png")}
+        className="w-20 h-20 rounded-full object-cover border cursor-pointer"
+        onClick={() => setPreviewImage(user.photo)}
+      />
+
+      <div className="flex flex-col">
+        <p className="font-semibold text-lg">{user.name}</p>
+        <p className="text-xs text-gray-600">
+          Phone: {user.phone}
+        </p>
+
+        {user.nri === "Yes" && (
+          <p className="text-xs font-semibold text-green-600">
+            NRI
+          </p>
+        )}
+      </div>
+    </div>
+
+    <button
+      onClick={() =>
+        setExpandedUser(expandedUser === user._id ? null : user._id)
+      }
+      className="px-3 py-1 text-xs bg-indigo-500 text-white rounded"
+    >
+      {expandedUser === user._id ? <FaAngleUp /> : <FaAngleDown />}
+    </button>
+  </div>
+
+  {/* Expanded Section */}
+  {expandedUser === user._id && (
+    <div className="mt-3 text-sm space-y-2">
+      <p><b>Father:</b> {user.fatherName || "—"}</p>
+      <p><b>Nickname:</b> {user.nickname || "—"}</p>
+      <p><b>Email:</b> {user.email || "—"}</p>
+      <p><b>WhatsApp:</b> {user.whatsapp || "—"}</p>
+      <p><b>DOB:</b> {formatDate(user.dob)}</p>
+      <p><b>Blood Group:</b> {user.bloodGroup || "—"}</p>
+      <p><b>Address:</b> {user.address || "—"}</p>
+      <p><b>Valid Upto:</b> {STATIC_VALID_UPTO}</p>
+      <p>
+        <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
+      </p>
+
+      {user.paymentProof && (
+        <a
+          href={user.paymentProof}
+          target="_blank"
+          rel="noreferrer"
+          className="text-blue-600 text-xs hover:underline"
+        >
+          View Payment Proof
+        </a>
+      )}
+
+      
+
+      {/* Actions */}
+      <div className="flex gap-2 flex-wrap pt-2">
+        <button
+          onClick={() => approveUser(user._id)}
+          disabled={actionLoading === user._id}
+          className="px-2 py-1 text-xs bg-green-600 text-white rounded"
+        >
+          {actionLoading === user._id ? "Processing..." : "Approve"}
+        </button>
+
+        <button
+          onClick={() => rejectUser(user._id)}
+          disabled={actionLoading === user._id}
+          className="px-2 py-1 text-xs bg-red-600 text-white rounded"
+        >
+          {actionLoading === user._id ? "Processing..." : "Reject"}
+        </button>
+      </div>
+    </div>
   )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      setExpandedUser(expandedUser === user._id ? null : user._id)
-                    }
-                    className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 transition"
-                  >
-                    {expandedUser === user._id ? <FaAngleUp /> : <FaAngleDown />}
-                  </button>
-                </div>
-
-                {/* Expanded Details */}
-                {expandedUser === user._id && (
-                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    <Detail label="Father Name" value={user.fatherName || "—"} />
-                    <Detail label="Nickname" value={user.nickname} />
-                    <Detail label="Email" value={user.email || "—"} />
-                    <Detail label="WhatsApp" value={user.whatsapp || "—"} />
-                    <Detail label="Blood Group" value={user.bloodGroup || "—"} />
-                    <Detail label="Address" value={user.address || "—"} />
-                    <Detail label="DOB" value={formatDate(user.dob)} />
-                    <Detail label="Valid Upto" value={STATIC_VALID_UPTO} />
-                    {user.paymentProof && (
-                      <a
-                        href={user.paymentProof}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 text-sm col-span-full hover:underline"
-                      >
-                        View Payment Proof
-                      </a>
-                    )}
-                    {user.photo && (
-  <button
-    onClick={() => downloadImage(user.photo, user.name)}
-    className="col-span-full mt-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition"
-  >
-    Download User Photo
-  </button>
-)}
-
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 mt-4 flex-wrap">
-                  <button
-                    onClick={() => approveUser(user._id)}
-                    disabled={actionLoading === user._id}
-                    className={`px-5 py-2 rounded-full text-white font-semibold transition-all duration-200 ${
-                      actionLoading === user._id
-                        ? "bg-green-400"
-                        : "bg-green-600 hover:bg-green-700"
-                    }`}
-                  >
-                    {actionLoading === user._id ? "Processing..." : "Approve"}
-                  </button>
-                  <button
-                    onClick={() => rejectUser(user._id)}
-                    disabled={actionLoading === user._id}
-                    className={`px-5 py-2 rounded-full text-white font-semibold transition-all duration-200 ${
-                      actionLoading === user._id
-                        ? "bg-red-400"
-                        : "bg-red-600 hover:bg-red-700"
-                    }`}
-                  >
-                    {actionLoading === user._id ? "Processing..." : "Reject"}
-                  </button>
-                </div>
-              </div>
+</div>
             ))}
           </div>
         )}
