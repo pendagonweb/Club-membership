@@ -66,16 +66,19 @@ router.put("/approve/:id", adminAuth, async (req, res) => {
       });
     }
    // Find last approved user's membership number
-const lastUser = await User.findOne({ membershipId: { $regex: /^K-STAR2026\// } })
-  .sort({ membershipId: -1 });
+const lastUser = await User.findOne({
+  membershipId: { $regex: /^K-STAR2026\// }
+}).sort({ membershipId: -1 });
+let nextNumber = 1;
 
-const nextNumber = lastUser
-  ? parseInt(lastUser.membershipId.split("/")[1]) + 1
-  : 1;
-
-if (!user.membershipId) {
-  user.membershipId = `K-STAR2026/${String(nextNumber).padStart(4, "0")}`;
+if (lastUser && lastUser.membershipId) {
+  const match = lastUser.membershipId.match(/\/(\d+)$/);
+  if (match) {
+    nextNumber = parseInt(match[1]) + 1;
+  }
 }
+
+user.membershipId = `K-STAR2026/${String(nextNumber).padStart(4, "0")}`;
 
 
     const approvedAt = new Date();

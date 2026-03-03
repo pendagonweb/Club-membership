@@ -40,14 +40,14 @@ const userSchema = new mongoose.Schema(
     },
 
     nri: {
-  type: String,
-  enum: ["Yes", "No"],
-  required: true,
-},
+      type: String,
+      enum: ["Yes", "No"],
+      required: true,
+    },
 
     bloodGroup: {
       type: String,
-      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" , "Nil"],
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Nil"],
       required: true,
       trim: true,
     },
@@ -58,18 +58,18 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-   phone: {
-  type: String,
-  required: true,
-  unique: true,
-  trim: true,
-},
+    phone: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
 
-whatsapp: {
-  type: String,
-  required: true,
-  trim: true,
-},
+    whatsapp: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
 
 
@@ -116,14 +116,14 @@ whatsapp: {
     },
 
     membershipId: {
-  type: String,
-  unique: true,
-  sparse: true,   // ✅ VERY IMPORTANT
-  default: null,
+      type: String,
+      unique: true,
+      sparse: true,   // ✅ VERY IMPORTANT
+      default: null,
     },
-     place: { 
-      type: String, 
-      default: "" 
+    place: {
+      type: String,
+      default: ""
     },
 
     membershipCard: {
