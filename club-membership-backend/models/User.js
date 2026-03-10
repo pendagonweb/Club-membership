@@ -121,12 +121,11 @@ const userSchema = new mongoose.Schema(
       default: "pending_approval",
     },
 
-    membershipId: {
-      type: String,
-      unique: true,
-      sparse: true,   // ✅ VERY IMPORTANT
-      default: null,
-    },
+   membershipId: {
+  type: String,
+  unique: true,
+  sparse: true
+},
     place: {
       type: String,
       default: ""
