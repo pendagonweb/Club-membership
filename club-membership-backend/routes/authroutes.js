@@ -27,6 +27,7 @@ router.post(
         address,
         dob,
         nri,
+        aadhaar,
       } = req.body;
 
       /* ======================
@@ -60,7 +61,12 @@ router.post(
     message: "NRI status is required",
   });
 }
-
+if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
+  return res.status(400).json({
+    success: false,
+    message: "Valid 12 digit Aadhaar number is required",
+  });
+}
 
       /* ======================
          PHONE NORMALIZATION
@@ -90,8 +96,12 @@ router.post(
          DUPLICATE CHECK
       ====================== */
       const existingUser = await User.findOne({
-        $or: [{ phone: cleanPhone }, { whatsapp: cleanWhatsapp }],
-      });
+  $or: [
+    { phone: cleanPhone },
+    { whatsapp: cleanWhatsapp },
+    { aadhaar: aadhaar },
+  ],
+});
 
       if (existingUser) {
         return res.status(409).json({
@@ -112,6 +122,7 @@ router.post(
         phone: cleanPhone,
         whatsapp: cleanWhatsapp,
         nri, //
+        aadhaar,
         bloodGroup:
         bloodGroup.toUpperCase() === "NIL" ? "Nil" : bloodGroup,
         address,

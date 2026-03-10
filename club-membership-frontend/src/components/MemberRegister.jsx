@@ -24,7 +24,8 @@ export default function MemberRegister() {
     phone: "",
     whatsappCode: "+91",
     whatsapp: "",
-    nri: "", 
+    nri: "",
+    aadhaar: "",
   });
 
   const countryCodes = [
@@ -53,7 +54,8 @@ export default function MemberRegister() {
      HELPERS
   ====================== */
   const inputClass = (field) =>
-    `p-2 border rounded-lg w-full ${errors[field] ? "border-red-500 focus:ring-red-400" : "border-gray-300"
+    `p-2 border rounded-lg w-full ${
+      errors[field] ? "border-red-500 focus:ring-red-400" : "border-gray-300"
     }`;
 
   const handleChange = (e) => {
@@ -110,6 +112,9 @@ export default function MemberRegister() {
     if (!/^\d{10}$/.test(formData.phone))
       newErrors.phone = "Enter valid 10-digit number";
 
+    if (!/^\d{12}$/.test(formData.aadhaar))
+      newErrors.aadhaar = "Enter valid 12 digit Aadhaar number";
+
     if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email))
       newErrors.email = "Enter a valid email address";
 
@@ -119,14 +124,12 @@ export default function MemberRegister() {
       newErrors.dob = "Enter Age or select Date of Birth";
     }
 
-    if (!formData.nri)
-    newErrors.nri = "Please select NRI status";
+    if (!formData.nri) newErrors.nri = "Please select NRI status";
 
     // If age is entered, validate it
     if (formData.age && Number(formData.age) < 1) {
       newErrors.age = "Enter a valid age";
     }
-
 
     if (!formData.bloodGroup)
       newErrors.bloodGroup = "Please select blood group";
@@ -174,6 +177,7 @@ export default function MemberRegister() {
       data.append("name", formData.name);
       data.append("fatherName", formData.fatherName);
       data.append("nickname", formData.nickname);
+      data.append("aadhaar", formData.aadhaar);
       if (formData.email) data.append("email", formData.email);
       data.append("age", Number(formData.age));
       data.append("bloodGroup", formData.bloodGroup);
@@ -226,8 +230,9 @@ export default function MemberRegister() {
 
         <form
           onSubmit={handleSubmit}
-          className={`max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-8 ${loading ? "pointer-events-none opacity-70" : ""
-            }`}
+          className={`max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6 sm:p-8 space-y-8 ${
+            loading ? "pointer-events-none opacity-70" : ""
+          }`}
         >
           {/* ================= PERSONAL DETAILS ================= */}
           <div className="space-y-5">
@@ -265,6 +270,20 @@ export default function MemberRegister() {
             />
             {errors.fatherName && (
               <p className="text-red-500 text-xs">{errors.fatherName}</p>
+            )}
+          </div>
+
+          <div>
+            <input
+              type="text"
+              name="aadhaar"
+              placeholder="Aadhaar Number / ആധാർ നമ്പർ"
+              maxLength={12}
+              onChange={handleChange}
+              className={`${inputClass("aadhaar")} placeholder:text-[11px]`}
+            />
+            {errors.aadhaar && (
+              <p className="text-red-500 text-xs">{errors.aadhaar}</p>
             )}
           </div>
 
@@ -412,7 +431,6 @@ export default function MemberRegister() {
                 {errors.dob && (
                   <p className="text-red-500 text-xs">{errors.dob}</p>
                 )}
-
               </div>
 
               <div>
@@ -442,20 +460,20 @@ export default function MemberRegister() {
               </div>
 
               <div>
-  <select
-    name="nri"
-    value={formData.nri}
-    onChange={handleChange}
-    className={inputClass("nri")}
-  >
-    <option value="">Select NRI Status</option>
-    <option value="Yes">NRI - Yes</option>
-    <option value="No">NRI - No</option>
-  </select>
-  {errors.nri && (
-  <p className="text-red-500 text-xs">{errors.nri}</p>
-)}
-</div>
+                <select
+                  name="nri"
+                  value={formData.nri}
+                  onChange={handleChange}
+                  className={inputClass("nri")}
+                >
+                  <option value="">Select NRI Status</option>
+                  <option value="Yes">NRI - Yes</option>
+                  <option value="No">NRI - No</option>
+                </select>
+                {errors.nri && (
+                  <p className="text-red-500 text-xs">{errors.nri}</p>
+                )}
+              </div>
             </div>
           </div>
 
@@ -540,9 +558,6 @@ export default function MemberRegister() {
                 </div>
               </div>
 
-
-
-
               {/* QR */}
               <div className="flex flex-col items-center gap-3">
                 {/* QR Thumbnail */}
@@ -551,7 +566,11 @@ export default function MemberRegister() {
                   onClick={payViaUPI}
                   className="flex items-center justify-center shadow-black gap-2 px-3 py-1 text-xs sm:text-sm font-semibold  rounded-lg bg-gray-300 text-black border hover:shadow-lg hover:bg-gray-300  transition"
                 >
-                  <img src={UpiIcon} alt="UPI" className="w-8 h-4 sm:w-8 sm:h-4" />
+                  <img
+                    src={UpiIcon}
+                    alt="UPI"
+                    className="w-8 h-4 sm:w-8 sm:h-4"
+                  />
                   Pay via UPI
                 </button>
                 <div className="relative w-36">
@@ -569,9 +588,6 @@ export default function MemberRegister() {
                     View QR
                   </button>
                 </div>
-
-
-
 
                 {/* Fullscreen Modal */}
                 {showQR && (

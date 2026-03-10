@@ -35,6 +35,11 @@ export default function MemberDashboard() {
     localStorage.removeItem("userId");
     navigate("/");
   };
+  const maskAadhaar = (aadhaar) => {
+  if (!aadhaar) return "N/A";
+  const last4 = aadhaar.slice(-4);
+  return `XXXX XXXX ${last4}`;
+};
 
   if (loading) {
     return (
@@ -123,6 +128,7 @@ export default function MemberDashboard() {
             <Detail label="Membership ID" value={member.membershipId} />
             <Detail label="Phone" value={member.phone} />
             <Detail label="Blood Group" value={member.bloodGroup || "N/A"} />
+            <Detail label="Aadhaar" value={maskAadhaar(member.aadhaar)} />
             <Detail label="Valid Upto" value={STATIC_VALID_UPTO || "N/A"} />
             <Detail
               label="Joined On"

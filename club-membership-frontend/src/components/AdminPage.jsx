@@ -198,6 +198,7 @@ const handleLogout = () => {
       <p><b>Nickname:</b> {user.nickname || "—"}</p>
       <p><b>Email:</b> {user.email || "—"}</p>
       <p><b>WhatsApp:</b> {user.whatsapp || "—"}</p>
+      <p><b>Aadhaar:</b> {user.aadhaar || "—"}</p>
       <p><b>DOB:</b> {formatDate(user.dob)}</p>
       <p><b>Blood Group:</b> {user.bloodGroup || "—"}</p>
       <p><b>Address:</b> {user.address || "—"}</p>

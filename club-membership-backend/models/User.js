@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    aadhaar: {
+  type: String,
+  trim: true,
+},
+
     email: {
       type: String,
       lowercase: true,

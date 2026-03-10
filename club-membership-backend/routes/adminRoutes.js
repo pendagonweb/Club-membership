@@ -167,6 +167,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
       "gender",
       "place",
       "nri",
+      "aadhaar",
     ];
 
     const updates = {};
