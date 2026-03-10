@@ -22,7 +22,8 @@ const userSchema = new mongoose.Schema(
 
     aadhaar: {
   type: String,
-  trim: true,
+  unique: true,
+  required: true
 },
 
     email: {
