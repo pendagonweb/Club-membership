@@ -9,14 +9,18 @@ import AdminLogin from "./components/AdminLogin";
 import MemberDashboard from "./components/MembershipDashboard";
 import MembershipCard from "./pages/MemberCard";
 import Footer from "./components/Footer";
+import Home from "./pages/Home";
+import Header from "./components/Header";
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col">
         <div className="flex-grow">
+          <Header />
           <Routes>
-            <Route path="/" element={<Login />} />
+             <Route path="/" element={<Home/>} />
+            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<MemberRegister />} />
             <Route path="/upload-payment" element={<UploadPayment />} />
             <Route path="/admin-login" element={<AdminLogin />} />
