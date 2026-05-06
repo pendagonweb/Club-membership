@@ -16,6 +16,8 @@ export default function AdminUserList() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const token = localStorage.getItem("adminToken");
+  const { VITE_BACKEND_URL } = import.meta.env;
+
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -23,7 +25,7 @@ export default function AdminUserList() {
     try {
       if (!token) throw new Error("Admin token not found");
       const res = await axios.get(
-        "https://club-membership-chi.vercel.app/api/admin/all-users",
+        `${VITE_BACKEND_URL}/api/admin/all-users`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const users = res.data.users || [];
@@ -45,7 +47,7 @@ export default function AdminUserList() {
   const approveUser = async (id) => {
     if (!window.confirm("Approve this user?")) return;
     await axios.put(
-      `https://club-membership-chi.vercel.app/api/admin/approve/${id}`,
+      `${VITE_BACKEND_URL}/api/admin/approve/${id}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -55,7 +57,7 @@ export default function AdminUserList() {
   const rejectUser = async (id) => {
     if (!window.confirm("Reject this user?")) return;
     await axios.put(
-      `https://club-membership-chi.vercel.app/api/admin/reject/${id}`,
+      `${VITE_BACKEND_URL}/api/admin/reject/${id}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } },
     );
@@ -65,7 +67,7 @@ export default function AdminUserList() {
   const deleteUser = async (id) => {
     if (!window.confirm("Delete this user permanently?")) return;
     await axios.delete(
-      `https://club-membership-chi.vercel.app/api/admin/user/${id}`,
+      `${VITE_BACKEND_URL}/api/admin/user/${id}`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
     fetchUsers();
@@ -90,7 +92,7 @@ export default function AdminUserList() {
     try {
       setActionLoading(true);
       await axios.put(
-        `https://club-membership-chi.vercel.app/api/admin/user/${editingUser._id}`,
+        `${VITE_BACKEND_URL}/api/admin/user/${editingUser._id}`,
         editForm,
         { headers: { Authorization: `Bearer ${token}` } },
       );

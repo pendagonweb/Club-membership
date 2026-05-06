@@ -7,6 +7,7 @@ export default function MemberDashboard() {
   const STATIC_VALID_UPTO = "31/03/2027";
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { VITE_BACKEND_URL } = import.meta.env;
 
   const navigate = useNavigate();
 
@@ -20,7 +21,7 @@ export default function MemberDashboard() {
     }
 
     axios
-      .get(`https://club-membership-chi.vercel.app/api/user/${userId}`, {
+      .get(`${VITE_BACKEND_URL}/api/user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

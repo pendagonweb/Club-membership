@@ -48,6 +48,8 @@ export default function MemberRegister() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const phoneRegex = /^\d{10}$/;
 
+  const { VITE_BACKEND_URL } = import.meta.env;
+
   const navigate = useNavigate();
 
   /* ======================
@@ -195,7 +197,7 @@ export default function MemberRegister() {
       data.append("paymentProof", paymentScreenshot);
 
       await axios.post(
-        "https://club-membership-chi.vercel.app/api/auth/register",
+        `${VITE_BACKEND_URL}/api/auth/register`,
         data,
         { headers: { "Content-Type": "multipart/form-data" } },
       );

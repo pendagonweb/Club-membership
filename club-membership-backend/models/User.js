@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
 
     fatherName: {
       type: String,
-      required: true,   // 👈 make false if optional
+      required: true,   
       trim: true,
     },
 

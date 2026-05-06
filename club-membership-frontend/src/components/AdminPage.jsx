@@ -14,6 +14,7 @@ export default function AdminPage() {
   const [expandedUser, setExpandedUser] = useState(null);
   const navigate = useNavigate();
   const token = localStorage.getItem("adminToken");
+  const { VITE_BACKEND_URL } = import.meta.env;
 
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` },
@@ -28,7 +29,7 @@ export default function AdminPage() {
     setLoading(true);
     setError("");
     const res = await axios.get(
-      "https://club-membership-chi.vercel.app/api/admin/pending-users",
+      `${VITE_BACKEND_URL}/api/admin/pending-users`,
       authHeader
     );
     const fetchedUsers = res.data.users || [];
@@ -62,7 +63,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       const res = await axios.put(
-        `https://club-membership-chi.vercel.app/api/admin/approve/${id}`,
+        `${VITE_BACKEND_URL}/api/admin/approve/${id}`,
         {},
         authHeader
       );
@@ -80,7 +81,7 @@ const handleLogout = () => {
       setActionLoading(id);
       setError("");
       await axios.put(
-        `https://club-membership-chi.vercel.app/api/admin/reject/${id}`,
+        `${VITE_BACKEND_URL}/api/admin/reject/${id}`,
         {},
         authHeader
       );

@@ -10,6 +10,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { VITE_BACKEND_URL } = import.meta.env;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +19,7 @@ export default function AdminLogin() {
 
     try {
       const res = await axios.post(
-        "https://club-membership-chi.vercel.app/api/admin/login",
+        `${VITE_BACKEND_URL}/api/admin/login`,
         { username: username.trim(), password }
       );
 

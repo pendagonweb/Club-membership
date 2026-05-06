@@ -128,7 +128,6 @@ if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
         address,
         dob: dob || null,
 
-        membershipId: null, // ✅ IMPORTANT
         membershipStatus: "pending_approval",
 
         photo: req.files.photo[0].path,

@@ -5,6 +5,7 @@ export default function UploadPayment() {
   const [file, setFile] = useState(null);
   const [userId, setUserId] = useState(""); // User _id from MongoDB
   const [uploadedFile, setUploadedFile] = useState("");
+  const { VITE_BACKEND_URL } = import.meta.env;
 
   const handleUpload = async () => {
     if (!file || !userId) return alert("Select file and enter User ID");
@@ -12,7 +13,7 @@ export default function UploadPayment() {
     const formData = new FormData();
     formData.append("paymentProof", file);
 
-    const res = await axios.post(`https://club-membership-chi.vercel.app/api/user/upload-payment/${userId}`, formData);
+    const res = await axios.post(`${VITE_BACKEND_URL}/api/user/upload-payment/${userId}`, formData);
     if (res.data.success) {
       alert("Payment uploaded!");
       setUploadedFile(res.data.filename || file.name);
@@ -29,7 +30,7 @@ export default function UploadPayment() {
       {uploadedFile && (
         <div className="mt-3">
           <p>Uploaded File: {uploadedFile}</p>
-          <a href={`https://club-membership-chi.vercel.app/uploads/${uploadedFile}`} target="_blank" rel="noreferrer" className="text-blue-600">View File</a>
+          <a href={`${VITE_BACKEND_URL}/uploads/${uploadedFile}`} target="_blank" rel="noreferrer" className="text-blue-600">View File</a>
         </div>
       )}
     </div>

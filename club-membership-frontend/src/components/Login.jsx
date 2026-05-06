@@ -6,6 +6,7 @@ import Lines from "../assets/lines.webp";         // left texture
 import CenterLogo from "../assets/logo-Malayalam.webp";   // middle logo
 import ClubName from "../assets/logo.webp";   // right text image
 import Hashtag from "../assets/hashtag.webp"; 
+const { VITE_BACKEND_URL } = import.meta.env;
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -29,7 +30,7 @@ export default function Login() {
 
     try {
       const res = await axios.post(
-        "https://green-street-orpin.vercel.app/api/member/login",
+        `${VITE_BACKEND_URL}/api/member/login`,
         formData
       );
 

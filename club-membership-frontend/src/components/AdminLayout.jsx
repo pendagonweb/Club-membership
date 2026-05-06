@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 
+const { VITE_BACKEND_URL } = import.meta.env;
+
 export default function AdminLayout({ children }) {
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = useState(0);
@@ -29,7 +31,7 @@ const fetchUsers = async (authToken = token) => {
     setLoading(true);
 
     const res = await axios.get(
-      "https://club-membership-chi.vercel.app/api/admin/all-users",
+        `${VITE_BACKEND_URL}/api/admin/all-users`,
       { headers: { Authorization: `Bearer ${authToken}` } }
     );
 
