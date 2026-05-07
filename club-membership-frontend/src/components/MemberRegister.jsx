@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import imageCompression from "browser-image-compression";
+import Cropper from "react-easy-crop";
 
 import Lines from "../assets/lines.webp";
 import CenterLogo from "../assets/logo-Malayalam.webp";
@@ -10,6 +11,139 @@ import Hashtag from "../assets/hashtag.webp";
 import Qr from "../assets/qr.jpeg";
 import UpiIcon from "../assets/Upi.webp";
 
+/* ======================
+   CROP HELPERS
+====================== */
+function createImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.addEventListener("load", () => resolve(img));
+    img.addEventListener("error", reject);
+    img.setAttribute("crossOrigin", "anonymous");
+    img.src = url;
+  });
+}
+
+async function getCroppedImg(imageSrc, pixelCrop) {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+  const ctx = canvas.getContext("2d");
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height,
+  );
+
+  return new Promise((resolve) => {
+    canvas.toBlob(
+      (blob) => {
+        resolve(blob);
+      },
+      "image/jpeg",
+      0.9,
+    );
+  });
+}
+
+/* ======================
+   CROP MODAL COMPONENT
+====================== */
+function CropModal({ imageSrc, onCropDone, onCancel }) {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const onCropComplete = useCallback((_, croppedPixels) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  const handleDone = async () => {
+    const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
+    onCropDone(croppedBlob);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4">
+      <div className="bg-white rounded-2xl overflow-hidden w-full max-w-md shadow-2xl">
+        {/* Header */}
+        <div className="bg-indigo-600 px-5 py-3 flex items-center justify-between">
+          <h3 className="text-white font-bold text-lg">Crop Photo</h3>
+          <button
+            onClick={onCancel}
+            className="text-white/80 hover:text-white text-2xl leading-none"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Cropper area */}
+        <div
+          className="relative w-full bg-gray-900"
+          style={{ height: "320px" }}
+        >
+          <Cropper
+            image={imageSrc}
+            crop={crop}
+            zoom={zoom}
+            aspect={1}
+            cropShape="round"
+            showGrid={false}
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={onCropComplete}
+          />
+        </div>
+
+        {/* Zoom slider */}
+        <div className="px-5 py-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 w-10">Zoom</span>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.05}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="flex-1 accent-indigo-600"
+            />
+            <span className="text-xs text-gray-500 w-8">
+              {zoom.toFixed(1)}x
+            </span>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDone}
+              className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition"
+            >
+              ✓ Use This Photo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ======================
+   MAIN COMPONENT
+====================== */
 export default function MemberRegister() {
   const [formData, setFormData] = useState({
     name: "",
@@ -40,6 +174,12 @@ export default function MemberRegister() {
   ];
 
   const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
+  // Crop state
+  const [cropSrc, setCropSrc] = useState(null); // raw src for cropper
+  const [showCropper, setShowCropper] = useState(false);
+
   const [sameAsPhone, setSameAsPhone] = useState(true);
   const [paymentScreenshot, setPaymentScreenshot] = useState(null);
   const [errors, setErrors] = useState({});
@@ -49,12 +189,8 @@ export default function MemberRegister() {
   const phoneRegex = /^\d{10}$/;
 
   const { VITE_BACKEND_URL } = import.meta.env;
-
   const navigate = useNavigate();
 
-  /* ======================
-     HELPERS
-  ====================== */
   const inputClass = (field) =>
     `p-2 border rounded-lg w-full ${
       errors[field] ? "border-red-500 focus:ring-red-400" : "border-gray-300"
@@ -62,32 +198,69 @@ export default function MemberRegister() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     let updatedForm = { ...formData, [name]: value };
 
-    // If checkbox is checked, copy phone → WhatsApp
-    if (sameAsPhone && name === "phone") {
-      updatedForm.whatsapp = value;
-    }
+    if (sameAsPhone && name === "phone") updatedForm.whatsapp = value;
+    if (sameAsPhone && name === "phoneCode") updatedForm.whatsappCode = value;
 
-    if (sameAsPhone && name === "phoneCode") {
-      updatedForm.whatsappCode = value;
+    if (name === "dob" && value) {
+      const age = calculateAge(value);
+      updatedForm.age = age > 0 ? age : "";
     }
 
     setFormData(updatedForm);
-
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
+    if (errors[name]) setErrors({ ...errors, [name]: "" });
   };
 
   const compressImage = async (file) =>
     await imageCompression(file, { maxSizeMB: 0.4, maxWidthOrHeight: 900 });
 
-  const handlePhotoChange = async (e) => {
-    if (!e.target.files[0]) return;
-    setPhoto(await compressImage(e.target.files[0]));
+  const calculateAge = (dob) => {
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    )
+      age--;
+    return age;
+  };
+
+  /* ======================
+     PHOTO: open file → show cropper
+  ====================== */
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    // Reset input so same file can be re-selected after cancel
+    e.target.value = "";
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
     if (errors.photo) setErrors({ ...errors, photo: "" });
+  };
+
+  /* ======================
+     CROP DONE: compress → store
+  ====================== */
+  const handleCropDone = async (croppedBlob) => {
+    setShowCropper(false);
+    setCropSrc(null);
+    const compressed = await compressImage(
+      new File([croppedBlob], "photo.jpg", { type: "image/jpeg" }),
+    );
+    setPhoto(compressed);
+    setPhotoPreview(URL.createObjectURL(compressed));
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setCropSrc(null);
   };
 
   const handlePaymentChange = async (e) => {
@@ -104,47 +277,31 @@ export default function MemberRegister() {
 
     if (!formData.name || formData.name.trim().length < 3)
       newErrors.name = "Full name must be at least 3 characters";
-
     if (!formData.nickname || formData.nickname.trim().length < 2)
       newErrors.nickname = "Nickname is required";
-
     if (!formData.fatherName || formData.fatherName.trim().length < 3)
       newErrors.fatherName = "Father name is required";
-
     if (!/^\d{10}$/.test(formData.phone))
       newErrors.phone = "Enter valid 10-digit number";
-
     if (!/^\d{12}$/.test(formData.aadhaar))
       newErrors.aadhaar = "Enter valid 12 digit Aadhaar number";
-
     if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email))
       newErrors.email = "Enter a valid email address";
-
-    // Either Age or DOB is required
     if (!formData.age && !formData.dob) {
       newErrors.age = "Enter Age or select Date of Birth";
       newErrors.dob = "Enter Age or select Date of Birth";
     }
-
     if (!formData.nri) newErrors.nri = "Please select NRI status";
-
-    // If age is entered, validate it
-    if (formData.age && Number(formData.age) < 1) {
+    if (formData.age && Number(formData.age) < 1)
       newErrors.age = "Enter a valid age";
-    }
-
     if (!formData.bloodGroup)
       newErrors.bloodGroup = "Please select blood group";
-
     if (!formData.address.trim()) newErrors.address = "Address is required";
 
     const whatsappNumber = sameAsPhone ? formData.phone : formData.whatsapp;
-
     if (!phoneRegex.test(whatsappNumber))
       newErrors.whatsapp = "Invalid WhatsApp number";
-
     if (!photo) newErrors.photo = "Profile photo is required";
-
     if (!paymentScreenshot)
       newErrors.payment = "Payment screenshot is required";
 
@@ -153,13 +310,7 @@ export default function MemberRegister() {
   };
 
   const payViaUPI = () => {
-    const upiId = "sabiaboobacker653-1@okaxis";
-    const name = "Club Membership";
-
-    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
-      name,
-    )}&cu=INR&tn=Membership Fee`;
-
+    const upiUrl = `upi://pay?pa=sabiaboobacker653-1@okaxis&pn=${encodeURIComponent("Club Membership")}&cu=INR&tn=Membership Fee`;
     window.location.href = upiUrl;
   };
 
@@ -172,10 +323,7 @@ export default function MemberRegister() {
 
     try {
       setLoading(true);
-
       const data = new FormData();
-
-      // TEXT FIELDS
       data.append("name", formData.name);
       data.append("fatherName", formData.fatherName);
       data.append("nickname", formData.nickname);
@@ -186,22 +334,12 @@ export default function MemberRegister() {
       data.append("address", formData.address);
       data.append("nri", formData.nri);
       if (formData.dob) data.append("dob", formData.dob);
-
-      // PHONE (with country code)
       data.append("phone", formData.phone);
-
       data.append("whatsapp", sameAsPhone ? formData.phone : formData.whatsapp);
-
-      // FILES
       data.append("photo", photo);
       data.append("paymentProof", paymentScreenshot);
 
-      await axios.post(
-        `${VITE_BACKEND_URL}/api/auth/register`,
-        data,
-        { headers: { "Content-Type": "multipart/form-data" } },
-      );
-
+      await axios.post(`${VITE_BACKEND_URL}/api/auth/register`, data);
       setShowSuccessModal(true);
     } catch (err) {
       alert(err.response?.data?.message || "Registration failed");
@@ -236,12 +374,11 @@ export default function MemberRegister() {
             loading ? "pointer-events-none opacity-70" : ""
           }`}
         >
-          {/* ================= PERSONAL DETAILS ================= */}
+          {/* PERSONAL DETAILS */}
           <div className="space-y-5">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
               Personal Details
             </h3>
-
             <input
               name="name"
               placeholder="Full Name / മുഴുവൻ പേര്"
@@ -251,7 +388,6 @@ export default function MemberRegister() {
             {errors.name && (
               <p className="text-red-500 text-xs">{errors.name}</p>
             )}
-
             <div>
               <input
                 name="nickname"
@@ -263,7 +399,6 @@ export default function MemberRegister() {
                 <p className="text-red-500 text-xs">{errors.nickname}</p>
               )}
             </div>
-
             <input
               name="fatherName"
               placeholder="Father Name / പിതാവിന്റെ പേര്"
@@ -289,13 +424,12 @@ export default function MemberRegister() {
             )}
           </div>
 
+          {/* CONTACT DETAILS */}
           <div className="space-y-5">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
               Contact Details
             </h3>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Email */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">
                   Email (optional)
@@ -304,14 +438,12 @@ export default function MemberRegister() {
                   name="email"
                   placeholder="example@mail.com"
                   onChange={handleChange}
-                  className={`p-2 border rounded-xl w-full text-sm sm:text-base ${errors.email ? "border-red-500 focus:ring-red-400" : "border-gray-300"} placeholder:text-sm`}
+                  className={`p-2 border rounded-xl w-full text-sm ${errors.email ? "border-red-500" : "border-gray-300"}`}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-xs">{errors.email}</p>
                 )}
               </div>
-
-              {/* Phone */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">
                   Phone / Mobile
@@ -334,15 +466,13 @@ export default function MemberRegister() {
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="Enter number"
-                    className="flex-1 p-2 outline-none text-sm sm:text-base placeholder:text-sm"
+                    className="flex-1 p-2 outline-none text-sm"
                   />
                 </div>
                 {errors.phone && (
                   <p className="text-red-500 text-xs">{errors.phone}</p>
                 )}
               </div>
-
-              {/* WhatsApp */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">
                   WhatsApp Number
@@ -367,7 +497,7 @@ export default function MemberRegister() {
                     onChange={handleChange}
                     disabled={sameAsPhone}
                     placeholder="Enter number"
-                    className="flex-1 p-2 outline-none text-sm sm:text-base placeholder:text-sm"
+                    className="flex-1 p-2 outline-none text-sm"
                   />
                 </div>
                 {errors.whatsapp && (
@@ -375,24 +505,19 @@ export default function MemberRegister() {
                 )}
               </div>
             </div>
-
-            {/* Checkbox */}
             <label className="flex items-center gap-2 text-sm text-gray-600 mt-1">
               <input
                 type="checkbox"
                 checked={sameAsPhone}
                 onChange={(e) => {
-                  const checked = e.target.checked;
-                  setSameAsPhone(checked);
-                  if (checked) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      whatsapp: prev.phone,
-                      whatsappCode: prev.phoneCode,
+                  setSameAsPhone(e.target.checked);
+                  if (e.target.checked)
+                    setFormData((p) => ({
+                      ...p,
+                      whatsapp: p.phone,
+                      whatsappCode: p.phoneCode,
                     }));
-                  } else {
-                    setFormData((prev) => ({ ...prev, whatsapp: "" }));
-                  }
+                  else setFormData((p) => ({ ...p, whatsapp: "" }));
                 }}
                 className="w-4 h-4 accent-blue-600"
               />
@@ -400,18 +525,18 @@ export default function MemberRegister() {
             </label>
           </div>
 
-          {/* ================= BASIC INFO ================= */}
+          {/* BASIC INFO */}
           <div className="space-y-5">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
               Basic Information
             </h3>
-
             <div className="grid sm:grid-cols-4 gap-4">
               <div>
                 <input
                   type="number"
                   name="age"
                   placeholder="Age / വയസ്"
+                  value={formData.age}
                   onChange={handleChange}
                   className={`${inputClass("age")} placeholder:text-[11px]`}
                 />
@@ -419,7 +544,6 @@ export default function MemberRegister() {
                   <p className="text-red-500 text-xs">{errors.age}</p>
                 )}
               </div>
-
               <div className="relative">
                 <label className="absolute -top-2 left-4 bg-white px-1 text-[11px] text-gray-500">
                   Date of Birth
@@ -434,12 +558,11 @@ export default function MemberRegister() {
                   <p className="text-red-500 text-xs">{errors.dob}</p>
                 )}
               </div>
-
               <div>
                 <select
                   name="bloodGroup"
                   onChange={handleChange}
-                  className={`${inputClass("bloodGroup")}`}
+                  className={inputClass("bloodGroup")}
                 >
                   <option value="">Blood Group</option>
                   {[
@@ -460,7 +583,6 @@ export default function MemberRegister() {
                   <p className="text-red-500 text-xs">{errors.bloodGroup}</p>
                 )}
               </div>
-
               <div>
                 <select
                   name="nri"
@@ -479,12 +601,11 @@ export default function MemberRegister() {
             </div>
           </div>
 
-          {/* ================= ADDRESS ================= */}
+          {/* ADDRESS */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
               Address
             </h3>
-
             <textarea
               name="address"
               placeholder="Address / അഡ്രസ്"
@@ -496,30 +617,51 @@ export default function MemberRegister() {
             )}
           </div>
 
-          {/* ================= UPLOADS & PAYMENT ================= */}
+          {/* UPLOADS & PAYMENT */}
           <div className="space-y-6">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
               Upload & Payment
             </h3>
-
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Uploads */}
               <div className="flex-1 space-y-5">
-                {/* Profile Photo */}
+                {/* ── PROFILE PHOTO with crop ── */}
                 <div>
                   <label className="text-sm font-medium">Profile Photo</label>
                   <div className="relative border-2 border-dashed rounded-2xl p-4 text-center hover:border-blue-400 transition">
-                    {photo ? (
-                      <img
-                        src={URL.createObjectURL(photo)}
-                        className="w-20 h-20 rounded-full mx-auto object-cover shadow"
-                      />
+                    {photoPreview ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <img
+                          src={photoPreview}
+                          className="w-20 h-20 rounded-full mx-auto object-cover shadow ring-2 ring-indigo-400"
+                        />
+                        <span className="text-xs text-indigo-600 font-medium">
+                          ✓ Photo selected
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("photoInput").click()
+                          }
+                          className="text-xs text-gray-500 underline hover:text-indigo-600"
+                        >
+                          Change photo
+                        </button>
+                      </div>
                     ) : (
-                      <p className="text-[11px] text-gray-500">
-                        Upload photo / ഫോട്ടോ അപ്ലോഡ് ചെയ്യുക
-                      </p>
+                      <div className="flex flex-col items-center gap-1 py-2">
+                        <div className="w-14 h-14 rounded-full bg-indigo-50 border-2 border-dashed border-indigo-300 flex items-center justify-center text-2xl">
+                          📷
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-1">
+                          Upload photo / ഫോട്ടോ അപ്ലോഡ് ചെയ്യുക
+                        </p>
+                        <p className="text-[10px] text-indigo-500 font-medium">
+                          You can crop after selecting
+                        </p>
+                      </div>
                     )}
                     <input
+                      id="photoInput"
                       type="file"
                       accept="image/*"
                       onChange={handlePhotoChange}
@@ -527,11 +669,11 @@ export default function MemberRegister() {
                     />
                   </div>
                   {errors.photo && (
-                    <p className="text-red-500 text-xs">{errors.photo}</p>
+                    <p className="text-red-500 text-xs mt-1">{errors.photo}</p>
                   )}
                 </div>
 
-                {/* Payment Screenshot */}
+                {/* PAYMENT SCREENSHOT */}
                 <div>
                   <label className="text-sm font-medium">
                     Payment Screenshot
@@ -562,17 +704,12 @@ export default function MemberRegister() {
 
               {/* QR */}
               <div className="flex flex-col items-center gap-3">
-                {/* QR Thumbnail */}
                 <button
                   type="button"
                   onClick={payViaUPI}
-                  className="flex items-center justify-center shadow-black gap-2 px-3 py-1 text-xs sm:text-sm font-semibold  rounded-lg bg-gray-300 text-black border hover:shadow-lg hover:bg-gray-300  transition"
+                  className="flex items-center justify-center gap-2 px-3 py-1 text-xs sm:text-sm font-semibold rounded-lg bg-gray-300 text-black border hover:shadow-lg transition"
                 >
-                  <img
-                    src={UpiIcon}
-                    alt="UPI"
-                    className="w-8 h-4 sm:w-8 sm:h-4"
-                  />
+                  <img src={UpiIcon} alt="UPI" className="w-8 h-4" />
                   Pay via UPI
                 </button>
                 <div className="relative w-36">
@@ -590,25 +727,22 @@ export default function MemberRegister() {
                     View QR
                   </button>
                 </div>
-
-                {/* Fullscreen Modal */}
                 {showQR && (
                   <div
                     className="fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-50 p-4"
-                    onClick={() => setShowQR(false)} // close on background click
+                    onClick={() => setShowQR(false)}
                   >
                     <img
                       src={Qr}
                       alt="QR Code"
                       className="max-w-full max-h-full rounded-xl shadow-lg"
-                      onClick={(e) => e.stopPropagation()} // prevent modal close on image click
+                      onClick={(e) => e.stopPropagation()}
                     />
-
                     <a
                       href={Qr}
                       download="ClubPaymentQR"
                       className="mt-4 px-6 py-2 bg-blue-700 text-white rounded-xl text-sm hover:bg-blue-800 transition"
-                      onClick={(e) => e.stopPropagation()} // prevent modal close on download click
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Download QR
                     </a>
@@ -624,7 +758,7 @@ export default function MemberRegister() {
             </div>
           </div>
 
-          {/* ================= SUBMIT ================= */}
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={loading}
@@ -635,14 +769,24 @@ export default function MemberRegister() {
         </form>
       </div>
 
+      {/* CROP MODAL */}
+      {showCropper && cropSrc && (
+        <CropModal
+          imageSrc={cropSrc}
+          onCropDone={handleCropDone}
+          onCancel={handleCropCancel}
+        />
+      )}
+
+      {/* SUCCESS MODAL */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl text-center">
             <h2 className="text-2xl font-bold text-green-600">
               Registration Successful 🎉
             </h2>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/login")}
               className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg"
             >
               Go to Login

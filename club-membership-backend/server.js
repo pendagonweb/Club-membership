@@ -9,6 +9,9 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import membershipCardRoute from "./routes/membershipCard.js";
 import memberAuthRoutes from "./routes/memberAuth.js";
+import juniorRoutes from "./routes/juniorRoutes.js";
+
+// REMOVED: import multer / upload.none() — see note below
 
 dotenv.config();
 
@@ -30,9 +33,9 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://kingstareriyapady.club",
-      "https://membership-front.vercel.app"
+      "https://membership-front.vercel.app",
     ],
-    credentials: true
+    credentials: true,
   })
 );
 
@@ -45,6 +48,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/member", memberAuthRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/auth", juniorRoutes);
 app.use("/api", membershipCardRoute);
 
 app.get("/", (req, res) => {
@@ -55,6 +59,4 @@ app.listen(process.env.PORT || 5000, () => {
   console.log(`✅ Server running on port ${process.env.PORT || 5000}`);
 });
 
-
-/* Export for Vercel */
 export default app;
