@@ -186,7 +186,6 @@ export default function MemberRegister() {
   const [loading, setLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const phoneRegex = /^\d{10}$/;
 
   const { VITE_BACKEND_URL } = import.meta.env;
   const navigate = useNavigate();
@@ -195,6 +194,17 @@ export default function MemberRegister() {
     `p-2 border rounded-lg w-full ${
       errors[field] ? "border-red-500 focus:ring-red-400" : "border-gray-300"
     }`;
+
+  const phoneLengths = {
+    "+91": [10], // India
+    "+971": [9], // UAE
+    "+974": [8], // Qatar
+    "+966": [9], // Saudi Arabia
+    "+973": [8], // Bahrain
+    "+965": [8], // Kuwait
+    "+968": [8], // Oman
+    "+44": [10], // UK
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -281,8 +291,12 @@ export default function MemberRegister() {
       newErrors.nickname = "Nickname is required";
     if (!formData.fatherName || formData.fatherName.trim().length < 3)
       newErrors.fatherName = "Father name is required";
-    if (!/^\d{10}$/.test(formData.phone))
-      newErrors.phone = "Enter valid 10-digit number";
+    const validPhoneLengths = phoneLengths[formData.phoneCode] ?? [
+      7, 8, 9, 10, 11,
+    ];
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (!phoneDigits || !validPhoneLengths.includes(phoneDigits.length))
+      newErrors.phone = `Enter a valid phone number for ${formData.phoneCode}`;
     if (!/^\d{12}$/.test(formData.aadhaar))
       newErrors.aadhaar = "Enter valid 12 digit Aadhaar number";
     if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email))
@@ -297,9 +311,11 @@ export default function MemberRegister() {
     if (!formData.bloodGroup)
       newErrors.bloodGroup = "Please select blood group";
     if (!formData.address.trim()) newErrors.address = "Address is required";
-
-    const whatsappNumber = sameAsPhone ? formData.phone : formData.whatsapp;
-    if (!phoneRegex.test(whatsappNumber))
+    const waCode = sameAsPhone ? formData.phoneCode : formData.whatsappCode;
+    const waNumber = sameAsPhone ? formData.phone : formData.whatsapp;
+    const validWaLengths = phoneLengths[waCode] ?? [7, 8, 9, 10, 11];
+    const waDigits = waNumber.replace(/\D/g, "");
+    if (!waDigits || !validWaLengths.includes(waDigits.length))
       newErrors.whatsapp = "Invalid WhatsApp number";
     if (!photo) newErrors.photo = "Profile photo is required";
     if (!paymentScreenshot)
@@ -335,6 +351,8 @@ export default function MemberRegister() {
       data.append("nri", formData.nri);
       if (formData.dob) data.append("dob", formData.dob);
       data.append("phone", formData.phone);
+      data.append("phoneCode", formData.phoneCode);
+      data.append("whatsappCode", sameAsPhone ? formData.phoneCode : formData.whatsappCode);
       data.append("whatsapp", sameAsPhone ? formData.phone : formData.whatsapp);
       data.append("photo", photo);
       data.append("paymentProof", paymentScreenshot);
@@ -453,7 +471,7 @@ export default function MemberRegister() {
                     name="phoneCode"
                     value={formData.phoneCode}
                     onChange={handleChange}
-                    className="bg-gray-100 px-3 py-2 border-r border-gray-300 text-sm outline-none"
+                    className="bg-gray-100 px-3 py-2 w-20 border-r border-gray-300 text-sm outline-none"
                   >
                     {countryCodes.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -483,7 +501,7 @@ export default function MemberRegister() {
                     value={formData.whatsappCode}
                     disabled={sameAsPhone}
                     onChange={handleChange}
-                    className="bg-gray-50 px-3 py-2 border-r border-gray-300 text-sm disabled:opacity-50 outline-none"
+                    className="bg-gray-50 w-20 px-3 py-2 border-r border-gray-300 text-sm disabled:opacity-50 outline-none"
                   >
                     {countryCodes.map((c) => (
                       <option key={c.code} value={c.code}>

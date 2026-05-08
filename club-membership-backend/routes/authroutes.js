@@ -31,7 +31,38 @@ const uploadRegisterFiles = (req, res, next) => {
 };
 
 /* ======================
-   REGISTER (NO MEMBERSHIP ID HERE)
+   PHONE HELPERS
+====================== */
+
+// Strip everything except digits
+const normalize = (num) => String(num).replace(/\D/g, "");
+
+// Strip leading + from country code e.g. "+91" → "91"
+const cleanCode = (code) => String(code).replace(/^\+/, "");
+
+// Build full international number: "+91" + "9876543210" → "+919876543210"
+const toFullNumber = (code, num) => `+${cleanCode(code)}${normalize(num)}`;
+
+const phoneLengths = {
+  91: [10], // India
+  971: [9], // UAE
+  974: [8], // Qatar
+  966: [9], // Saudi Arabia
+  973: [8], // Bahrain
+  965: [8], // Kuwait
+  968: [8], // Oman
+  44: [10, 11], // UK
+};
+
+const isValidPhone = (num, code) => {
+  const digits = normalize(num);
+  const key = cleanCode(code);
+  const valid = phoneLengths[key] ?? [7, 8, 9, 10, 11]; // permissive fallback
+  return digits.length > 0 && valid.includes(digits.length);
+};
+
+/* ======================
+   REGISTER
 ====================== */
 router.post("/register", uploadRegisterFiles, async (req, res) => {
   try {
@@ -42,7 +73,9 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       email,
       age,
       phone,
+      phoneCode,
       whatsapp,
+      whatsappCode,
       bloodGroup,
       address,
       dob,
@@ -59,7 +92,9 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       !nickname ||
       !age ||
       !phone ||
+      !phoneCode ||
       !whatsapp ||
+      !whatsappCode ||
       !bloodGroup ||
       !address
     ) {
@@ -76,7 +111,7 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       });
     }
 
-    if (nri === undefined) {
+    if (nri === undefined || nri === "") {
       return res.status(400).json({
         success: false,
         message: "NRI status is required",
@@ -86,41 +121,39 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
     if (!aadhaar || !/^\d{12}$/.test(aadhaar)) {
       return res.status(400).json({
         success: false,
-        message: "Valid 12 digit Aadhaar number is required",
+        message: "Valid 12-digit Aadhaar number is required",
       });
     }
 
     /* ======================
-       PHONE NORMALIZATION
+       PHONE VALIDATION
     ====================== */
-    const normalize = (num) => num.replace(/\D/g, "").slice(-10);
-
-    const cleanPhone = normalize(phone);
-    const cleanWhatsapp = normalize(whatsapp);
-
-    const phoneRegex = /^[6-9]\d{9}$/;
-
-    if (!phoneRegex.test(cleanPhone)) {
+    if (!isValidPhone(phone, phoneCode)) {
       return res.status(400).json({
         success: false,
         message: "Invalid phone number",
       });
     }
 
-    if (!phoneRegex.test(cleanWhatsapp)) {
+    if (!isValidPhone(whatsapp, whatsappCode)) {
       return res.status(400).json({
         success: false,
         message: "Invalid WhatsApp number",
       });
     }
 
+    // Full international numbers ready for WhatsApp API usage
+    // e.g. "+919876543210", "+971501234567"
+    const fullPhone = toFullNumber(phoneCode, phone);
+    const fullWhatsapp = toFullNumber(whatsappCode, whatsapp);
+
     /* ======================
        DUPLICATE CHECK
     ====================== */
     const existingUser = await User.findOne({
       $or: [
-        { phone: cleanPhone },
-        { whatsapp: cleanWhatsapp },
+        { phone: fullPhone },
+        { whatsapp: fullWhatsapp },
         { aadhaar: aadhaar },
       ],
     });
@@ -128,12 +161,12 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "Phone, WhatsApp or Aadhaar already exists",
+        message: "Phone, WhatsApp or Aadhaar already registered",
       });
     }
 
     /* ======================
-       CREATE USER (NO membershipId)
+       CREATE USER
     ====================== */
     await User.create({
       name,
@@ -141,8 +174,8 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       nickname,
       email: email || null,
       age,
-      phone: cleanPhone,
-      whatsapp: cleanWhatsapp,
+      phone: fullPhone,
+      whatsapp: fullWhatsapp,
       nri,
       aadhaar,
       bloodGroup: bloodGroup.toUpperCase() === "NIL" ? "Nil" : bloodGroup,

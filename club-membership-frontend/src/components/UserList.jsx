@@ -18,16 +18,14 @@ export default function AdminUserList() {
   const token = localStorage.getItem("adminToken");
   const { VITE_BACKEND_URL } = import.meta.env;
 
-
   const fetchUsers = async () => {
     setLoading(true);
     setError("");
     try {
       if (!token) throw new Error("Admin token not found");
-      const res = await axios.get(
-        `${VITE_BACKEND_URL}/api/admin/all-users`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      const res = await axios.get(`${VITE_BACKEND_URL}/api/admin/all-users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const users = res.data.users || [];
       setApprovedUsers(users.filter((u) => u.membershipStatus === "approved"));
       setRejectedUsers(users.filter((u) => u.membershipStatus === "rejected"));
@@ -66,10 +64,9 @@ export default function AdminUserList() {
 
   const deleteUser = async (id) => {
     if (!window.confirm("Delete this user permanently?")) return;
-    await axios.delete(
-      `${VITE_BACKEND_URL}/api/admin/user/${id}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
+    await axios.delete(`${VITE_BACKEND_URL}/api/admin/user/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     fetchUsers();
   };
 
@@ -106,7 +103,15 @@ export default function AdminUserList() {
   };
 
   const getWhatsAppLink = (user) => {
-    const phone = (user.whatsapp || user.phone).replace("+", "");
+    let phone = String(user.whatsapp || user.phone || "").replace(/[^\d]/g, ""); // remove all non-digit characters
+
+    // Add India country code if missing
+    if (phone.length === 10) {
+      phone = `91${phone}`;
+    }
+
+    // Remove leading zeros if any
+    phone = phone.replace(/^0+/, "");
 
     let message = "";
 
@@ -193,27 +198,27 @@ Kingstar Arts & Sports Club`;
         </h1>
 
         {/* Filter Buttons */}
-<div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
-  {["all", "approved", "rejected"].map((f) => {
-    let count = 0;
-    if (f === "all") count = approvedUsers.length + rejectedUsers.length;
-    if (f === "approved") count = approvedUsers.length;
-    if (f === "rejected") count = rejectedUsers.length;
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
+          {["all", "approved", "rejected"].map((f) => {
+            let count = 0;
+            if (f === "all")
+              count = approvedUsers.length + rejectedUsers.length;
+            if (f === "approved") count = approvedUsers.length;
+            if (f === "rejected") count = rejectedUsers.length;
 
-    return (
-      <button
-        key={f}
-        onClick={() => setFilter(f)}
-        className={`px-4 py-2 rounded-lg text-sm sm:text-base ${
-          filter === f ? "bg-gray-800 text-white" : "bg-white border"
-        }`}
-      >
-        {f.charAt(0).toUpperCase() + f.slice(1)} ({count})
-      </button>
-    );
-  })}
-</div>
-
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-lg text-sm sm:text-base ${
+                  filter === f ? "bg-gray-800 text-white" : "bg-white border"
+                }`}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)} ({count})
+              </button>
+            );
+          })}
+        </div>
 
         {/* Users Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 gap-4">
@@ -240,15 +245,15 @@ Kingstar Arts & Sports Club`;
               Edit User
             </h2>
             <select
-  className="w-full border p-2 rounded"
-  value={editForm.nri}
-  onChange={(e) =>
-    setEditForm({ ...editForm, nri: e.target.value })
-  }
->
-  <option value="No">NRI - No</option>
-  <option value="Yes">NRI - Yes</option>
-</select>
+              className="w-full border p-2 rounded"
+              value={editForm.nri}
+              onChange={(e) =>
+                setEditForm({ ...editForm, nri: e.target.value })
+              }
+            >
+              <option value="No">NRI - No</option>
+              <option value="Yes">NRI - Yes</option>
+            </select>
             <input
               className="w-full border p-2 rounded"
               placeholder="Name"
@@ -341,31 +346,29 @@ function UserCard({
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 w-full flex flex-col">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-  <img
-    src={user.photo || "/default-user.png"}
-    alt={user.name}
-    className="w-20 h-20 rounded-full object-cover border"
-  />
-  <div className="flex flex-col">
-    <p className="font-semibold text-lg">{user.name}</p>
-    <p className="text-xs text-gray-600">ID: {user.membershipId}</p>
-    {user.nri === "Yes" && (
-    <p className="text-xs font-semibold text-green-600">
-      NRI
-    </p>
-  )}
+          <img
+            src={user.photo || "/default-user.png"}
+            alt={user.name}
+            className="w-20 h-20 rounded-full object-cover border"
+          />
+          <div className="flex flex-col">
+            <p className="font-semibold text-lg">{user.name}</p>
+            <p className="text-xs text-gray-600">ID: {user.membershipId}</p>
+            {user.nri === "Yes" && (
+              <p className="text-xs font-semibold text-green-600">NRI</p>
+            )}
 
-    {user.photo && (
-      <a
-        href={user.photo}
-        download={`${user.name}-photo`}
-        className="mt-1 text-xs text-blue-600 hover:underline"
-      >
-        Download Photo
-      </a>
-    )}
-  </div>
-</div>
+            {user.photo && (
+              <a
+                href={user.photo}
+                download={`${user.name}-photo`}
+                className="mt-1 text-xs text-blue-600 hover:underline"
+              >
+                Download Photo
+              </a>
+            )}
+          </div>
+        </div>
         <button
           onClick={() => setExpanded(!expanded)}
           className="px-3 py-1 text-xs bg-indigo-500 text-white rounded"
@@ -391,7 +394,10 @@ function UserCard({
           <p>
             <b>Whatsapp:</b> {user.whatsapp || "—"}
           </p>
-          <p><b>DOB:</b> {user.dob ? new Date(user.dob).toLocaleDateString() : "—"}</p>
+          <p>
+            <b>DOB:</b>{" "}
+            {user.dob ? new Date(user.dob).toLocaleDateString() : "—"}
+          </p>
           <p>
             <b>Blood Group:</b> {user.bloodGroup || "—"}
           </p>
@@ -402,8 +408,8 @@ function UserCard({
             <b>Place:</b> {user.place || "—"}
           </p>
           <p>
-  <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
-</p>
+            <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
+          </p>
           <div className="flex gap-2 flex-wrap pt-2">
             {user.membershipStatus === "approved" ? (
               <>
