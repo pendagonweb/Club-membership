@@ -124,7 +124,7 @@ Membership ID: *${user.membershipId}*
 Login Mob No.: ${user.phone}
 
 *Download your Membership* 👇
-https://kingstareriyapady.club/dashboard
+https://kingstareriyapady.club/login
 
 _________________
 

@@ -804,10 +804,10 @@ export default function MemberRegister() {
               Registration Successful 🎉
             </h2>
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/")}
               className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg"
             >
-              Go to Login
+              Go to HomePage
             </button>
           </div>
         </div>
