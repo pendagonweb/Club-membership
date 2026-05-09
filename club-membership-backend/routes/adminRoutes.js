@@ -160,6 +160,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
     const allowedUpdates = [
       "name",
       "phone",
+      "whatsapp",
       "email",
       "address",
       "dob",

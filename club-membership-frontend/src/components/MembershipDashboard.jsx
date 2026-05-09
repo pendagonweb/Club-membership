@@ -128,6 +128,13 @@ function CropModal({ imageSrc, onCropDone, onCancel }) {
 ====================== */
 export default function MemberDashboard() {
   const STATIC_VALID_UPTO = "31/03/2027";
+  const getRemainingDays = (validUpto) => {
+    const [day, month, year] = validUpto.split("/").map(Number);
+    const expiry = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  };
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
@@ -214,6 +221,7 @@ export default function MemberDashboard() {
       {/* MAIN */}
       <main className="flex-1 p-6 space-y-8">
         {/* PROFILE HEADER */}
+        {/* PROFILE HEADER */}
         <div className="bg-white rounded-3xl shadow-xl p-4 flex flex-col md:flex-row gap-6 items-center transition-all hover:shadow-2xl">
           <img
             src={member.photo || "/default-avatar.png"}
@@ -234,6 +242,59 @@ export default function MemberDashboard() {
               {member.membershipId?.toUpperCase()}
             </span>
           </div>
+
+          {/* ── DAYS REMAINING BADGE ── */}
+          {(() => {
+            const days = getRemainingDays(STATIC_VALID_UPTO);
+            const isExpiringSoon = days <= 30;
+            const isExpired = days <= 0;
+            return (
+              <div
+                className={`flex flex-col items-center justify-center rounded-2xl px-5 py-4 shadow-md min-w-[110px] ${
+                  isExpired
+                    ? "bg-red-50 border border-red-200"
+                    : isExpiringSoon
+                      ? "bg-amber-50 border border-amber-200"
+                      : "bg-indigo-50 border border-indigo-200"
+                }`}
+              >
+                <span
+                  className={`text-3xl font-extrabold leading-none ${
+                    isExpired
+                      ? "text-red-600"
+                      : isExpiringSoon
+                        ? "text-amber-500"
+                        : "text-indigo-600"
+                  }`}
+                >
+                  {isExpired ? "0" : days}
+                </span>
+                <span
+                  className={`text-[11px] font-semibold uppercase tracking-wide mt-1 ${
+                    isExpired
+                      ? "text-red-400"
+                      : isExpiringSoon
+                        ? "text-amber-400"
+                        : "text-indigo-400"
+                  }`}
+                >
+                  {isExpired ? "Expired" : "Days Left"}
+                </span>
+                <span
+                  className={`text-[10px] mt-1 ${
+                    isExpired
+                      ? "text-red-300"
+                      : isExpiringSoon
+                        ? "text-amber-300"
+                        : "text-indigo-300"
+                  }`}
+                >
+                  Valid: {STATIC_VALID_UPTO}
+                </span>
+              </div>
+            );
+          })()}
+
           <button
             onClick={() => setShowEdit(true)}
             className="md:hidden flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition-all"

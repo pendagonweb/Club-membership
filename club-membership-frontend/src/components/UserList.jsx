@@ -1,9 +1,248 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
-import { FaAngleUp } from "react-icons/fa";
-import { FaAngleDown } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
+// ─── PDF Export Modal ────────────────────────────────────────────────────────
+const ALL_FIELDS = [
+  { key: "membershipId", label: "Membership ID" },
+  { key: "name", label: "Name" },
+  { key: "fatherName", label: "Father's Name" },
+  { key: "nickname", label: "Nickname" },
+  { key: "phone", label: "Phone" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "email", label: "Email" },
+  { key: "dob", label: "Date of Birth" },
+  { key: "bloodGroup", label: "Blood Group" },
+  { key: "address", label: "Address" },
+  { key: "place", label: "Place" },
+  { key: "gender", label: "Gender" },
+  { key: "nri", label: "NRI" },
+  { key: "membershipStatus", label: "Status" },
+];
+
+function ExportPdfModal({ users, onClose }) {
+  const [selected, setSelected] = useState(["name", "phone"]);
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  const toggle = (key) =>
+    setSelected((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+
+  const moveUp = (idx) => {
+    if (idx === 0) return;
+    const next = [...selected];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    setSelected(next);
+  };
+
+  const moveDown = (idx) => {
+    if (idx === selected.length - 1) return;
+    const next = [...selected];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    setSelected(next);
+  };
+
+  const exportPdf = async () => {
+    if (selected.length === 0) {
+      alert("Please select at least one field.");
+      return;
+    }
+
+    // Lazy-load jsPDF + autotable via script tags (UMD builds attach to window)
+    const loadScript = (src) =>
+      new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+
+    await loadScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+    );
+    await loadScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js",
+    );
+
+    const { jsPDF } = window.jspdf;
+
+    const filteredUsers =
+      filterStatus === "all"
+        ? users
+        : users.filter((u) => u.membershipStatus === filterStatus);
+
+    const doc = new jsPDF({ orientation: "landscape" });
+
+    doc.setFontSize(14);
+    doc.text("Kingstar Arts & Sports Club – Member List", 14, 14);
+    doc.setFontSize(9);
+    doc.text(
+      `Filter: ${filterStatus.toUpperCase()}   |   Total: ${filteredUsers.length}   |   Generated: ${new Date().toLocaleDateString()}`,
+      14,
+      21,
+    );
+
+    const columns = selected.map((key) => ({
+      header: ALL_FIELDS.find((f) => f.key === key)?.label || key,
+      dataKey: key,
+    }));
+
+    const rows = filteredUsers.map((u, i) => {
+      const row = { "#": i + 1 };
+      selected.forEach((key) => {
+        let val = u[key] ?? "—";
+        if (key === "dob" && val && val !== "—")
+          val = new Date(val).toLocaleDateString();
+        row[key] = val;
+      });
+      return row;
+    });
+
+    doc.autoTable({
+      startY: 26,
+      columns: [{ header: "#", dataKey: "#" }, ...columns],
+      body: rows,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: {
+        fillColor: [31, 41, 55],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      margin: { left: 14, right: 14 },
+    });
+
+    doc.save("kingstar-members.pdf");
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-3">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto flex flex-col">
+        {/* Header */}
+        <div className="bg-gray-900 text-white px-5 py-4 rounded-t-2xl flex items-center justify-between">
+          <h2 className="text-lg font-bold">Export Members as PDF</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-300 hover:text-white text-xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5 flex-1">
+          {/* Status Filter */}
+          <div>
+            <p className="text-sm font-semibold text-gray-700 mb-2">
+              Filter Members
+            </p>
+            <div className="flex gap-2">
+              {["all", "approved", "rejected"].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setFilterStatus(s)}
+                  className={`flex-1 py-1.5 rounded-lg text-sm border transition ${
+                    filterStatus === s
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Field Selection */}
+          <div>
+            <p className="text-sm font-semibold text-gray-700 mb-2">
+              Select &amp; Order Fields
+            </p>
+            <div className="border rounded-xl overflow-hidden divide-y divide-gray-100">
+              {ALL_FIELDS.map(({ key, label }) => (
+                <label
+                  key={key}
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(key)}
+                    onChange={() => toggle(key)}
+                    className="w-4 h-4 accent-gray-900"
+                  />
+                  <span className="text-sm text-gray-800">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected Order */}
+          {selected.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">
+                Column Order (drag to reorder)
+              </p>
+              <div className="space-y-1">
+                {selected.map((key, idx) => {
+                  const label =
+                    ALL_FIELDS.find((f) => f.key === key)?.label || key;
+                  return (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2"
+                    >
+                      <span className="text-sm font-medium text-indigo-800">
+                        <span className="text-indigo-400 mr-2">{idx + 1}.</span>
+                        {label}
+                      </span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => moveUp(idx)}
+                          className="p-1 text-indigo-500 hover:text-indigo-800 disabled:opacity-30"
+                          disabled={idx === 0}
+                        >
+                          <FaAngleUp size={12} />
+                        </button>
+                        <button
+                          onClick={() => moveDown(idx)}
+                          className="p-1 text-indigo-500 hover:text-indigo-800 disabled:opacity-30"
+                          disabled={idx === selected.length - 1}
+                        >
+                          <FaAngleDown size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 pb-5 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={exportPdf}
+            className="flex-1 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-700 transition"
+          >
+            📄 Export PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 export default function AdminUserList() {
   const STATIC_VALID_UPTO = "31/03/2027";
   const [approvedUsers, setApprovedUsers] = useState([]);
@@ -14,6 +253,7 @@ export default function AdminUserList() {
   const [actionLoading, setActionLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [error, setError] = useState("");
+  const [showExportModal, setShowExportModal] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem("adminToken");
   const { VITE_BACKEND_URL } = import.meta.env;
@@ -75,6 +315,7 @@ export default function AdminUserList() {
     setEditForm({
       name: user.name || "",
       phone: user.phone || "",
+      whatsapp: user.whatsapp || "",
       email: user.email || "",
       address: user.address || "",
       dob: user.dob ? user.dob.split("T")[0] : "",
@@ -103,20 +344,12 @@ export default function AdminUserList() {
   };
 
   const getWhatsAppLink = (user) => {
-    let phone = String(user.whatsapp || user.phone || "").replace(/[^\d]/g, ""); // remove all non-digit characters
-
-    // Add India country code if missing
-    if (phone.length === 10) {
-      phone = `91${phone}`;
-    }
-
-    // Remove leading zeros if any
+    let phone = String(user.whatsapp || user.phone || "").replace(/[^\d]/g, "");
+    if (phone.length === 10) phone = `91${phone}`;
     phone = phone.replace(/^0+/, "");
 
     let message = "";
-
     if (user.membershipStatus === "approved") {
-      // 🟢 APPROVED MESSAGE
       message = `Hello ${user.name}, Welcome to Kingstar Arts & Sports Club.
 🎉 Your membership has been approved!
 
@@ -131,7 +364,7 @@ _________________
 Member Details:
 • Full Name: ${user.name}
 • Display / Nick Name: ${user.nickname || "—"}
-• Father’s Name: ${user.fatherName || "—"}
+• Father's Name: ${user.fatherName || "—"}
 • Place: ${user.address || "—"}   
 • Blood Group: ${user.bloodGroup || "—"}
 • Valid Upto: 31/03/2027
@@ -142,7 +375,6 @@ _Thank you for becoming a member of Kingstar Arts & Sports Club._
 - Sabit Aboobacker (Gen. Sec)
 📞 91 9747656653`;
     } else if (user.membershipStatus === "rejected") {
-      // 🔴 REJECTED MESSAGE
       message = `Hello ${user.name}, 
 Your membership request with Kingstar Eriyapady has been *rejected* due to _______.
 
@@ -163,7 +395,6 @@ _Thank you for your interest in Kingstar Arts & Sports Club._
 ------------------------------
 Kingstar Arts & Sports Club`;
     }
-
     return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   };
 
@@ -180,32 +411,42 @@ Kingstar Arts & Sports Club`;
       </div>
     );
 
+  const allUsers = [...approvedUsers, ...rejectedUsers];
   const filteredUsers =
     filter === "all"
-      ? [...approvedUsers, ...rejectedUsers]
+      ? allUsers
       : filter === "approved"
         ? approvedUsers
         : rejectedUsers;
 
   return (
     <>
-      {/* Sidebar */}
-
-      {/* MAIN */}
       <main className="flex-1 p-3 sm:p-4 md:p-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-5 sm:mb-6">
-          User List
-        </h1>
+        {/* Title row with Export button */}
+        <div className="flex items-center justify-between mb-5 sm:mb-6">
+          <div className="flex-1" />
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center flex-1">
+            User List
+          </h1>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="flex items-center gap-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition shadow"
+            >
+              📄 <span className="hidden sm:inline">Export as PDF</span>
+            </button>
+          </div>
+        </div>
 
         {/* Filter Buttons */}
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
           {["all", "approved", "rejected"].map((f) => {
-            let count = 0;
-            if (f === "all")
-              count = approvedUsers.length + rejectedUsers.length;
-            if (f === "approved") count = approvedUsers.length;
-            if (f === "rejected") count = rejectedUsers.length;
-
+            let count =
+              f === "all"
+                ? allUsers.length
+                : f === "approved"
+                  ? approvedUsers.length
+                  : rejectedUsers.length;
             return (
               <button
                 key={f}
@@ -221,7 +462,7 @@ Kingstar Arts & Sports Club`;
         </div>
 
         {/* Users Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {filteredUsers.map((user) => (
             <UserCard
               key={user._id}
@@ -272,6 +513,14 @@ Kingstar Arts & Sports Club`;
             />
             <input
               className="w-full border p-2 rounded"
+              placeholder="Whatsapp"
+              value={editForm.whatsapp}
+              onChange={(e) =>
+                setEditForm({ ...editForm, whatsapp: e.target.value })
+              }
+            />
+            <input
+              className="w-full border p-2 rounded"
               placeholder="Email"
               value={editForm.email}
               onChange={(e) =>
@@ -310,7 +559,6 @@ Kingstar Arts & Sports Club`;
                 setEditForm({ ...editForm, place: e.target.value })
               }
             />
-
             <div className="flex justify-between pt-4">
               <button
                 onClick={() => setEditingUser(null)}
@@ -329,10 +577,19 @@ Kingstar Arts & Sports Club`;
           </div>
         </div>
       )}
+
+      {/* EXPORT PDF MODAL */}
+      {showExportModal && (
+        <ExportPdfModal
+          users={allUsers}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
     </>
   );
 }
 
+// ─── UserCard ────────────────────────────────────────────────────────────────
 function UserCard({
   user,
   approveUser,
@@ -357,7 +614,6 @@ function UserCard({
             {user.nri === "Yes" && (
               <p className="text-xs font-semibold text-green-600">NRI</p>
             )}
-
             {user.photo && (
               <a
                 href={user.photo}
@@ -412,49 +668,36 @@ function UserCard({
           </p>
           <div className="flex gap-2 flex-wrap pt-2">
             {user.membershipStatus === "approved" ? (
-              <>
-                <button
-                  onClick={() => rejectUser(user._id)}
-                  className="px-2 py-1 text-xs bg-orange-600 text-white rounded"
-                >
-                  Reject
-                </button>
-              </>
+              <button
+                onClick={() => rejectUser(user._id)}
+                className="px-2 py-1 text-xs bg-orange-600 text-white rounded"
+              >
+                Reject
+              </button>
             ) : (
-              <>
-                <button
-                  onClick={() =>
-                    user.membershipStatus === "approved"
-                      ? rejectUser(user._id)
-                      : approveUser(user._id)
-                  }
-                  className={`px-2 py-1 text-xs text-white rounded ${
-                    user.membershipStatus === "approved"
-                      ? "bg-orange-600"
-                      : "bg-green-600"
-                  }`}
-                >
-                  {user.membershipStatus === "approved"
-                    ? "Reject"
-                    : "Re-Approve"}
-                </button>
-              </>
+              <button
+                onClick={() =>
+                  user.membershipStatus === "approved"
+                    ? rejectUser(user._id)
+                    : approveUser(user._id)
+                }
+                className={`px-2 py-1 text-xs text-white rounded ${user.membershipStatus === "approved" ? "bg-orange-600" : "bg-green-600"}`}
+              >
+                {user.membershipStatus === "approved" ? "Reject" : "Re-Approve"}
+              </button>
             )}
-
             <button
               onClick={() => openEditModal(user)}
               className="px-2 py-1 text-xs bg-blue-600 text-white rounded"
             >
               Edit
             </button>
-
             <button
               onClick={() => deleteUser(user._id)}
               className="px-2 py-1 text-xs bg-red-800 text-white rounded"
             >
               Delete
             </button>
-
             <a
               href={getWhatsAppLink(user)}
               target="_blank"
