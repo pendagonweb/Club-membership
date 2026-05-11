@@ -128,6 +128,26 @@ function CropModal({ imageSrc, onCropDone, onCancel }) {
 ====================== */
 export default function MemberDashboard() {
   const STATIC_VALID_UPTO = "31/03/2027";
+
+  // ── Pick the earlier of member.expiryDate vs STATIC_VALID_UPTO ──────────
+  const getEffectiveValidUpto = (member) => {
+    const [sd, sm, sy] = STATIC_VALID_UPTO.split("/").map(Number);
+    const staticExpiry = new Date(sy, sm - 1, sd);
+
+    if (member?.expiryDate) {
+      const memberExpiry = new Date(member.expiryDate);
+      // If member's expiry is before static, use member's (formatted as dd/mm/yyyy)
+      if (memberExpiry < staticExpiry) {
+        const d = String(memberExpiry.getDate()).padStart(2, "0");
+        const m = String(memberExpiry.getMonth() + 1).padStart(2, "0");
+        const y = memberExpiry.getFullYear();
+        return `${d}/${m}/${y}`;
+      }
+    }
+    // member.expiryDate is beyond static OR not set → use static
+    return STATIC_VALID_UPTO;
+  };
+
   const getRemainingDays = (validUpto) => {
     const [day, month, year] = validUpto.split("/").map(Number);
     const expiry = new Date(year, month - 1, day);
@@ -191,6 +211,7 @@ export default function MemberDashboard() {
       </div>
     );
   }
+  const effectiveValidUpto = getEffectiveValidUpto(member); // ← ADD HERE
 
   return (
     <div className="flex min-h-screen">
@@ -244,8 +265,9 @@ export default function MemberDashboard() {
           </div>
 
           {/* ── DAYS REMAINING BADGE ── */}
+
           {(() => {
-            const days = getRemainingDays(STATIC_VALID_UPTO);
+            const days = getRemainingDays(effectiveValidUpto); // ← was STATIC_VALID_UPTO
             const isExpiringSoon = days <= 30;
             const isExpired = days <= 0;
             return (
@@ -289,7 +311,7 @@ export default function MemberDashboard() {
                         : "text-indigo-300"
                   }`}
                 >
-                  Valid: {STATIC_VALID_UPTO}
+                  Valid: {effectiveValidUpto} {/* ← was STATIC_VALID_UPTO */}
                 </span>
               </div>
             );
@@ -334,7 +356,7 @@ export default function MemberDashboard() {
             <Detail label="Age" value={member.age} />
             <Detail label="Address" value={member.address} />
             <Detail label="NRI" value={member.nri || "No"} />
-            <Detail label="Valid Upto" value={STATIC_VALID_UPTO} />
+            <Detail label="Valid Upto" value={effectiveValidUpto} />{" "}
             <Detail
               label="Joined On"
               value={new Date(member.createdAt).toLocaleDateString()}

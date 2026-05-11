@@ -259,6 +259,7 @@ export default function AdminUserList() {
   const [editForm, setEditForm] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState(""); // ← NEW
   const [error, setError] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
   const navigate = useNavigate();
@@ -330,6 +331,9 @@ export default function AdminUserList() {
       place: user.place || "",
       gender: user.gender || "",
       nri: user.nri || "No",
+      expiryDate: user.expiryDate // ← NEW
+        ? new Date(user.expiryDate).toISOString().split("T")[0]
+        : "2027-03-31",
     });
   };
 
@@ -419,12 +423,24 @@ Kingstar Arts & Sports Club`;
     );
 
   const allUsers = [...approvedUsers, ...rejectedUsers];
-  const filteredUsers =
+  const statusFiltered =
     filter === "all"
       ? allUsers
       : filter === "approved"
         ? approvedUsers
         : rejectedUsers;
+  const q = search.trim().toLowerCase();
+  const filteredUsers = q
+    ? statusFiltered.filter((u) => {
+        if (q === "nri") return u.nri === "Yes";
+        return (
+          (u.name || "").toLowerCase().includes(q) ||
+          String(u.membershipId || "")
+            .toLowerCase()
+            .includes(q)
+        );
+      })
+    : statusFiltered;
 
   return (
     <>
@@ -445,10 +461,31 @@ Kingstar Arts & Sports Club`;
           </div>
         </div>
 
-        {/* Filter Buttons */}
+        {/* ── Search Bar ── NEW ─────────────────────────────────────────── */}
+        <div className="mb-4 relative">
+          <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
+            🔍
+          </span>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder='Search by name, membership ID, or type "nri"…'
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-700 text-lg"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6">
           {["all", "approved", "rejected"].map((f) => {
-            let count =
+            const count =
               f === "all"
                 ? allUsers.length
                 : f === "approved"
@@ -467,6 +504,14 @@ Kingstar Arts & Sports Club`;
             );
           })}
         </div>
+
+        {/* Result count hint when searching */}
+        {q && (
+          <p className="text-xs text-gray-500 text-center mb-3">
+            {filteredUsers.length} result{filteredUsers.length !== 1 ? "s" : ""}{" "}
+            for &quot;{search}&quot;
+          </p>
+        )}
 
         {/* Users Grid */}
         <div className="grid grid-cols-1 gap-4">
@@ -566,6 +611,22 @@ Kingstar Arts & Sports Club`;
                 setEditForm({ ...editForm, place: e.target.value })
               }
             />
+
+            {/* ── Expiry Date ── NEW ───────────────────────────────────── */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                Membership Expiry Date
+              </label>
+              <input
+                type="date"
+                className="w-full border p-2 rounded"
+                value={editForm.expiryDate}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, expiryDate: e.target.value })
+                }
+              />
+            </div>
+
             <div className="flex justify-between pt-4">
               <button
                 onClick={() => setEditingUser(null)}
@@ -606,6 +667,21 @@ function UserCard({
   getWhatsAppLink,
 }) {
   const [expanded, setExpanded] = useState(false);
+  const getEffectiveDays = () => {
+    const staticExpiry = new Date("2027-03-31");
+    const memberExpiry = user.expiryDate
+      ? new Date(user.expiryDate)
+      : staticExpiry;
+    const expiry = memberExpiry < staticExpiry ? memberExpiry : staticExpiry;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  };
+
+  const days = getEffectiveDays();
+  const isExpired = days <= 0;
+  const isExpiringSoon = days <= 30 && !isExpired;
+
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 w-full flex flex-col">
       <div className="flex items-center justify-between gap-3">
@@ -632,12 +708,49 @@ function UserCard({
             )}
           </div>
         </div>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="px-3 py-1 text-xs bg-indigo-500 text-white rounded"
-        >
-          {expanded ? <FaAngleUp /> : <FaAngleDown />}
-        </button>
+
+        {/* ── Days badge + expand button ──────────────────────────────── */}
+        <div className="flex items-center gap-4 ml-auto">
+          <div
+            className={`flex flex-col items-center justify-center rounded-xl px-2.5 py-1.5 min-w-[52px] border ${
+              isExpired
+                ? "bg-red-50 border-red-200"
+                : isExpiringSoon
+                  ? "bg-amber-50 border-amber-200"
+                  : "bg-indigo-50 border-indigo-200"
+            }`}
+          >
+            <span
+              className={`text-[10px] font-extrabold leading-none ${
+                isExpired
+                  ? "text-red-600"
+                  : isExpiringSoon
+                    ? "text-amber-500"
+                    : "text-indigo-600"
+              }`}
+            >
+              {isExpired ? "0" : days}
+            </span>
+            <span
+              className={`text-[7px] font-semibold text-center uppercase tracking-wide mt-0.5 ${
+                isExpired
+                  ? "text-red-400"
+                  : isExpiringSoon
+                    ? "text-amber-400"
+                    : "text-indigo-400"
+              }`}
+            >
+              {isExpired ? "Expired" : "days left"}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="px-3 py-1 text-xs bg-indigo-500 text-white rounded"
+          >
+            {expanded ? <FaAngleUp /> : <FaAngleDown />}
+          </button>
+        </div>
       </div>
 
       {expanded && (
@@ -672,6 +785,17 @@ function UserCard({
           </p>
           <p>
             <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
+          </p>
+          <p>
+            <b>Expiry Date:</b>{" "}
+            {new Date(user.expiryDate || "2027-03-31").toLocaleDateString(
+              "en-IN",
+              {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              },
+            )}
           </p>
           <div className="flex gap-2 flex-wrap pt-2">
             {user.membershipStatus === "approved" ? (

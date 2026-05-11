@@ -16,19 +16,21 @@ router.post("/login", (req, res) => {
       username !== process.env.ADMIN_USERNAME ||
       password !== process.env.ADMIN_PASSWORD
     ) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
       { role: "admin", username },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.status(200).json({
       success: true,
       token,
-      admin: { username }
+      admin: { username },
     });
   } catch (error) {
     console.error("Admin login error:", error);
@@ -41,8 +43,9 @@ router.post("/login", (req, res) => {
 ========================= */
 router.get("/pending-users", adminAuth, async (req, res) => {
   try {
-    const users = await User.find({ membershipStatus: "pending_approval" })
-      .sort({ createdAt: -1 });
+    const users = await User.find({
+      membershipStatus: "pending_approval",
+    }).sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, users });
   } catch (error) {
@@ -57,7 +60,10 @@ router.get("/pending-users", adminAuth, async (req, res) => {
 router.put("/approve/:id", adminAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     if (!user.photo || !user.paymentProof) {
       return res.status(400).json({
@@ -65,29 +71,25 @@ router.put("/approve/:id", adminAuth, async (req, res) => {
         message: "Profile photo and payment proof are required before approval",
       });
     }
-   // Find last approved user's membership number
-const lastUser = await User.findOne({
-  membershipId: { $regex: /^K-STAR2026\// }
-}).sort({ membershipId: -1 });
-let nextNumber = 1;
+    // Find last approved user's membership number
+    const lastUser = await User.findOne({
+      membershipId: { $regex: /^K-STAR2026\// },
+    }).sort({ membershipId: -1 });
+    let nextNumber = 1;
 
-if (lastUser && lastUser.membershipId) {
-  const match = lastUser.membershipId.match(/\/(\d+)$/);
-  if (match) {
-    nextNumber = parseInt(match[1]) + 1;
-  }
-}
+    if (lastUser && lastUser.membershipId) {
+      const match = lastUser.membershipId.match(/\/(\d+)$/);
+      if (match) {
+        nextNumber = parseInt(match[1]) + 1;
+      }
+    }
 
-user.membershipId = `K-STAR2026/${String(nextNumber).padStart(4, "0")}`;
-
+    user.membershipId = `K-STAR2026/${String(nextNumber).padStart(4, "0")}`;
 
     const approvedAt = new Date();
-    const expiryDate = new Date(approvedAt);
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-
     user.membershipStatus = "approved";
     user.approvedAt = approvedAt;
-    user.expiryDate = expiryDate;
+    user.expiryDate = new Date("2027-03-31");
 
     await user.save();
 
@@ -97,7 +99,6 @@ user.membershipId = `K-STAR2026/${String(nextNumber).padStart(4, "0")}`;
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
 
 /* =========================
    REJECT USER
@@ -114,7 +115,7 @@ router.put("/reject/:id", adminAuth, async (req, res) => {
 
     // Clear approval-related fields SAFELY
     user.membershipStatus = "rejected";
-    user.membershipId = undefined;   // ✅ NOT null
+    user.membershipId = undefined; // ✅ NOT null
     user.approvedAt = undefined;
     user.expiryDate = undefined;
 
@@ -133,8 +134,6 @@ router.put("/reject/:id", adminAuth, async (req, res) => {
     });
   }
 });
-
-
 
 /* =========================
    GET ALL USERS
@@ -166,6 +165,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
       "dob",
       "bloodGroup",
       "gender",
+      "expiryDate",
       "place",
       "nri",
       "aadhaar",
@@ -173,20 +173,15 @@ router.put("/user/:id", adminAuth, async (req, res) => {
 
     const updates = {};
     allowedUpdates.forEach((field) => {
-  if (
-    req.body[field] !== undefined &&
-    req.body[field] !== ""
-  ) {
-    updates[field] = req.body[field];
-  }
-});
+      if (req.body[field] !== undefined && req.body[field] !== "") {
+        updates[field] = req.body[field];
+      }
+    });
 
-
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      updates,
-      { new: true, runValidators: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedUser) {
       return res.status(404).json({
@@ -234,7 +229,5 @@ router.delete("/user/:id", adminAuth, async (req, res) => {
     });
   }
 });
-
-
 
 export default router;
