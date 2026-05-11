@@ -50,7 +50,6 @@ function ExportPdfModal({ users, onClose }) {
       return;
     }
 
-    // Lazy-load jsPDF + autotable via script tags (UMD builds attach to window)
     const loadScript = (src) =>
       new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) return resolve();
@@ -70,10 +69,14 @@ function ExportPdfModal({ users, onClose }) {
 
     const { jsPDF } = window.jspdf;
 
+    // ── Updated filter logic ──────────────────────────────────────────────
     const filteredUsers =
       filterStatus === "all"
         ? users
-        : users.filter((u) => u.membershipStatus === filterStatus);
+        : filterStatus === "nri"
+          ? users.filter((u) => u.nri === "Yes")
+          : users.filter((u) => u.membershipStatus === filterStatus);
+    // ─────────────────────────────────────────────────────────────────────
 
     const doc = new jsPDF({ orientation: "landscape" });
 
@@ -139,21 +142,25 @@ function ExportPdfModal({ users, onClose }) {
             <p className="text-sm font-semibold text-gray-700 mb-2">
               Filter Members
             </p>
+            {/* ── Updated: 4-button row ──────────────────────────────────── */}
             <div className="flex gap-2">
-              {["all", "approved", "rejected"].map((s) => (
+              {["all", "approved", "rejected", "nri"].map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterStatus(s)}
                   className={`flex-1 py-1.5 rounded-lg text-sm border transition ${
                     filterStatus === s
-                      ? "bg-gray-900 text-white border-gray-900"
+                      ? s === "nri"
+                        ? "bg-green-700 text-white border-green-700"
+                        : "bg-gray-900 text-white border-gray-900"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {s === "nri" ? "NRI" : s.charAt(0).toUpperCase() + s.slice(1)}
                 </button>
               ))}
             </div>
+            {/* ─────────────────────────────────────────────────────────── */}
           </div>
 
           {/* Field Selection */}

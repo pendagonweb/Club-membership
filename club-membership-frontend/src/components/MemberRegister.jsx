@@ -797,18 +797,17 @@ export default function MemberRegister() {
       )}
 
       {/* SUCCESS MODAL */}
-      {showSuccessModal && (
+      {showSuccessModal &&(
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl text-center">
             <h2 className="text-2xl font-bold text-green-600">
               Registration Successful 🎉
             </h2>
-            <button
-              onClick={() => navigate("/")}
-              className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg"
+            <p
+              className="mt-4 text-black px-6 py-2 italic text-sm"
             >
-              Go to HomePage
-            </button>
+              Waiting for approval. Your membership request<br/> will be approved by the Secretary shortly
+            </p>
           </div>
         </div>
       )}
