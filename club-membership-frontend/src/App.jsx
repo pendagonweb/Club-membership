@@ -12,8 +12,8 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Header from "./components/Header";
 import JuniorRegister from "./pages/JuniorRegister";
+import JuniorList from "./components/JuniorList"; // 👈 add this import
 
-/* Wraps all public (non-admin) pages with Header + Footer */
 function PublicLayout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
@@ -28,7 +28,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* PUBLIC ROUTES — with Header & Footer */}
+        {/* PUBLIC ROUTES */}
         <Route
           path="/"
           element={
@@ -93,8 +93,7 @@ function App() {
             </PublicLayout>
           }
         />
-
-        {/* ADMIN ROUTES — no Header or Footer, AdminLayout handles its own UI */}
+        {/* ADMIN ROUTES */}
         <Route
           path="/admin"
           element={
@@ -111,6 +110,14 @@ function App() {
             </AdminLayout>
           }
         />
+        <Route
+          path="/juniors"
+          element={
+            <AdminLayout>
+              <JuniorList />
+            </AdminLayout>
+          }
+        />{" "}
       </Routes>
     </Router>
   );

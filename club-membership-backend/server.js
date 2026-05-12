@@ -36,7 +36,7 @@ app.use(
       "https://membership-front.vercel.app",
     ],
     credentials: true,
-  })
+  }),
 );
 
 /* Body parsers */
@@ -48,7 +48,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/member", memberAuthRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/auth", juniorRoutes);
+app.use("/api/juniors", juniorRoutes); // ← fixed
 app.use("/api", membershipCardRoute);
 
 app.get("/", (req, res) => {

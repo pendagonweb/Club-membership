@@ -1,16 +1,21 @@
 import { useLocation, useNavigate } from "react-router-dom";
 
-export default function AdminSidebar({ onLogout, pendingCount=0, membersCount=0, loading = false }) {
+export default function AdminSidebar({
+  onLogout,
+  pendingCount = 0,
+  membersCount = 0,
+  juniorCount = 0,
+  loading = false,
+}) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const tabs = [
     { label: "Requests", path: "/admin", count: pendingCount },
     { label: "Members", path: "/users", count: membersCount },
+    { label: "Juniors", path: "/juniors", count: juniorCount }, 
   ];
 
-
-  
   return (
     <aside className="w-full md:w-64 bg-white shadow-md md:flex md:flex-col p-3 md:p-0">
       <div className="text-xl md:text-2xl font-bold text-indigo-600 text-center m-3">
@@ -59,7 +64,9 @@ export default function AdminSidebar({ onLogout, pendingCount=0, membersCount=0,
               key={tab.label}
               onClick={() => navigate(tab.path)}
               className={`w-full flex items-center justify-between px-4 py-2 rounded-lg transition font-medium ${
-                isActive ? "bg-blue-600 text-white" : "hover:bg-gray-100 text-gray-700"
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-100 text-gray-700"
               }`}
             >
               <span>{tab.label}</span>

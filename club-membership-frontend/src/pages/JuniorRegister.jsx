@@ -79,9 +79,10 @@ export default function JuniorRegister() {
         if (value) data.append(key, value);
       });
 
-      await axios.post(`${VITE_BACKEND_URL}/api/auth/juniorregister`, data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await axios.post(
+        `${VITE_BACKEND_URL}/api/juniors/juniorregister`,
+        formData,
+      );
 
       setSuccess(true);
 

@@ -91,7 +91,7 @@ router.get("/", async (req, res) => {
 ====================== */
 router.get("/:id", async (req, res) => {
   try {
-    const junior = await Junior.findById(req.params.id);
+    const junior = await Juniors.findById(req.params.id);
 
     if (!junior) {
       return res.status(404).json({
@@ -117,7 +117,7 @@ router.get("/:id", async (req, res) => {
 ====================== */
 router.delete("/:id", async (req, res) => {
   try {
-    const junior = await Junior.findById(req.params.id);
+    const junior = await Juniors.findById(req.params.id);
 
     if (!junior) {
       return res.status(404).json({
