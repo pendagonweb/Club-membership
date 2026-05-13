@@ -201,6 +201,7 @@ router.put(
         dob,
         nri,
         aadhaar,
+        password,
       } = req.body;
 
       const normalize = (num) => num?.replace(/\D/g, "").slice(-10);
@@ -256,6 +257,7 @@ router.put(
       if (dob !== undefined) updates.dob = dob || null;
       if (nri !== undefined) updates.nri = nri;
       if (aadhaar) updates.aadhaar = aadhaar;
+      if (password) updates.password = password;
 
       if (req.files?.photo) {
         // Optionally delete old photo: await cloudinary.uploader.destroy(oldUser.photoId)

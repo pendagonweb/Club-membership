@@ -394,6 +394,7 @@ function EditProfileModal({ member, onClose, onSuccess, backendUrl }) {
     dob: member.dob ? member.dob.slice(0, 10) : "",
     nri: member.nri || "No",
     aadhaar: member.aadhaar || "",
+    password: member.password || "",
   });
 
   const [photoFile, setPhotoFile] = useState(null);
@@ -600,7 +601,13 @@ function EditProfileModal({ member, onClose, onSuccess, backendUrl }) {
                 onChange={handleChange}
                 maxLength={12}
               />
-
+              <Field
+                label="Password"
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+              />
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">
                   Blood Group
