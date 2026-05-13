@@ -81,6 +81,7 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       dob,
       nri,
       aadhaar,
+      password,
     } = req.body;
 
     /* ======================
@@ -96,7 +97,8 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       !whatsapp ||
       !whatsappCode ||
       !bloodGroup ||
-      !address
+      !address ||
+      !password
     ) {
       return res.status(400).json({
         success: false,
@@ -122,6 +124,18 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Valid 12-digit Aadhaar number is required",
+      });
+    }
+    if (
+      !password ||
+      password.length < 5 ||
+      !/[a-zA-Z]/.test(password) ||
+      !/[0-9]/.test(password)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 5 characters and contain both letters and numbers",
       });
     }
 
@@ -181,6 +195,7 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       bloodGroup: bloodGroup.toUpperCase() === "NIL" ? "Nil" : bloodGroup,
       address,
       dob: dob || null,
+      password,
 
       membershipStatus: "pending_approval",
 

@@ -160,6 +160,7 @@ export default function MemberRegister() {
     whatsapp: "",
     nri: "",
     aadhaar: "",
+    password: "",
   });
 
   const countryCodes = [
@@ -317,6 +318,8 @@ export default function MemberRegister() {
     const waDigits = waNumber.replace(/\D/g, "");
     if (!waDigits || !validWaLengths.includes(waDigits.length))
       newErrors.whatsapp = "Invalid WhatsApp number";
+    if (!formData.password || formData.password.length < 6)
+      newErrors.password = "Password must be at least 6 characters";
     if (!photo) newErrors.photo = "Profile photo is required";
     if (!paymentScreenshot)
       newErrors.payment = "Payment screenshot is required";
@@ -344,6 +347,7 @@ export default function MemberRegister() {
       data.append("fatherName", formData.fatherName);
       data.append("nickname", formData.nickname);
       data.append("aadhaar", formData.aadhaar);
+      data.append("password", formData.password);
       if (formData.email) data.append("email", formData.email);
       data.append("age", Number(formData.age));
       data.append("bloodGroup", formData.bloodGroup);
@@ -352,7 +356,10 @@ export default function MemberRegister() {
       if (formData.dob) data.append("dob", formData.dob);
       data.append("phone", formData.phone);
       data.append("phoneCode", formData.phoneCode);
-      data.append("whatsappCode", sameAsPhone ? formData.phoneCode : formData.whatsappCode);
+      data.append(
+        "whatsappCode",
+        sameAsPhone ? formData.phoneCode : formData.whatsappCode,
+      );
       data.append("whatsapp", sameAsPhone ? formData.phone : formData.whatsapp);
       data.append("photo", photo);
       data.append("paymentProof", paymentScreenshot);
@@ -439,6 +446,18 @@ export default function MemberRegister() {
             />
             {errors.aadhaar && (
               <p className="text-red-500 text-xs">{errors.aadhaar}</p>
+            )}
+          </div>
+          <div>
+            <input
+              type="text"
+              name="password"
+              placeholder="Password / പാസ്‌വേഡ്"
+              onChange={handleChange}
+              className={`${inputClass("password")} placeholder:text-[11px]`}
+            />
+            {errors.password && (
+              <p className="text-red-500 text-xs">{errors.password}</p>
             )}
           </div>
 
@@ -797,17 +816,35 @@ export default function MemberRegister() {
       )}
 
       {/* SUCCESS MODAL */}
-      {showSuccessModal &&(
+      {showSuccessModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl text-center">
+          <div className="bg-white p-6 rounded-xl text-center relative">
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl leading-none"
+            >
+              ✕
+            </button>
             <h2 className="text-2xl font-bold text-green-600">
               Registration Successful 🎉
             </h2>
-            <p
-              className="mt-4 text-black px-6 py-2 italic text-sm"
-            >
-              Waiting for approval. Your membership request<br/> will be approved by the Secretary shortly
+            <p className="mt-4 text-black px-6 py-2 italic text-sm">
+              Waiting for approval. Your membership request
+              <br /> will be approved by the Secretary shortly
             </p>
+
+            <a
+              href="https://wa.me/919747656653"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 px-5 py-2 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 transition"
+            >
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+                className="w-4 h-4"
+              />
+              Contact Secretary
+            </a>
           </div>
         </div>
       )}

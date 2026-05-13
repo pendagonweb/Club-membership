@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
-// ─── Main Component ──────────────────────────────────────────────────────────
+
 export default function JuniorList() {
   const [juniors, setJuniors] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
 
     fatherName: {
       type: String,
-      required: true,   
+      required: true,
       trim: true,
     },
 
@@ -21,10 +21,10 @@ const userSchema = new mongoose.Schema(
     },
 
     aadhaar: {
-  type: String,
-  unique: true,
-  required: true
-},
+      type: String,
+      unique: true,
+      required: true,
+    },
 
     email: {
       type: String,
@@ -77,8 +77,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
-
-
     /* ======================
        CLOUDINARY PROFILE PHOTO
     ====================== */
@@ -121,22 +119,26 @@ const userSchema = new mongoose.Schema(
       default: "pending_approval",
     },
 
-   membershipId: {
-  type: String,
-  unique: true,
-  sparse: true
-},
+    membershipId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
     place: {
       type: String,
-      default: ""
+      default: "",
     },
 
     membershipCard: {
       type: String,
       default: null,
     },
+    password: {
+      type: String,
+      required: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("User", userSchema);
