@@ -604,7 +604,7 @@ function EditProfileModal({ member, onClose, onSuccess, backendUrl }) {
               <Field
                 label="Password"
                 name="password"
-                type="password"
+                type="pass"
                 value={form.password}
                 onChange={handleChange}
               />

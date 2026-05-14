@@ -34,6 +34,11 @@ const juniorSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  membershipId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 });
 
 export default mongoose.model("Junior", juniorSchema);

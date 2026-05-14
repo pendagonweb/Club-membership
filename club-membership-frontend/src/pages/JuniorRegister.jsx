@@ -9,6 +9,7 @@ export default function JuniorRegister() {
     occupation: "",
     mobile: "",
     place: "",
+    membershipId: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -94,6 +95,7 @@ export default function JuniorRegister() {
         occupation: "",
         mobile: "",
         place: "",
+        membershipId: "",
       });
     } catch (err) {
       alert(err.response?.data?.message || "Registration failed");
@@ -184,6 +186,14 @@ export default function JuniorRegister() {
           className={inputClass("place")}
         />
         {errors.place && <p className="text-red-500 text-sm">{errors.place}</p>}
+        <input
+          type="text"
+          name="membershipId"
+          placeholder="Membership ID"
+          value={formData.membershipId}
+          onChange={handleChange}
+          className={inputClass("membershipId")}
+        />
 
         {/* BUTTON */}
         <button

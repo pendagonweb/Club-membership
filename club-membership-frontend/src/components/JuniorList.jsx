@@ -182,6 +182,9 @@ function JuniorCard({ junior, deleteJunior }) {
       {expanded && (
         <div className="mt-3 text-sm space-y-2 border-t pt-3">
           <p>
+            <b>Membership ID:</b> {junior.membershipId}
+          </p>
+          <p>
             <b>Father's Name:</b> {junior.fatherName}
           </p>
           <p>

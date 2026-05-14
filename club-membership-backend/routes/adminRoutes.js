@@ -158,6 +158,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
     // Whitelist fields admin is allowed to edit
     const allowedUpdates = [
       "name",
+      "nickname",
       "phone",
       "whatsapp",
       "email",
@@ -169,6 +170,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
       "place",
       "nri",
       "aadhaar",
+      "password",
     ];
 
     const updates = {};

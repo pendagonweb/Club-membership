@@ -8,7 +8,7 @@ const router = express.Router();
 ====================== */
 router.post("/juniorregister", async (req, res) => {
   try {
-    const { name, fatherName, dob, occupation, mobile, place } = req.body;
+    const { name, fatherName, dob, occupation, mobile, place, membershipId } = req.body;
 
     /* VALIDATION */
     if (!name || name.trim().length < 3) {
@@ -52,6 +52,7 @@ router.post("/juniorregister", async (req, res) => {
       occupation: occupation.trim(),
       mobile,
       place: place || "",
+      membershipId: membershipId.trim(),
     });
 
     res.status(201).json({
