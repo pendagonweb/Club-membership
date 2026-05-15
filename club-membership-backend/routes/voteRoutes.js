@@ -1,6 +1,6 @@
 import express from "express";
 import { castVote, getVoteStatus, getResults } from "../controller/voteController.js";
-import adminAuth from "../middleware/adminAuth.js";
+import adminAuth from "../middleware/adminauth.js";
 import userAuth from "../middleware/userAuth.js"; // your existing user auth middleware
 
 const router = express.Router();
