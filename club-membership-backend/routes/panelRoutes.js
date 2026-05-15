@@ -7,7 +7,7 @@ import {
   togglePanelStatus,
   deletePanel,
 } from "../controller/panelController.js";
-import adminAuth from "../middleware/adminAuth.js";
+import adminAuth from "../middleware/adminauth.js";
 
 const router = express.Router();
 
