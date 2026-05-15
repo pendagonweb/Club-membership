@@ -90,6 +90,11 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    paymentAmount: {
+      type: Number,
+      default: 0,
+    },
+
     /* ======================
        CLOUDINARY PAYMENT PROOF
     ====================== */

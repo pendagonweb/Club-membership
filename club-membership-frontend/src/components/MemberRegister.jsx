@@ -145,6 +145,33 @@ function CropModal({ imageSrc, onCropDone, onCancel }) {
    MAIN COMPONENT
 ====================== */
 export default function MemberRegister() {
+  const generatePassword = () => {
+    const adjectives = [
+      "Swift",
+      "Brave",
+      "Bold",
+      "Noble",
+      "Sharp",
+      "Wise",
+      "Bright",
+      "Calm",
+    ];
+    const nouns = [
+      "Lion",
+      "Tiger",
+      "Eagle",
+      "Storm",
+      "River",
+      "Stone",
+      "Arrow",
+      "Flame",
+    ];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const num = Math.floor(100 + Math.random() * 900); // 3-digit number
+    return `King${adj}${noun}${num}`;
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     fatherName: "",
@@ -160,7 +187,7 @@ export default function MemberRegister() {
     whatsapp: "",
     nri: "",
     aadhaar: "",
-    password: "",
+    password: generatePassword(),
   });
 
   const countryCodes = [
@@ -372,6 +399,7 @@ export default function MemberRegister() {
       setLoading(false);
     }
   };
+  /* Add this helper at the top of the file, outside the component */
 
   return (
     <div className="min-h-screen flex items-center justify-center relative px-4 sm:px-6">
@@ -449,13 +477,29 @@ export default function MemberRegister() {
             )}
           </div>
           <div>
-            <input
-              type="text"
-              name="password"
-              placeholder="Password / പാസ്‌വേഡ്"
-              onChange={handleChange}
-              className={`${inputClass("password")} placeholder:text-[11px]`}
-            />
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                name="password"
+                value={formData.password} // ← controlled with value
+                placeholder="Password / പാസ്‌വേഡ്"
+                onChange={handleChange}
+                className={`${inputClass("password")} placeholder:text-[11px]`}
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    password: generatePassword(),
+                  }))
+                }
+                title="Generate new password"
+                className="shrink-0 px-3 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg text-sm font-medium text-gray-600 transition whitespace-nowrap"
+              >
+                🔀 New
+              </button>
+            </div>
             {errors.password && (
               <p className="text-red-500 text-xs">{errors.password}</p>
             )}

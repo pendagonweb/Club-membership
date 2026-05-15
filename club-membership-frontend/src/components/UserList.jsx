@@ -331,6 +331,7 @@ export default function AdminUserList() {
       dob: user.dob ? user.dob.split("T")[0] : "",
       bloodGroup: user.bloodGroup || "",
       place: user.place || "",
+      paymentAmount: user.paymentAmount || 0,
       gender: user.gender || "",
       nri: user.nri || "No",
       expiryDate: user.expiryDate // ← NEW
@@ -718,17 +719,36 @@ Kingstar Arts & Sports Club`;
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                        Place
-                      </label>
-                      <input
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
-                        placeholder="City / town"
-                        value={editForm.place}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, place: e.target.value })
-                        }
-                      />
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          Place
+                        </label>
+                        <input
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                          placeholder="City / town"
+                          value={editForm.place}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, place: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          Payment Amount
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                          placeholder="Amount in INR"
+                          value={editForm.paymentAmount}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              paymentAmount: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -793,13 +813,20 @@ function UserCard({
   const [expanded, setExpanded] = useState(false);
   const getEffectiveDays = () => {
     const staticExpiry = new Date("2027-03-31");
+    staticExpiry.setHours(0, 0, 0, 0);
+
     const memberExpiry = user.expiryDate
       ? new Date(user.expiryDate)
       : staticExpiry;
+
+    memberExpiry.setHours(0, 0, 0, 0);
+
     const expiry = memberExpiry < staticExpiry ? memberExpiry : staticExpiry;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+    return Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
   };
 
   const days = getEffectiveDays();
@@ -893,6 +920,9 @@ function UserCard({
           </p>
           <p>
             <b>Whatsapp:</b> {user.whatsapp || "—"}
+          </p>
+          <p>
+            <b>Payment Amount:</b> ₹{user.paymentAmount || "—"}
           </p>
           <p>
             <b>DOB:</b>{" "}

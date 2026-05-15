@@ -59,7 +59,7 @@ export default function MembershipCard({ user }) {
 
       {/* Name & ID */}
       <div className="absolute  NID uppercase">
-        <p className=" font-bold text-color toUpperCase() text-[15px]">
+        <p className=" font-bold leading-5 text-color toUpperCase() text-[15px]">
           {user.nickname}
         </p>
         <p className="text-color toUpperCase() text-[10px]">

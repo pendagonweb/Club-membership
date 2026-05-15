@@ -13,6 +13,8 @@ import Home from "./pages/Home";
 import Header from "./components/Header";
 import JuniorRegister from "./pages/JuniorRegister";
 import JuniorList from "./components/JuniorList"; // 👈 add this import
+import PanelList from "./components/PanelList";
+import VotingPage from "./components/VotingPage";
 
 function PublicLayout({ children }) {
   return (
@@ -50,6 +52,14 @@ function App() {
           element={
             <PublicLayout>
               <MemberRegister />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/vote"
+          element={
+            <PublicLayout>
+              <VotingPage />
             </PublicLayout>
           }
         />
@@ -117,7 +127,15 @@ function App() {
               <JuniorList />
             </AdminLayout>
           }
-        />{" "}
+        />
+        <Route
+          path="/panels"
+          element={
+            <AdminLayout>
+              <PanelList />
+            </AdminLayout>
+          }
+        />
       </Routes>
     </Router>
   );

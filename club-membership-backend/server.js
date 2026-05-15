@@ -10,6 +10,9 @@ import adminRoutes from "./routes/adminRoutes.js";
 import membershipCardRoute from "./routes/membershipCard.js";
 import memberAuthRoutes from "./routes/memberAuth.js";
 import juniorRoutes from "./routes/juniorRoutes.js";
+import panelRoutes from "./routes/panelRoutes.js";
+import voteRoutes from "./routes/voteRoutes.js";
+
 
 // REMOVED: import multer / upload.none() — see note below
 
@@ -50,6 +53,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/juniors", juniorRoutes); // ← fixed
 app.use("/api", membershipCardRoute);
+app.use("/api/panels", panelRoutes);
+app.use("/api/votes", voteRoutes);
 
 app.get("/", (req, res) => {
   res.send("✅ Club Membership API running");

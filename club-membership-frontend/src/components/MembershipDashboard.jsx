@@ -150,10 +150,14 @@ export default function MemberDashboard() {
 
   const getRemainingDays = (validUpto) => {
     const [day, month, year] = validUpto.split("/").map(Number);
+
     const expiry = new Date(year, month - 1, day);
+    expiry.setHours(0, 0, 0, 0);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+    return Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
   };
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);

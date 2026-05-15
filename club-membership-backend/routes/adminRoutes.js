@@ -171,6 +171,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
       "nri",
       "aadhaar",
       "password",
+      "paymentAmount",
     ];
 
     const updates = {};
