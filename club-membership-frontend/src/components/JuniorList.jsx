@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
-
 export default function JuniorList() {
   const [juniors, setJuniors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [editingJunior, setEditingJunior] = useState(null);
   const { VITE_BACKEND_URL } = import.meta.env;
 
   const fetchJuniors = async () => {
@@ -35,6 +35,12 @@ export default function JuniorList() {
     } catch (err) {
       alert(err.response?.data?.message || "Delete failed");
     }
+  };
+
+  const updateJunior = (updated) => {
+    setJuniors((prev) =>
+      prev.map((j) => (j._id === updated._id ? updated : j)),
+    );
   };
 
   if (loading)
@@ -125,15 +131,29 @@ export default function JuniorList() {
             key={junior._id}
             junior={junior}
             deleteJunior={deleteJunior}
+            onEdit={() => setEditingJunior(junior)}
           />
         ))}
       </div>
+
+      {/* Edit Modal */}
+      {editingJunior && (
+        <EditModal
+          junior={editingJunior}
+          backendUrl={VITE_BACKEND_URL}
+          onClose={() => setEditingJunior(null)}
+          onSaved={(updated) => {
+            updateJunior(updated);
+            setEditingJunior(null);
+          }}
+        />
+      )}
     </main>
   );
 }
 
-// ─── JuniorCard ──────────────────────────────────────────────────────────────
-function JuniorCard({ junior, deleteJunior }) {
+// ─── JuniorCard ───────────────────────────────────────────────────────────────
+function JuniorCard({ junior, deleteJunior, onEdit }) {
   const [expanded, setExpanded] = useState(false);
 
   const formatDob = (dob) => {
@@ -202,13 +222,24 @@ function JuniorCard({ junior, deleteJunior }) {
 
           <div className="flex gap-2 flex-wrap pt-2">
             <button
+              onClick={onEdit}
+              className="px-2 py-1 text-xs bg-indigo-600 text-white rounded"
+            >
+              Edit
+            </button>
+            <button
               onClick={() => deleteJunior(junior._id)}
               className="px-2 py-1 text-xs bg-red-800 text-white rounded"
             >
               Delete
             </button>
+
             <a
-              href={`https://wa.me/${junior.mobile.length === 10 ? "91" + junior.mobile : junior.mobile}`}
+              href={`https://wa.me/${
+                junior.mobile.length === 10
+                  ? "91" + junior.mobile
+                  : junior.mobile
+              }`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-2 py-1 text-xs bg-gray-800 text-white rounded"
@@ -218,6 +249,122 @@ function JuniorCard({ junior, deleteJunior }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── EditModal ────────────────────────────────────────────────────────────────
+function EditModal({ junior, backendUrl, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    name: junior.name || "",
+    fatherName: junior.fatherName || "",
+    dob: junior.dob ? junior.dob.slice(0, 10) : "",
+    occupation: junior.occupation || "",
+    mobile: junior.mobile || "",
+    place: junior.place || "",
+    membershipId: junior.membershipId || "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      const res = await axios.put(
+        `${backendUrl}/api/juniors/${junior._id}`,
+        form,
+      );
+      if (res.data.success) onSaved(res.data.junior);
+    } catch (err) {
+      setError(err.response?.data?.message || "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Close on backdrop click
+  const handleBackdrop = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const fields = [
+    { label: "Full Name", name: "name", type: "text" },
+    { label: "Father's Name", name: "fatherName", type: "text" },
+    { label: "Date of Birth", name: "dob", type: "date" },
+    { label: "Occupation", name: "occupation", type: "text" },
+    { label: "Mobile", name: "mobile", type: "tel" },
+    { label: "Place", name: "place", type: "text" },
+    { label: "Membership ID", name: "membershipId", type: "text" },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      onClick={handleBackdrop}
+    >
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b">
+          <h2 className="text-lg font-bold">Edit Junior</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 text-xl font-bold leading-none"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="px-5 py-4 space-y-3 max-h-[70vh] overflow-y-auto"
+        >
+          {error && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          {fields.map(({ label, name, type }) => (
+            <div key={name} className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-600">
+                {label}
+              </label>
+              <input
+                type={type}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+          ))}
+
+          {/* Footer buttons */}
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 text-sm rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60"
+            >
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

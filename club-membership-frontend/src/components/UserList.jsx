@@ -381,6 +381,7 @@ Member Details:
 • Father's Name: ${user.fatherName || "—"}
 • Place: ${user.address || "—"}   
 • Blood Group: ${user.bloodGroup || "—"}
+• Password: ${user.password || "—"}
 • Valid Upto: 31/03/2027
 
 _Thank you for becoming a member of Kingstar Arts & Sports Club._
