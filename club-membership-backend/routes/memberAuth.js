@@ -9,23 +9,23 @@ const router = express.Router();
 ====================== */
 router.post("/login", async (req, res) => {
   try {
-    const { phone, membershipId } = req.body;
+    const { password, membershipId } = req.body;
 
     // 1️⃣ Validate input
-    if (!phone || !membershipId) {
+    if (!password || !membershipId) {
       return res.status(400).json({
         success: false,
-        message: "Phone number and Membership ID are required",
+        message: "Password and Membership ID are required",
       });
     }
 
     // 2️⃣ Find member
-    const member = await User.findOne({ phone, membershipId });
+    const member = await User.findOne({ password, membershipId });
 
     if (!member) {
       return res.status(401).json({
         success: false,
-        message: "Invalid phone number or Membership ID",
+        message: "Invalid password",
       });
     }
 
@@ -52,7 +52,7 @@ router.post("/login", async (req, res) => {
       success: true,
       message: "Login successful back",
       token,
-      userId: member._id, // ✅ THIS IS THE KEY
+      userId: member._id, 
     });
 
   } catch (err) {

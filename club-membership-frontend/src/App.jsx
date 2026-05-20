@@ -15,6 +15,7 @@ import JuniorRegister from "./pages/JuniorRegister";
 import JuniorList from "./components/JuniorList"; 
 import PanelList from "./components/PanelList";
 import VotingPage from "./components/VotingPage";
+import VotingResults from "./pages/VotingResults";
 
 function PublicLayout({ children }) {
   return (
@@ -84,6 +85,14 @@ function App() {
           element={
             <PublicLayout>
               <MemberDashboard />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/results"
+          element={
+            <PublicLayout>
+              <VotingResults />
             </PublicLayout>
           }
         />

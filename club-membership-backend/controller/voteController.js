@@ -14,13 +14,17 @@ export const castVote = async (req, res) => {
 
     // Only approved members can vote
     if (req.user.membershipStatus !== "approved") {
-      return res.status(403).json({ message: "Only approved members can vote" });
+      return res
+        .status(403)
+        .json({ message: "Only approved members can vote" });
     }
 
     // Check if user already voted for ANY panel
     const alreadyVoted = await Vote.findOne({ user: userId });
     if (alreadyVoted) {
-      return res.status(409).json({ message: "You have already cast your vote" });
+      return res
+        .status(409)
+        .json({ message: "You have already cast your vote" });
     }
 
     // Create vote + increment count atomically
@@ -28,11 +32,12 @@ export const castVote = async (req, res) => {
     await Panel.findByIdAndUpdate(panelId, { $inc: { voteCount: 1 } });
 
     res.status(201).json({ message: "Vote cast successfully" });
-
   } catch (error) {
     // Duplicate key error (race condition safety net)
     if (error.code === 11000) {
-      return res.status(409).json({ message: "You have already cast your vote" });
+      return res
+        .status(409)
+        .json({ message: "You have already cast your vote" });
     }
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -44,7 +49,10 @@ export const getVoteStatus = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const vote = await Vote.findOne({ user: userId }).populate("panel", "name logo");
+    const vote = await Vote.findOne({ user: userId }).populate(
+      "panel",
+      "name logo",
+    );
     if (!vote) {
       return res.json({ hasVoted: false, votedPanel: null });
     }
@@ -57,7 +65,9 @@ export const getVoteStatus = async (req, res) => {
 // GET /api/votes/results  (admin only)
 export const getResults = async (req, res) => {
   try {
-    const panels = await Panel.find().select("name voteCount logo").sort({ voteCount: -1 });
+    const panels = await Panel.find()
+      .select("name voteCount logo")
+      .sort({ voteCount: -1 });
     const totalVotes = await Vote.countDocuments();
     res.json({ panels, totalVotes });
   } catch (error) {

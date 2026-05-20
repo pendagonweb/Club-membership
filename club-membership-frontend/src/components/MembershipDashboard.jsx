@@ -2,6 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Cropper from "react-easy-crop";
+import { HiSpeakerphone } from "react-icons/hi";
+import { HiCheckCircle } from "react-icons/hi";
 import MembershipCard from "../pages/MemberCard";
 
 /* ======================
@@ -245,8 +247,19 @@ export default function MemberDashboard() {
 
       {/* MAIN */}
       <main className="flex-1 p-6 space-y-8">
-        {/* PROFILE HEADER */}
-        {/* PROFILE HEADER */}
+        <div className="w-full h-10 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full mb-4 flex items-center justify-center gap-3 px-4">
+          <HiSpeakerphone className="text-white text-lg shrink-0" />
+          <p className="text-white text-sm font-medium tracking-wide">
+            Council election is ongoing
+          </p>
+          <button
+            onClick={() => navigate("/vote")}
+            className="flex items-center gap-1.5 bg-white/20 border border-white/50 text-white text-xs font-semibold px-4 py-1 rounded-full hover:bg-white/30 transition"
+          >
+            <HiCheckCircle className="text-base" />
+            Cast your vote
+          </button>
+        </div>
         <div className="bg-white rounded-3xl shadow-xl p-4 flex flex-col md:flex-row gap-6 items-center transition-all hover:shadow-2xl">
           <img
             src={member.photo || "/default-avatar.png"}
