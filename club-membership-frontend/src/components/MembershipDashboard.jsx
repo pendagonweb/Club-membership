@@ -247,26 +247,89 @@ export default function MemberDashboard() {
 
       {/* MAIN */}
       <main className="flex-1 p-6 space-y-8">
-        <div className="w-full h-10 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full mb-4 flex items-center justify-center gap-3 px-4">
-          <HiSpeakerphone className="text-white text-lg shrink-0" />
-          <p className="text-white text-sm font-medium tracking-wide">
-            Council election is ongoing
-          </p>
+        <div className="w-full h-20 sm:h-10 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full mb-4 flex items-center justify-center gap-3 px-4">
+          <div className="flex items-center w-2/3 gap-2">
+            <HiSpeakerphone className="text-white text-lg shrink-0" />
+            <p className="text-white text-xs sm:text-sm font-medium tracking-wide">
+              KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27
+            </p>
+          </div>
           <button
             onClick={() => navigate("/vote")}
             className="flex items-center gap-1.5 bg-white/20 border border-white/50 text-white text-xs font-semibold px-4 py-1 rounded-full hover:bg-white/30 transition"
           >
-            <HiCheckCircle className="text-base" />
-            Cast your vote
+            <HiCheckCircle className="text-base sm:block hidden" />
+            Cast vote
           </button>
         </div>
-        <div className="bg-white rounded-3xl shadow-xl p-4 flex flex-col md:flex-row gap-6 items-center transition-all hover:shadow-2xl">
+        <div className="flex flex-col sm:flex-row items-center justify-around rounded-3xl shadow-xl sm:p-4 py-2  transition-all hover:shadow-2xl">
+          <div className="flex gap-20">
+            {(() => {
+              const days = getRemainingDays(effectiveValidUpto);
+              const isExpiringSoon = days <= 30;
+              const isExpired = days <= 0;
+              return (
+                <div
+                  className={`flex flex-col items-center justify-center rounded-2xl p-2 sm:px-5 sm:py-4 shadow-md min-w-[110px] ${
+                    isExpired
+                      ? "bg-red-50 border border-red-200"
+                      : isExpiringSoon
+                        ? "bg-amber-50 border border-amber-200"
+                        : "bg-indigo-50 border border-indigo-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`text-xl font-extrabold leading-none ${
+                        isExpired
+                          ? "text-red-600"
+                          : isExpiringSoon
+                            ? "text-amber-500"
+                            : "text-indigo-600"
+                      }`}
+                    >
+                      {isExpired ? "0" : days}
+                    </span>
+                    <span
+                      className={`text-[11px] font-semibold uppercase tracking-wide mt-1 ${
+                        isExpired
+                          ? "text-red-400"
+                          : isExpiringSoon
+                            ? "text-amber-400"
+                            : "text-indigo-400"
+                      }`}
+                    >
+                      {isExpired ? "Expired" : "Days Left"}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[10px] mt-1 ${
+                      isExpired
+                        ? "text-red-300"
+                        : isExpiringSoon
+                          ? "text-amber-300"
+                          : "text-indigo-300"
+                    }`}
+                  >
+                    Valid: {effectiveValidUpto}
+                  </span>
+                </div>
+              );
+            })()}
+
+            <button
+              onClick={() => setShowEdit(true)}
+              className="md:hidden flex items-center gap-2 px-4 sm:py-2 rounded-xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition-all"
+            >
+              ✏️ Edit Profile
+            </button>
+          </div>
           <img
             src={member.photo || "/default-avatar.png"}
             alt={member.name}
             className="w-40 h-40 rounded-full border-4 border-indigo-500 object-cover shadow-md"
           />
-          <div className="text-center md:text-left flex-1">
+          <div className="text-center md:text-left">
             <h1 className="text-xl font-extrabold uppercase text-indigo-600 tracking-wide">
               {member.nickname}
             </h1>
@@ -280,66 +343,6 @@ export default function MemberDashboard() {
               {member.membershipId?.toUpperCase()}
             </span>
           </div>
-
-          {/* ── DAYS REMAINING BADGE ── */}
-
-          {(() => {
-            const days = getRemainingDays(effectiveValidUpto); // ← was STATIC_VALID_UPTO
-            const isExpiringSoon = days <= 30;
-            const isExpired = days <= 0;
-            return (
-              <div
-                className={`flex flex-col items-center justify-center rounded-2xl px-5 py-4 shadow-md min-w-[110px] ${
-                  isExpired
-                    ? "bg-red-50 border border-red-200"
-                    : isExpiringSoon
-                      ? "bg-amber-50 border border-amber-200"
-                      : "bg-indigo-50 border border-indigo-200"
-                }`}
-              >
-                <span
-                  className={`text-3xl font-extrabold leading-none ${
-                    isExpired
-                      ? "text-red-600"
-                      : isExpiringSoon
-                        ? "text-amber-500"
-                        : "text-indigo-600"
-                  }`}
-                >
-                  {isExpired ? "0" : days}
-                </span>
-                <span
-                  className={`text-[11px] font-semibold uppercase tracking-wide mt-1 ${
-                    isExpired
-                      ? "text-red-400"
-                      : isExpiringSoon
-                        ? "text-amber-400"
-                        : "text-indigo-400"
-                  }`}
-                >
-                  {isExpired ? "Expired" : "Days Left"}
-                </span>
-                <span
-                  className={`text-[10px] mt-1 ${
-                    isExpired
-                      ? "text-red-300"
-                      : isExpiringSoon
-                        ? "text-amber-300"
-                        : "text-indigo-300"
-                  }`}
-                >
-                  Valid: {effectiveValidUpto} {/* ← was STATIC_VALID_UPTO */}
-                </span>
-              </div>
-            );
-          })()}
-
-          <button
-            onClick={() => setShowEdit(true)}
-            className="md:hidden flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition-all"
-          >
-            ✏️ Edit Profile
-          </button>
         </div>
 
         {member.membershipStatus === "approved" && (

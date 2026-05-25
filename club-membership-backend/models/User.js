@@ -77,6 +77,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    designation: {
+      type: String,
+      trim: true,
+      default: "member",
+    },
+
     /* ======================
        CLOUDINARY PROFILE PHOTO
     ====================== */

@@ -318,14 +318,52 @@ export default function AdminUserList() {
     fetchUsers();
   };
 
+  const COUNTRY_CODES = [
+    { code: "+91", label: "🇮🇳 +91" },
+    { code: "+1", label: "🇺🇸 +1" },
+    { code: "+44", label: "🇬🇧 +44" },
+    { code: "+971", label: "🇦🇪 +971" },
+    { code: "+974", label: "🇶🇦 +974" },
+    { code: "+966", label: "🇸🇦 +966" },
+    { code: "+60", label: "🇲🇾 +60" },
+    { code: "+65", label: "🇸🇬 +65" },
+    { code: "+61", label: "🇦🇺 +61" },
+  ];
+
+  // Splits "+919876543210" → { code: "+91", number: "9876543210" }
+  function splitPhone(full = "") {
+    const cleaned = full.trim();
+    const sorted = [...COUNTRY_CODES].sort(
+      (a, b) => b.code.length - a.code.length,
+    );
+
+    for (const { code } of sorted) {
+      if (cleaned.startsWith(code)) {
+        let number = cleaned.slice(code.length).replace(/\D/g, "");
+        // ✅ Fix legacy double-prefix: if number still starts with same code digits, strip again
+        const codeDigits = code.replace("+", "");
+        if (number.startsWith(codeDigits)) {
+          number = number.slice(codeDigits.length);
+        }
+        return { code, number };
+      }
+    }
+
+    const stripped = cleaned.replace(/^\+\d{1,4}/, "").replace(/\D/g, "");
+    return { code: "+91", number: stripped };
+  }
   const openEditModal = (user) => {
+    const ph = splitPhone(user.phone || "");
+    const wa = splitPhone(user.whatsapp || "");
     setEditingUser(user);
     setEditForm({
       name: user.name || "",
       nickname: user.nickname || "",
-      phone: user.phone || "",
+      phoneCode: ph.code,
+      phone: ph.number, 
       password: user.password || "",
-      whatsapp: user.whatsapp || "",
+      waCode: wa.code,
+      whatsapp: wa.number,
       email: user.email || "",
       address: user.address || "",
       dob: user.dob ? user.dob.split("T")[0] : "",
@@ -334,7 +372,7 @@ export default function AdminUserList() {
       paymentAmount: user.paymentAmount || 0,
       gender: user.gender || "",
       nri: user.nri || "No",
-      expiryDate: user.expiryDate // ← NEW
+      expiryDate: user.expiryDate
         ? new Date(user.expiryDate).toISOString().split("T")[0]
         : "2027-03-31",
     });
@@ -343,9 +381,17 @@ export default function AdminUserList() {
   const handleSaveChanges = async () => {
     try {
       setActionLoading(true);
+      const payload = {
+        ...editForm,
+        phone: editForm.phoneCode + editForm.phone.replace(/[^\d]/g, ""),
+        whatsapp: editForm.waCode + editForm.whatsapp.replace(/[^\d]/g, ""),
+      };
+      delete payload.phoneCode;
+      delete payload.waCode;
+
       await axios.put(
         `${VITE_BACKEND_URL}/api/admin/user/${editingUser._id}`,
-        editForm,
+        payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       setEditingUser(null);
@@ -448,7 +494,7 @@ Kingstar Arts & Sports Club`;
 
   return (
     <>
-      <main className="flex-1 p-3 sm:p-4 md:p-6">
+      <main className="flex-1 p-3 sm:p-4 md:p-6 pb-20">
         {/* Title row with Export button */}
         <div className="flex items-center justify-between mb-5 sm:mb-6">
           <div className="flex-1" />
@@ -662,32 +708,73 @@ Kingstar Arts & Sports Club`;
                   Contact
                 </p>
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="gap-3">
+                    {/* Phone */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1.5">
                         Phone
                       </label>
-                      <input
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
-                        placeholder="+91 ..."
-                        value={editForm.phone}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, phone: e.target.value })
-                        }
-                      />
+                      <div className="flex gap-1.5">
+                        <select
+                          className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-gray-400 bg-white"
+                          style={{ width: "92px" }}
+                          value={editForm.phoneCode}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              phoneCode: e.target.value,
+                            })
+                          }
+                        >
+                          {COUNTRY_CODES.map(({ code, label }) => (
+                            <option key={code} value={code}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                          placeholder="9876543210"
+                          value={editForm.phone}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, phone: e.target.value })
+                          }
+                        />
+                      </div>
                     </div>
+
+                    {/* WhatsApp */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1.5">
                         WhatsApp
                       </label>
-                      <input
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
-                        placeholder="+91 ..."
-                        value={editForm.whatsapp}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, whatsapp: e.target.value })
-                        }
-                      />
+                      <div className="flex gap-1.5">
+                        <select
+                          className="border border-gray-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-gray-400 bg-white"
+                          style={{ width: "92px" }}
+                          value={editForm.waCode}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, waCode: e.target.value })
+                          }
+                        >
+                          {COUNTRY_CODES.map(({ code, label }) => (
+                            <option key={code} value={code}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                          placeholder="9876543210"
+                          value={editForm.whatsapp}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              whatsapp: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>

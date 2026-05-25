@@ -16,6 +16,7 @@ import JuniorList from "./components/JuniorList";
 import PanelList from "./components/PanelList";
 import VotingPage from "./components/VotingPage";
 import VotingResults from "./pages/VotingResults";
+import AdminActivities from "./components/AdminActivities";
 
 function PublicLayout({ children }) {
   return (
@@ -118,6 +119,14 @@ function App() {
           element={
             <AdminLayout>
               <AdminPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/adminactivities"
+          element={
+            <AdminLayout>
+              <AdminActivities />
             </AdminLayout>
           }
         />

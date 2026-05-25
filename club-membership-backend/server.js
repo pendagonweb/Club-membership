@@ -12,9 +12,7 @@ import memberAuthRoutes from "./routes/memberAuth.js";
 import juniorRoutes from "./routes/juniorRoutes.js";
 import panelRoutes from "./routes/panelRoutes.js";
 import voteRoutes from "./routes/voteRoutes.js";
-
-
-// REMOVED: import multer / upload.none() — see note below
+import activityRoutes from "./routes/activityRoutes.js";
 
 dotenv.config();
 
@@ -51,10 +49,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/member", memberAuthRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/juniors", juniorRoutes); // ← fixed
+app.use("/api/juniors", juniorRoutes);
 app.use("/api", membershipCardRoute);
 app.use("/api/panels", panelRoutes);
 app.use("/api/votes", voteRoutes);
+app.use("/api", activityRoutes);
 
 app.get("/", (req, res) => {
   res.send("✅ Club Membership API running");

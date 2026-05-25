@@ -70,7 +70,7 @@ export default function JuniorList() {
     : juniors;
 
   return (
-    <main className="flex-1 p-3 sm:p-4 md:p-6">
+    <main className="flex-1 p-3 sm:p-4 md:p-6 pb-20">
       {/* Title row */}
       <div className="flex items-center justify-between mb-5 sm:mb-6">
         <div className="flex-1" />

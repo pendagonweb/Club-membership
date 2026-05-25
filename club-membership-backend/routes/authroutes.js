@@ -4,11 +4,6 @@ import upload from "../middleware/cloudinaryUpload.js";
 
 const router = express.Router();
 
-/* ======================
-   SAFE MULTER WRAPPER
-   Catches "Unexpected field" and returns a clean JSON error
-   instead of crashing the server with an unhandled MulterError
-====================== */
 const uploadRegisterFiles = (req, res, next) => {
   upload.fields([
     { name: "photo", maxCount: 1 },
