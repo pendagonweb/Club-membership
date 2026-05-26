@@ -17,6 +17,7 @@ import PanelList from "./components/PanelList";
 import VotingPage from "./components/VotingPage";
 import VotingResults from "./pages/VotingResults";
 import AdminActivities from "./components/AdminActivities";
+import GalleryManager from "./pages/GalleryManager";
 
 function PublicLayout({ children }) {
   return (
@@ -130,6 +131,15 @@ function App() {
             </AdminLayout>
           }
         />
+        <Route
+          path="/admingallery"
+          element={
+            <AdminLayout>
+              <GalleryManager />
+            </AdminLayout>
+          }
+        />
+
         <Route
           path="/users"
           element={

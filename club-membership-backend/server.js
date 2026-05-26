@@ -13,6 +13,7 @@ import juniorRoutes from "./routes/juniorRoutes.js";
 import panelRoutes from "./routes/panelRoutes.js";
 import voteRoutes from "./routes/voteRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
+import galleryRoutes from "./routes/galleryRoutes.js";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use("/api", membershipCardRoute);
 app.use("/api/panels", panelRoutes);
 app.use("/api/votes", voteRoutes);
 app.use("/api", activityRoutes);
+app.use("/api", galleryRoutes); // moved from activityRoutes.js to avoid circular import
 
 app.get("/", (req, res) => {
   res.send("✅ Club Membership API running");
