@@ -6,7 +6,7 @@ import {
   deleteLogo,
   getLogo,
 } from "../controller/logoController.js";
-import adminAuth from "../middleware/adminAuth.js"; // JWT admin auth middleware
+import adminAuth from "../middleware/adminauth.js"; // JWT admin auth middleware
 import upload from "../middleware/cloudinaryUpload.js";
 const router = express.Router();
 
