@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaAngleDown, FaAngleUp } from "react-icons/fa";
-
+import AdminNavigation from "./AdminNavigation";
 
 export default function AdminPage() {
   const STATIC_VALID_UPTO = "31/03/2027";
@@ -21,42 +21,38 @@ export default function AdminPage() {
   };
 
   const fetchUsers = async () => {
-  if (!token) {
-    navigate("/admin-login");
-    return;
-  }
-  try {
-    setLoading(true);
-    setError("");
-    const res = await axios.get(
-      `${VITE_BACKEND_URL}/api/admin/pending-users`,
-      authHeader
-    );
-    const fetchedUsers = res.data.users || [];
-    setUsers(fetchedUsers);
-
-    // Compute pendingCount
-  } catch (err) {
-    console.error(err);
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      localStorage.removeItem("adminToken");
+    if (!token) {
       navigate("/admin-login");
-    } else {
-      setError(err.response?.data?.message || "Error fetching users");
+      return;
     }
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      setError("");
+      const res = await axios.get(
+        `${VITE_BACKEND_URL}/api/admin/pending-users`,
+        authHeader,
+      );
+      const fetchedUsers = res.data.users || [];
+      setUsers(fetchedUsers);
 
+      // Compute pendingCount
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("adminToken");
+        navigate("/admin-login");
+      } else {
+        setError(err.response?.data?.message || "Error fetching users");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
-const handleLogout = () => {
-  localStorage.removeItem("adminToken"); // remove token
-  navigate("/admin-login"); // redirect to login page
-};
-
-  
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken"); // remove token
+    navigate("/admin-login"); // redirect to login page
+  };
 
   const approveUser = async (id) => {
     try {
@@ -65,7 +61,7 @@ const handleLogout = () => {
       const res = await axios.put(
         `${VITE_BACKEND_URL}/api/admin/approve/${id}`,
         {},
-        authHeader
+        authHeader,
       );
       alert(`User approved! Membership ID: ${res.data.user.membershipId}`);
       fetchUsers();
@@ -83,7 +79,7 @@ const handleLogout = () => {
       await axios.put(
         `${VITE_BACKEND_URL}/api/admin/reject/${id}`,
         {},
-        authHeader
+        authHeader,
       );
       fetchUsers();
     } catch (err) {
@@ -93,14 +89,13 @@ const handleLogout = () => {
     }
   };
 
-
   useEffect(() => {
-  if (!token) {
-    navigate("/admin-login");
-  } else {
-    fetchUsers(); // 👈 ADD THIS
-  }
-}, [token]);
+    if (!token) {
+      navigate("/admin-login");
+    } else {
+      fetchUsers(); // 👈 ADD THIS
+    }
+  }, [token]);
 
   const formatDate = (date) => {
     if (!date) return "—";
@@ -112,28 +107,26 @@ const handleLogout = () => {
   };
 
   const downloadImage = async (imageUrl, name = "user-photo") => {
-  try {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
 
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${name}.jpg`;
-    document.body.appendChild(link);
-    link.click();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${name}.jpg`;
+      document.body.appendChild(link);
+      link.click();
 
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    alert("Failed to download image");
-  }
-};
-
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Failed to download image");
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-6 overflow-x-auto">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center md:text-left text-indigo-700">
@@ -154,94 +147,120 @@ const handleLogout = () => {
           <div className="space-y-6">
             {users.map((user) => (
               <div
-  key={user._id}
-  className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 w-full flex flex-col"
->
-  {/* Top Row */}
-  <div className="flex items-center justify-between gap-3">
-    <div className="flex items-center gap-3">
-      <img
-        src={user.photo || "/no-user.png"}
-        alt={user.name}
-        onError={(e) => (e.target.src = "/no-user.png")}
-        className="w-20 h-20 rounded-full object-cover border cursor-pointer"
-        onClick={() => setPreviewImage(user.photo)}
-      />
+                key={user._id}
+                className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 w-full flex flex-col"
+              >
+                {/* Top Row */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={user.photo || "/no-user.png"}
+                      alt={user.name}
+                      onError={(e) => (e.target.src = "/no-user.png")}
+                      className="w-20 h-20 rounded-full object-cover border cursor-pointer"
+                      onClick={() => setPreviewImage(user.photo)}
+                    />
 
-      <div className="flex flex-col">
-        <p className="font-semibold text-lg">{user.name}</p>
-        <p className="text-xs text-gray-600">
-          Phone: {user.phone}
-        </p>
+                    <div className="flex flex-col">
+                      <p className="font-semibold text-lg">{user.name}</p>
+                      <p className="text-xs text-gray-600">
+                        Phone: {user.phone}
+                      </p>
 
-        {user.nri === "Yes" && (
-          <p className="text-xs font-semibold text-green-600">
-            NRI
-          </p>
-        )}
-      </div>
-    </div>
+                      {user.nri === "Yes" && (
+                        <p className="text-xs font-semibold text-green-600">
+                          NRI
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-    <button
-      onClick={() =>
-        setExpandedUser(expandedUser === user._id ? null : user._id)
-      }
-      className="px-3 py-1 text-xs bg-indigo-500 text-white rounded"
-    >
-      {expandedUser === user._id ? <FaAngleUp /> : <FaAngleDown />}
-    </button>
-  </div>
+                  <button
+                    onClick={() =>
+                      setExpandedUser(
+                        expandedUser === user._id ? null : user._id,
+                      )
+                    }
+                    className="px-3 py-1 text-xs bg-indigo-500 text-white rounded"
+                  >
+                    {expandedUser === user._id ? (
+                      <FaAngleUp />
+                    ) : (
+                      <FaAngleDown />
+                    )}
+                  </button>
+                </div>
 
-  {/* Expanded Section */}
-  {expandedUser === user._id && (
-    <div className="mt-3 text-sm space-y-2">
-      <p><b>Father:</b> {user.fatherName || "—"}</p>
-      <p><b>Nickname:</b> {user.nickname || "—"}</p>
-      <p><b>Email:</b> {user.email || "—"}</p>
-      <p><b>WhatsApp:</b> {user.whatsapp || "—"}</p>
-      <p><b>Aadhaar:</b> {user.aadhaar || "—"}</p>
-      <p><b>DOB:</b> {formatDate(user.dob)}</p>
-      <p><b>Blood Group:</b> {user.bloodGroup || "—"}</p>
-      <p><b>Address:</b> {user.address || "—"}</p>
-      <p><b>Valid Upto:</b> {STATIC_VALID_UPTO}</p>
-      <p>
-        <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
-      </p>
+                {/* Expanded Section */}
+                {expandedUser === user._id && (
+                  <div className="mt-3 text-sm space-y-2">
+                    <p>
+                      <b>Father:</b> {user.fatherName || "—"}
+                    </p>
+                    <p>
+                      <b>Nickname:</b> {user.nickname || "—"}
+                    </p>
+                    <p>
+                      <b>Email:</b> {user.email || "—"}
+                    </p>
+                    <p>
+                      <b>WhatsApp:</b> {user.whatsapp || "—"}
+                    </p>
+                    <p>
+                      <b>Aadhaar:</b> {user.aadhaar || "—"}
+                    </p>
+                    <p>
+                      <b>DOB:</b> {formatDate(user.dob)}
+                    </p>
+                    <p>
+                      <b>Blood Group:</b> {user.bloodGroup || "—"}
+                    </p>
+                    <p>
+                      <b>Address:</b> {user.address || "—"}
+                    </p>
+                    <p>
+                      <b>Valid Upto:</b> {STATIC_VALID_UPTO}
+                    </p>
+                    <p>
+                      <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
+                    </p>
 
-      {user.paymentProof && (
-        <a
-          href={user.paymentProof}
-          target="_blank"
-          rel="noreferrer"
-          className="text-blue-600 text-xs hover:underline"
-        >
-          View Payment Proof
-        </a>
-      )}
+                    {user.paymentProof && (
+                      <a
+                        href={user.paymentProof}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 text-xs hover:underline"
+                      >
+                        View Payment Proof
+                      </a>
+                    )}
 
-      
+                    {/* Actions */}
+                    <div className="flex gap-2 flex-wrap pt-2">
+                      <button
+                        onClick={() => approveUser(user._id)}
+                        disabled={actionLoading === user._id}
+                        className="px-2 py-1 text-xs bg-green-600 text-white rounded"
+                      >
+                        {actionLoading === user._id
+                          ? "Processing..."
+                          : "Approve"}
+                      </button>
 
-      {/* Actions */}
-      <div className="flex gap-2 flex-wrap pt-2">
-        <button
-          onClick={() => approveUser(user._id)}
-          disabled={actionLoading === user._id}
-          className="px-2 py-1 text-xs bg-green-600 text-white rounded"
-        >
-          {actionLoading === user._id ? "Processing..." : "Approve"}
-        </button>
-
-        <button
-          onClick={() => rejectUser(user._id)}
-          disabled={actionLoading === user._id}
-          className="px-2 py-1 text-xs bg-red-600 text-white rounded"
-        >
-          {actionLoading === user._id ? "Processing..." : "Reject"}
-        </button>
-      </div>
-    </div>
-  )}
-</div>
+                      <button
+                        onClick={() => rejectUser(user._id)}
+                        disabled={actionLoading === user._id}
+                        className="px-2 py-1 text-xs bg-red-600 text-white rounded"
+                      >
+                        {actionLoading === user._id
+                          ? "Processing..."
+                          : "Reject"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -286,8 +305,9 @@ function Detail({ label, value }) {
 }
 
 function SidebarButton({ label, icon, active, onClick, color }) {
-  const baseClasses = "w-full flex items-center px-4 py-2 rounded-lg transition font-medium";
-  
+  const baseClasses =
+    "w-full flex items-center px-4 py-2 rounded-lg transition font-medium";
+
   let buttonClasses = "";
   if (color === "red") {
     buttonClasses = "bg-red-600 text-white hover:bg-red-700";
@@ -304,4 +324,3 @@ function SidebarButton({ label, icon, active, onClick, color }) {
     </button>
   );
 }
-

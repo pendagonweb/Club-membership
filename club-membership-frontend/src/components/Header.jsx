@@ -1,19 +1,37 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import logo from "../assets/KING.webp";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 
 const navLinks = ["Home", "Activities", "Committee", "About"];
+const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [logo, setLogo] = useState(null); // { url, altText }
 
+  const isLoggedIn = localStorage.getItem("userlogged") === "true";
+
+  /* ── scroll listener ── */
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  /* ── fetch logo ── */
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const res = await axios.get(`${BASE}/api/logo`);
+        if (res.data?.success) setLogo(res.data.data);
+      } catch {
+        // 404 = no logo uploaded yet, silently fall back to nothing
+      }
+    };
+    fetchLogo();
   }, []);
 
   return (
@@ -30,13 +48,18 @@ export default function Header() {
       <div className="max-w-7xl mx-auto flex justify-between items-center px-5 sm:px-8 py-3.5">
         {/* Logo */}
         <Link to="/" className="flex items-center group">
-          <motion.img
-            src={logo}
-            alt="Kingstar Logo"
-            className="h-9 sm:h-11 w-auto object-contain"
-            whileHover={{ scale: 1.04 }}
-            transition={{ type: "spring", stiffness: 350, damping: 20 }}
-          />
+          {logo ? (
+            <motion.img
+              src={logo.url}
+              alt={logo.altText || "Logo"}
+              className="h-9 sm:h-11 w-auto object-contain"
+              whileHover={{ scale: 1.04 }}
+              transition={{ type: "spring", stiffness: 350, damping: 20 }}
+            />
+          ) : (
+            /* Skeleton shown while loading / no logo */
+            <div className="h-9 sm:h-11 w-24 rounded-lg bg-gray-100 animate-pulse" />
+          )}
         </Link>
 
         {/* Desktop Navigation */}
@@ -48,22 +71,24 @@ export default function Header() {
 
         {/* Right Buttons */}
         <div className="hidden md:flex items-center gap-3">
+          {/* LOGIN / DASHBOARD */}
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
             <Link
-              to="/login"
+              to={isLoggedIn ? "/dashboard" : "/login"}
               className="px-4 py-2 text-blue-600 font-semibold text-sm rounded-full border border-blue-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
             >
-              Login
+              {isLoggedIn ? "Dashboard" : "Login"}
             </Link>
           </motion.div>
 
+          {/* REGISTER BUTTON */}
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
             <Link
               to="/register"
               className="relative overflow-hidden bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all duration-200 group"
             >
               <span className="relative z-10">Become a Member</span>
-              {/* shine sweep on hover */}
+              {/* Shine Effect */}
               <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12" />
             </Link>
           </motion.div>
@@ -130,6 +155,7 @@ export default function Header() {
                 </motion.div>
               ))}
 
+              {/* MOBILE ACTION BUTTONS */}
               <motion.div
                 initial={{ x: -16, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -137,11 +163,11 @@ export default function Header() {
                 className="pt-4 mt-2 border-t border-gray-100 space-y-3"
               >
                 <Link
-                  to="/login"
+                  to={isLoggedIn ? "/dashboard" : "/login"}
                   className="block text-center px-4 py-3 rounded-xl border border-blue-200 text-blue-600 font-semibold text-base hover:bg-blue-50 transition-colors"
                   onClick={() => setOpen(false)}
                 >
-                  Login
+                  {isLoggedIn ? "Dashboard" : "Login"}
                 </Link>
 
                 <Link
@@ -174,7 +200,6 @@ function NavLink({ item }) {
         to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
         className="relative px-3.5 py-2 text-sm rounded-lg hover:text-blue-600 transition-colors duration-150 block"
       >
-        {/* Pill bg on hover */}
         <AnimatePresence>
           {hovered && (
             <motion.span

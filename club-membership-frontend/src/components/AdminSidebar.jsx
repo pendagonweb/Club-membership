@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 
-const TABS = [
+// Original tabs + Registration + Activity added
+const DESKTOP_TABS = [
   {
     label: "Requests",
     path: "/admin",
@@ -72,6 +73,116 @@ const TABS = [
       </svg>
     ),
   },
+  {
+    label: "Gallery",
+    path: "/admingallery",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    ),
+  },
+  {
+    label: "Activity",
+    path: "/adminactivities",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+    ),
+  },
+];
+
+// Mobile: Registration, Panels, Gallery, Activity only
+const MOBILE_TABS = [
+  {
+    label: "Registration",
+    path: "/admin",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="12" y1="18" x2="12" y2="12" />
+        <line x1="9" y1="15" x2="15" y2="15" />
+      </svg>
+    ),
+  },
+  {
+    label: "Panels",
+    path: "/panels",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    label: "Gallery",
+    path: "/admingallery",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <polyline points="21 15 16 10 5 21" />
+      </svg>
+    ),
+  },
+  {
+    label: "Activity",
+    path: "/adminactivities",
+    icon: (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+    ),
+  },
 ];
 
 export default function AdminSidebar({
@@ -79,6 +190,7 @@ export default function AdminSidebar({
   pendingCount = 0,
   membersCount = 0,
   juniorCount = 0,
+  registrationCount = 0,
   loading = false,
 }) {
   const navigate = useNavigate();
@@ -88,6 +200,7 @@ export default function AdminSidebar({
     "/admin": pendingCount,
     "/users": membersCount,
     "/juniors": juniorCount,
+    "/registration": registrationCount,
   };
 
   return (
@@ -113,7 +226,6 @@ export default function AdminSidebar({
           flex-shrink: 0;
         }
 
-        /* subtle grid texture */
         .sidebar-desktop::before {
           content: '';
           position: absolute;
@@ -125,7 +237,6 @@ export default function AdminSidebar({
           pointer-events: none;
         }
 
-        /* glowing orb */
         .sidebar-desktop::after {
           content: '';
           position: absolute;
@@ -198,7 +309,6 @@ export default function AdminSidebar({
           border-color: rgba(99,102,241,0.2);
         }
 
-        /* left accent line on active */
         .nav-item.active::before {
           content: '';
           position: absolute;
@@ -242,6 +352,12 @@ export default function AdminSidebar({
         .nav-item:not(.active) .nav-badge {
           background: #e8eaf0;
           color: #9ca3af;
+        }
+
+        .nav-section-divider {
+          height: 1px;
+          background: linear-gradient(90deg, rgba(99,102,241,0.15) 0%, transparent 100%);
+          margin: 8px 2px;
         }
 
         .sidebar-footer {
@@ -334,7 +450,6 @@ export default function AdminSidebar({
         .mob-logout-icon { width: 20px; height: 20px; color: #ef4444; }
         .mob-logout-label { font-size: 10px; font-weight: 600; color: #ef4444; }
 
-        /* page padding on mobile so content isn't hidden behind bottom nav */
         @media (max-width: 767px) {
           .sidebar-desktop { display: none !important; }
         }
@@ -358,21 +473,25 @@ export default function AdminSidebar({
           <div className="brand-divider" />
 
           <nav className="sidebar-nav">
-            {TABS.map((tab) => {
+            {DESKTOP_TABS.map((tab, index) => {
               const isActive = location.pathname === tab.path;
               const count = counts[tab.path];
+              // Add a subtle divider before Registration to separate new items
+              const showDivider = index === 4;
               return (
-                <button
-                  key={tab.path}
-                  onClick={() => navigate(tab.path)}
-                  className={`nav-item ${isActive ? "active" : ""}`}
-                >
-                  <span className="nav-icon">{tab.icon}</span>
-                  <span className="nav-label">{tab.label}</span>
-                  {!loading && count != null && (
-                    <span className="nav-badge">{count}</span>
-                  )}
-                </button>
+                <div key={tab.path}>
+                  {showDivider && <div className="nav-section-divider" />}
+                  <button
+                    onClick={() => navigate(tab.path)}
+                    className={`nav-item ${isActive ? "active" : ""}`}
+                  >
+                    <span className="nav-icon">{tab.icon}</span>
+                    <span className="nav-label">{tab.label}</span>
+                    {!loading && count != null && (
+                      <span className="nav-badge">{count}</span>
+                    )}
+                  </button>
+                </div>
               );
             })}
           </nav>
@@ -399,7 +518,7 @@ export default function AdminSidebar({
 
         {/* ── MOBILE BOTTOM NAV ── */}
         <nav className="mobile-bottom-nav">
-          {TABS.map((tab) => {
+          {MOBILE_TABS.map((tab) => {
             const isActive = location.pathname === tab.path;
             const count = counts[tab.path];
             const hasBadge = !loading && count != null && count > 0;

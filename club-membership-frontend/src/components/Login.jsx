@@ -79,6 +79,10 @@ export default function Login() {
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("userId", res.data.userId);
+
+      // ADD THIS
+      localStorage.setItem("userlogged", "true");
+
       navigate("/dashboard");
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");

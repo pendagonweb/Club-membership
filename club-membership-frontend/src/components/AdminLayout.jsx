@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
+import AdminNavigation from "./AdminNavigation"; // ← add
+
 import axios from "axios";
 
 const { VITE_BACKEND_URL } = import.meta.env;
@@ -80,9 +82,15 @@ export default function AdminLayout({ children }) {
       <AdminSidebar
         pendingCount={pendingCount}
         membersCount={membersCount}
-        juniorCount={juniorCount} 
+        juniorCount={juniorCount}
         loading={loading}
         onLogout={handleLogout}
+      />
+      <AdminNavigation // ← add
+        pendingCount={pendingCount}
+        membersCount={membersCount}
+        juniorCount={juniorCount}
+        loading={loading}
       />
 
       <main className="flex-1 p-4 md:p-6 overflow-x-auto">

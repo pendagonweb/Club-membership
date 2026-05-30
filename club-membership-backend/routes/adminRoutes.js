@@ -1,7 +1,7 @@
 import express from "express";
-import jwt from "jsonwebtoken"; // ← added import
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import adminAuth from "../middleware/adminauth.js"; // your middleware
+import adminAuth from "../middleware/adminauth.js";
 
 const router = express.Router();
 
@@ -113,9 +113,8 @@ router.put("/reject/:id", adminAuth, async (req, res) => {
       });
     }
 
-    // Clear approval-related fields SAFELY
     user.membershipStatus = "rejected";
-    user.membershipId = undefined; // ✅ NOT null
+    user.membershipId = undefined;
     user.approvedAt = undefined;
     user.expiryDate = undefined;
 
@@ -136,7 +135,7 @@ router.put("/reject/:id", adminAuth, async (req, res) => {
 });
 
 /* =========================
-   GET ALL USERS
+   GET ALL USERS (admin)
 ========================= */
 router.get("/all-users", adminAuth, async (req, res) => {
   try {
@@ -149,15 +148,36 @@ router.get("/all-users", adminAuth, async (req, res) => {
 });
 
 /* =========================
+   GET COMMITTEE (public)
+   Returns only approved members with safe public fields.
+   Leaders (designation !== "member") are separated from members.
+========================= */
+router.get("/committee", async (req, res) => {
+  try {
+    const users = await User.find({ membershipStatus: "approved" })
+      .select("name nickname designation photo bloodGroup place nri whatsapp")
+      .sort({ name: 1 });
+
+    const leaders = users.filter((u) => u.designation !== "member");
+    const members = users.filter((u) => u.designation === "member");
+
+    res.status(200).json({ success: true, data: { leaders, members } });
+  } catch (error) {
+    console.error("Committee fetch error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/* =========================
    EDIT / UPDATE USER DETAILS
 ========================= */
 router.put("/user/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Whitelist fields admin is allowed to edit
     const allowedUpdates = [
       "name",
+      "designation",
       "nickname",
       "phone",
       "whatsapp",

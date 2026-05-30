@@ -1,15 +1,11 @@
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import {
-  ArrowRight,
-  MapPin,
-  Calendar,
-  Star,
-  ChevronRight,
-} from "lucide-react";
+import { ArrowRight, MapPin, Calendar, Star, ChevronRight } from "lucide-react";
 import ActivitiesSection from "../components/ActivitiesSection";
 import EventsSection from "../components/EventsSection";
+import GalleryPage from "../components/GalleryPage";
+import Hero from "../assets/Kings.jpg";
 
 /* ── Reusable fade-up wrapper ── */
 const FadeUp = ({ children, delay = 0, className = "" }) => (
@@ -30,16 +26,6 @@ const SectionLabel = ({ text }) => (
     {text}
   </span>
 );
-
-/* ── Gallery images ── */
-const galleryImgs = [
-  "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80",
-  "https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&q=80",
-  "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&q=80",
-  "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=600&q=80",
-  "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
-  "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80",
-];
 
 /* ── Awards ── */
 const awards = [
@@ -237,7 +223,7 @@ export default function Home() {
           <FadeUp delay={0.15}>
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=700&q=80"
+                src={Hero}
                 alt="Community gathering"
                 className="w-full h-72 sm:h-80 object-cover rounded-3xl shadow-xl"
               />
@@ -255,35 +241,10 @@ export default function Home() {
           </FadeUp>
         </div>
       </section>
-      <EventsSection/>
+      <EventsSection />
       <ActivitiesSection />
       {/* ── 5. GALLERY ───────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 px-5 sm:px-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <FadeUp className="text-center mb-14">
-            <SectionLabel text="Moments" />
-            <h2 className="text-3xl sm:text-4xl font-bold">News Gallery</h2>
-          </FadeUp>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            {galleryImgs.map((src, i) => (
-              <FadeUp key={i} delay={i * 0.06}>
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className={`overflow-hidden rounded-2xl ${i === 0 ? "sm:col-span-2 row-span-2 h-64 sm:h-full" : "h-36 sm:h-44"}`}
-                >
-                  <img
-                    src={src}
-                    alt={`Gallery ${i + 1}`}
-                    className="w-full h-full object-cover hover:brightness-95 transition-all duration-300"
-                  />
-                </motion.div>
-              </FadeUp>
-            ))}
-          </div>
-        </div>
-      </section>
+      <GalleryPage />
 
       {/* ── 6. TESTIMONIAL ───────────────────────────────────── */}
       <section className="py-20 sm:py-28 px-5 sm:px-8">

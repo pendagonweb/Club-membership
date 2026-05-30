@@ -325,6 +325,7 @@ export default function AdminUserList() {
     { code: "+971", label: "🇦🇪 +971" },
     { code: "+974", label: "🇶🇦 +974" },
     { code: "+966", label: "🇸🇦 +966" },
+    { code: "+968", label: "🇴🇲 +968" },
     { code: "+60", label: "🇲🇾 +60" },
     { code: "+65", label: "🇸🇬 +65" },
     { code: "+61", label: "🇦🇺 +61" },
@@ -358,9 +359,10 @@ export default function AdminUserList() {
     setEditingUser(user);
     setEditForm({
       name: user.name || "",
+      designation: user.designation || "",
       nickname: user.nickname || "",
       phoneCode: ph.code,
-      phone: ph.number, 
+      phone: ph.number,
       password: user.password || "",
       waCode: wa.code,
       whatsapp: wa.number,
@@ -624,17 +626,34 @@ Kingstar Arts & Sports Club`;
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                      Membership expiry date
-                    </label>
-                    <input
-                      type="date"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
-                      value={editForm.expiryDate}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, expiryDate: e.target.value })
-                      }
-                    />
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                        Membership expiry date
+                      </label>
+                      <input
+                        type="date"
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                        value={editForm.expiryDate}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            expiryDate: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                        Designation
+                      </label>
+                      <input
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                        value={editForm.designation}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, designation: e.target.value })
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -994,6 +1013,9 @@ function UserCard({
 
       {expanded && (
         <div className="mt-3 text-sm space-y-2">
+          <p>
+            <b>Designation:</b> {user.designation}
+          </p>
           <p>
             <b>Phone:</b> {user.phone}
           </p>

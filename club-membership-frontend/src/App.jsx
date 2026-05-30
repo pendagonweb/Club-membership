@@ -18,6 +18,9 @@ import VotingPage from "./components/VotingPage";
 import VotingResults from "./pages/VotingResults";
 import AdminActivities from "./components/AdminActivities";
 import GalleryManager from "./pages/GalleryManager";
+import ActivityPage from "./pages/ActivityPage";
+import AdminLogoPanel from "./pages/AdminLogoPanel";
+import CommitteePage from "./pages/CommitteePage";
 
 function PublicLayout({ children }) {
   return (
@@ -90,11 +93,20 @@ function App() {
             </PublicLayout>
           }
         />
+        
         <Route
           path="/results"
           element={
             <PublicLayout>
               <VotingResults />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/activities"
+          element={
+            <PublicLayout>
+              <ActivityPage />
             </PublicLayout>
           }
         />
@@ -114,12 +126,28 @@ function App() {
             </PublicLayout>
           }
         />
+        <Route
+          path="/committee"
+          element={
+            <PublicLayout>
+              <CommitteePage />
+            </PublicLayout>
+          }
+        />
         {/* ADMIN ROUTES */}
         <Route
           path="/admin"
           element={
             <AdminLayout>
               <AdminPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/adminlogo"
+          element={
+            <AdminLayout>
+              <AdminLogoPanel />
             </AdminLayout>
           }
         />

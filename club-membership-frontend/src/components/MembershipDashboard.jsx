@@ -18,6 +18,11 @@ import {
   HiExclamationCircle,
   HiSave,
   HiX,
+  HiInformationCircle,
+  HiUserGroup,
+  HiSparkles,
+  HiEye,
+  HiEyeOff,
 } from "react-icons/hi";
 import MembershipCard from "../pages/MemberCard";
 
@@ -186,6 +191,7 @@ export default function MemberDashboard() {
   }, [navigate]);
 
   const handleLogout = () => {
+    localStorage.setItem("userlogged", "false");
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     navigate("/login");
@@ -300,18 +306,68 @@ export default function MemberDashboard() {
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <main className="flex-1 pb-24 md:pb-8 pt-[60px] md:pt-0 px-0 md:p-6 space-y-0 md:space-y-6 overflow-x-hidden">
-        {/* Announcement banner */}
-        <div className="mx-3 mt-3 md:mx-0 md:mt-0 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-between gap-2 px-4 py-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <HiSpeakerphone className="text-white text-lg shrink-0" />
-            <p className="text-white text-xs font-semibold leading-snug truncate">
-              KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27
-            </p>
+      <main className="flex-1 pb-24 md:pb-8 pt-[20px] md:pt-0 px-0 md:p-6 space-y-0 md:space-y-6 overflow-x-hidden">
+        {/* ── ANNOUNCEMENT BANNER with marquee + glow animations ── */}
+        <style>{`
+  @keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+  @keyframes bannerPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.0); }
+    50%       { box-shadow: 0 0 18px 4px rgba(99,102,241,0.55); }
+  }
+  @keyframes voteBtnGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+    50%       { box-shadow: 0 0 10px 3px rgba(255,255,255,0.7); }
+  }
+  @keyframes speakerBounce {
+    0%, 100% { transform: rotate(-8deg) scale(1); }
+    50%       { transform: rotate(8deg) scale(1.2); }
+  }
+  .banner-marquee {
+    display: inline-block;
+    white-space: nowrap;
+  }
+  @media (max-width: 768px) {
+    .banner-marquee {
+      animation: marquee 10s linear infinite;
+    }
+  }
+  .banner-glow {
+    animation: bannerPulse 2.4s ease-in-out infinite;
+  }
+  .vote-btn-glow {
+    animation: voteBtnGlow 1.8s ease-in-out infinite;
+  }
+  .speaker-bounce {
+    display: inline-block;
+    animation: speakerBounce 1s ease-in-out infinite;
+  }
+`}</style>
+
+        <div className="mx-3 mt-3 md:mx-0 md:mt-0 banner-glow bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-between gap-2 px-4 py-3 overflow-hidden">
+          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+            <span className="speaker-bounce shrink-0">
+              <HiSpeakerphone className="text-white text-lg" />
+            </span>
+            {/* Marquee wrapper */}
+            <div className="overflow-hidden flex-1">
+              <div className="flex w-max">
+                <span className="banner-marquee text-white text-xs font-semibold leading-snug pr-16">
+                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27 
+                </span>
+                <span
+                  className="banner-marquee text-white text-xs font-semibold leading-snug pr-16"
+                >
+                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27 
+                </span>
+              </div>
+            </div>
           </div>
           <button
             onClick={() => navigate("/vote")}
-            className="shrink-0 flex items-center gap-1 bg-white/25 border border-white/40 text-white text-xs font-bold px-3 py-1.5 rounded-full active:bg-white/40 transition"
+            className="vote-btn-glow shrink-0 flex items-center gap-1 bg-white/25 border border-white/40 text-white text-xs font-bold px-3 py-1.5 rounded-full active:bg-white/40 transition"
           >
             <HiCheckCircle className="text-sm" />
             Vote
@@ -321,18 +377,18 @@ export default function MemberDashboard() {
         {/* ── MOBILE PROFILE HERO ── */}
         <div className="md:hidden mx-3 mt-3 bg-white rounded-2xl shadow-sm overflow-hidden">
           {/* Gradient bar */}
-          <div className="h-16 bg-gradient-to-br from-indigo-400 to-blue-500" />
-          <div className="px-4 pb-4 -mt-8">
+          <div className="h-10 bg-gradient-to-br from-indigo-400 to-blue-500" />
+          <div className="px-4 pb-4 -mt-6">
             <div className="flex items-end gap-3 mb-3">
               <div className="relative">
                 <img
                   src={member.photo || "/default-avatar.png"}
                   alt={member.name}
-                  className="w-16 h-16 rounded-full border-3 border-white shadow-md object-cover"
+                  className="w-20 h-20 rounded-full border-3 border-white shadow-md object-cover"
                 />
               </div>
               <div className="pb-1 min-w-0 flex-1">
-                <h1 className="text-base font-extrabold text-gray-900 uppercase tracking-wide truncate leading-tight">
+                <h1 className="text-lg font-extrabold text-gray-900 uppercase tracking-wide truncate leading-tight">
                   {member.name}
                 </h1>
                 <p className="text-gray-500 text-xs">{member.phone}</p>
@@ -450,7 +506,7 @@ export default function MemberDashboard() {
 
         {/* ── MEMBERSHIP CARD ── */}
         {member.membershipStatus === "approved" && (
-          <div className="mx-3 md:mx-0 rounded-2xl md:rounded-3xl shadow-sm md:shadow-xl bg-white p-3 flex flex-col items-center overflow-x-auto">
+          <div className="mx-3 mt-4 sm:mt-0 md:mx-0 rounded-2xl md:rounded-3xl shadow-sm md:shadow-xl bg-white p-3 flex flex-col items-center overflow-x-auto">
             <MembershipCard user={member} />
           </div>
         )}
@@ -463,9 +519,9 @@ export default function MemberDashboard() {
             </h2>
             <button
               onClick={() => setShowEdit(true)}
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 text-white sm:text-sm text-xs font-semibold hover:bg-indigo-600 transition-all"
             >
-              <HiPencil className="text-base" />
+              <HiPencil className="sm:text-base" />
               Edit Profile
             </button>
           </div>
@@ -504,16 +560,22 @@ export default function MemberDashboard() {
             onClick={() => setActiveTab("home")}
           />
           <TabBtn
-            icon={<HiPencil className="text-xl" />}
-            label="Edit"
+            icon={<HiSparkles className="text-xl" />}
+            label="Activities"
             active={false}
-            onClick={() => setShowEdit(true)}
+            onClick={() => navigate("/activities")}
           />
           <TabBtn
-            icon={<HiClipboardCheck className="text-xl" />}
-            label="Vote"
+            icon={<HiUserGroup className="text-xl" />}
+            label="Members"
             active={false}
-            onClick={() => navigate("/vote")}
+            onClick={() => navigate("/committee")}
+          />
+          <TabBtn
+            icon={<HiInformationCircle className="text-xl" />}
+            label="About"
+            active={false}
+            onClick={() => navigate("/about")}
           />
           <TabBtn
             icon={<HiLogout className="text-xl" />}
@@ -587,6 +649,7 @@ function EditProfileModal({ member, onClose, onSuccess, backendUrl }) {
   const [showCropper, setShowCropper] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef();
 
   const handleChange = (e) =>
@@ -685,6 +748,8 @@ function EditProfileModal({ member, onClose, onSuccess, backendUrl }) {
             fileInputRef={fileInputRef}
             handlePhotoChange={handlePhotoChange}
             error={error}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
           />
         </div>
       </div>
@@ -804,12 +869,15 @@ function EditProfileModal({ member, onClose, onSuccess, backendUrl }) {
                 onChange={handleChange}
                 maxLength={12}
               />
-              <Field
+              {/* Password field with eye toggle — desktop */}
+              <PasswordField
                 label="Password"
                 name="password"
-                type="password"
                 value={form.password}
                 onChange={handleChange}
+                show={showPassword}
+                onToggle={() => setShowPassword((v) => !v)}
+                desktop
               />
               <SelectField
                 label="Blood Group"
@@ -897,6 +965,8 @@ function MobileEditBody({
   fileInputRef,
   handlePhotoChange,
   error,
+  showPassword,
+  setShowPassword,
 }) {
   return (
     <div className="px-4 py-5 space-y-5">
@@ -1033,12 +1103,14 @@ function MobileEditBody({
         onChange={handleChange}
         maxLength={12}
       />
-      <MobileField
+      {/* Password with eye toggle — mobile */}
+      <PasswordField
         label="Password"
         name="password"
-        type="password"
         value={form.password}
         onChange={handleChange}
+        show={showPassword}
+        onToggle={() => setShowPassword((v) => !v)}
       />
 
       {error && (
@@ -1107,6 +1179,64 @@ function MobileSelectField({ label, name, value, onChange, options }) {
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+/* ======================
+   PASSWORD FIELD with eye toggle
+====================== */
+function PasswordField({
+  label,
+  name,
+  value,
+  onChange,
+  show,
+  onToggle,
+  desktop,
+}) {
+  const baseInput = desktop
+    ? "border border-indigo-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-indigo-50 flex-1 min-w-0"
+    : "border border-gray-200 rounded-xl px-3 py-3 text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 flex-1 min-w-0";
+  const labelClass = desktop
+    ? "text-xs font-semibold text-indigo-600 uppercase tracking-wide"
+    : "text-xs font-semibold text-gray-500 uppercase tracking-wide";
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className={labelClass}>{label}</label>
+      <div className="flex items-center gap-0">
+        <input
+          type={show ? "text" : "password"}
+          name={name}
+          value={value}
+          onChange={onChange}
+          className={baseInput}
+          style={{
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+            borderRight: "none",
+          }}
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`flex items-center justify-center px-3 h-full border focus:outline-none transition-colors ${
+            desktop
+              ? "border-indigo-200 bg-indigo-50 text-indigo-400 hover:text-indigo-600 rounded-r-xl"
+              : "border-gray-200 bg-gray-50 text-gray-400 hover:text-gray-600 rounded-r-xl"
+          }`}
+          style={{ minHeight: desktop ? "38px" : "50px", borderLeft: "none" }}
+          tabIndex={-1}
+          aria-label={show ? "Hide password" : "Show password"}
+        >
+          {show ? (
+            <HiEyeOff className="text-lg" />
+          ) : (
+            <HiEye className="text-lg" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }
