@@ -646,13 +646,29 @@ Kingstar Arts & Sports Club`;
                       <label className="block text-xs font-medium text-gray-600 mb-1.5">
                         Designation
                       </label>
-                      <input
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                      <select
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400 bg-white"
                         value={editForm.designation}
                         onChange={(e) =>
-                          setEditForm({ ...editForm, designation: e.target.value })
+                          setEditForm({
+                            ...editForm,
+                            designation: e.target.value,
+                          })
                         }
-                      />
+                      >
+                        <option value="">— Select —</option>
+                        <option value="President">President</option>
+                        <option value="Gen. Secretary">Gen. Secretary</option>
+                        <option value="Treasurer">Treasurer</option>
+                        <option value="Vice President">Vice President</option>
+                        <option value="Joint Secretary">Joint Secretary</option>
+                        <option value="Captain">Captain</option>
+                        <option value="Exec. Member">Exec. Member</option>
+                        <option value="Chairman">Chairman</option>
+                        <option value="Vice Chairman">Vice Chairman</option>
+                        <option value="Convenor">Convenor</option>
+                        <option value="Joint convenor">Joint convenor</option>
+                      </select>
                     </div>
                   </div>
                 </div>

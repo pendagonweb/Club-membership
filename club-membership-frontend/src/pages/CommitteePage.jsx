@@ -10,6 +10,9 @@ import {
   RiCloseLine,
   RiTeamLine,
   RiUserStarLine,
+  RiGlobalLine,
+  RiGroupLine,
+  RiShieldStarLine,
 } from "react-icons/ri";
 
 const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -18,53 +21,29 @@ const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 const capitalize = (s) =>
   s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
 
-// Known country code prefixes (longest first so we match +971 before +97, etc.)
 const COUNTRY_CODE_PREFIXES = [
-  "971", // UAE
-  "974", // Qatar
-  "966", // Saudi Arabia
-  "968", // Oman
-  "965", // Kuwait
-  "973", // Bahrain
-  "961", // Lebanon
-  "44", // UK
-  "61", // Australia
-  "65", // Singapore
-  "60", // Malaysia
-  "1", // USA/Canada
-  "91", // India
+  "971",
+  "974",
+  "966",
+  "968",
+  "965",
+  "973",
+  "961",
+  "44",
+  "61",
+  "65",
+  "60",
+  "1",
+  "91",
 ];
 
-/**
- * Converts any stored phone value to a wa.me-compatible number.
- *
- * Handles all of these formats:
- *   "+919876543210"   → "919876543210"
- *   "919876543210"    → "919876543210"
- *   "9876543210"      → "919876543210"  (10-digit → assume India)
- *   "+971501234567"   → "971501234567"
- *   "971501234567"    → "971501234567"
- *   "+44 7911 123456" → "447911123456"
- */
 const toWhatsAppNumber = (raw = "") => {
-  // Strip everything except digits
   const digits = String(raw).replace(/\D/g, "");
-
   if (!digits) return null;
-
-  // If it already starts with a known country code, use it as-is
   for (const prefix of COUNTRY_CODE_PREFIXES) {
-    if (digits.startsWith(prefix)) {
-      return digits;
-    }
+    if (digits.startsWith(prefix)) return digits;
   }
-
-  // Plain 10-digit number → prepend India code
-  if (digits.length === 10) {
-    return `91${digits}`;
-  }
-
-  // Fallback: return as-is (e.g. already has some country code we don't know)
+  if (digits.length === 10) return `91${digits}`;
   return digits;
 };
 
@@ -112,13 +91,12 @@ const MemberCard = ({ user, index, isLeader }) => {
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 z-10" />
       )}
 
-      {/* Photo — fixed aspect ratio so all cards identical */}
-      <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
+      {/* Photo */}
+      <div className="relative w-full overflow-hidden aspect-square bg-gray-100">
         <Avatar photo={user.photo} name={user.name} />
 
-        {/* NRI tag overlaid on photo */}
         {user.nri === "Yes" && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-full border border-indigo-100 shadow-sm">
+          <div className="absolute top-2 right-3 flex items-center gap-0.5 bg-white/90 backdrop-blur-sm text-indigo-600 text-[8px] font-bold px-1 py-0.5 rounded-full border border-indigo-100 shadow-sm">
             <RiFlightTakeoffLine size={10} />
             NRI
           </div>
@@ -126,46 +104,35 @@ const MemberCard = ({ user, index, isLeader }) => {
       </div>
 
       {/* Body */}
-      <div className="flex flex-col flex-1 p-4 gap-3">
-        {/* Name + designation */}
+      <div className="flex flex-col flex-1 p-4 gap-3 relative">
         <div>
-          <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-1">
-            {user.name}
-          </h3>
           {user.nickname && (
-            <p className="text-xs text-gray-400 mt-0.5 italic line-clamp-1">
-              "{user.nickname}"
-            </p>
+            <h3 className=" font-bold text-gray-900 text-xs leading-snug line-clamp-1">
+              {user.nickname}
+            </h3>
           )}
+          <p className="text-xs text-gray-400  italic line-clamp-1">
+            {user.name}
+          </p>
+
           {isLeader && (
             <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
               {capitalize(user.designation)}
             </span>
           )}
         </div>
-
-        {/* Place */}
-        {user.place && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <RiMapPinLine size={12} className="text-gray-300 shrink-0" />
-            <span className="line-clamp-1">{user.place}</span>
-          </div>
-        )}
-
-        {/* WhatsApp button — pushed to bottom */}
-        <div className="mt-auto pt-2">
+        <div className="absolute -top-3 right-3 ">
           {waLink ? (
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-green-50 hover:bg-green-500 text-green-600 hover:text-white text-xs font-semibold border border-green-100 hover:border-green-500 transition-all duration-200"
+              className="flex w-6 h-6 items-center justify-center rounded-full bg-green-50 hover:bg-green-500 text-green-600 hover:text-white text-xs font-semibold border border-green-100 hover:border-green-500 transition-all duration-200"
             >
-              <RiWhatsappLine size={14} />
-              WhatsApp
+              <RiWhatsappLine size={16} />
             </a>
           ) : (
-            <div className="h-8" /> /* spacer so cards without WA still align */
+            <div className="h-8" />
           )}
         </div>
       </div>
@@ -216,22 +183,88 @@ const SearchBar = ({ value, onChange }) => (
 );
 
 /* ── Section divider label ───────────────────────────────────────────────── */
-const SectionLabel = ({ icon: Icon, label }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 16 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.45 }}
-    className="flex items-center gap-3 mb-7"
-  >
-    <div className="flex items-center gap-2 text-blue-600">
-      <Icon size={16} />
-      <span className="text-xs font-bold uppercase tracking-widest text-blue-600">
-        {label}
-      </span>
-    </div>
-    <div className="flex-1 h-px bg-gray-100" />
-  </motion.div>
+const SectionLabel = ({ icon: Icon, label, accent = "blue" }) => {
+  const colorMap = {
+    blue: {
+      text: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-100",
+      divider: "bg-blue-100",
+    },
+    indigo: {
+      text: "text-indigo-600",
+      bg: "bg-indigo-50",
+      border: "border-indigo-100",
+      divider: "bg-indigo-100",
+    },
+    amber: {
+      text: "text-amber-600",
+      bg: "bg-amber-50",
+      border: "border-amber-100",
+      divider: "bg-amber-100",
+    },
+  };
+  const c = colorMap[accent] || colorMap.blue;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.45 }}
+      className="flex items-center gap-3 mb-6"
+    >
+      <div className={`flex items-center gap-2 ${c.text}`}>
+        <Icon size={16} />
+        <span
+          className={`text-xs font-bold uppercase tracking-widest ${c.text}`}
+        >
+          {label}
+        </span>
+      </div>
+      <div className={`flex-1 h-px ${c.divider}`} />
+    </motion.div>
+  );
+};
+
+/* ── Committee Panel (one half of the split) ─────────────────────────────── */
+const CommitteePanel = ({
+  icon,
+  label,
+  accent,
+  members,
+  emptyText,
+  skeletonCount = 3,
+  loading,
+}) => (
+  <div className="flex-1 min-w-0">
+    {loading ? (
+      <>
+        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse mb-6" />
+        <div className="grid grid-cols-3 gap-3">
+          {Array.from({ length: skeletonCount }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </>
+    ) : (
+      <>
+        <SectionLabel icon={icon} label={label} accent={accent} />
+        {members.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-300 gap-2">
+            <icon size={32} />
+            <p className="text-xs">{emptyText}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            {members.map((user, i) => (
+              <MemberCard key={user._id} user={user} index={i} isLeader />
+            ))}
+          </div>
+        )}
+      </>
+    )}
+  </div>
 );
 
 /* ── Main Page ───────────────────────────────────────────────────────────── */
@@ -259,13 +292,79 @@ const CommitteePage = () => {
   }, []);
 
   const q = search.toLowerCase();
-  const filteredLeaders = leaders.filter(
-    (u) =>
-      !q ||
-      u.name?.toLowerCase().includes(q) ||
-      u.designation?.toLowerCase().includes(q) ||
-      u.place?.toLowerCase().includes(q),
+
+  const DESIGNATION_ORDER = [
+    "President",
+    "Gen. Secretary",
+    "Treasurer",
+    "Vice President",
+    "Joint Secretary",
+    "Captain",
+    "Exec. Member",
+    "Chairman",
+    "Vice Chairman",
+    "Convenor",
+    "Joint convenor",
+  ];
+
+  const designationRank = (u) => {
+    const idx = DESIGNATION_ORDER.findIndex(
+      (d) => d.toLowerCase() === (u.designation || "").toLowerCase().trim(),
+    );
+    return idx === -1 ? 999 : idx;
+  };
+
+  const sortByDesignation = (arr) =>
+    [...arr].sort((a, b) => designationRank(a) - designationRank(b));
+
+  const ADVISORY_DESIGNATIONS = [
+    "chairman",
+    "vice chairman",
+    "convenor",
+    "joint convenor",
+  ];
+
+  const isExec = (u) =>
+    u.designation?.toLowerCase().replace(/\s+/g, " ").trim() === "exec. member";
+
+  const isAdvisory = (u) =>
+    ADVISORY_DESIGNATIONS.includes(
+      u.designation?.toLowerCase().replace(/\s+/g, " ").trim(),
+    );
+
+  const matchesSearch = (u) =>
+    !q ||
+    u.name?.toLowerCase().includes(q) ||
+    u.designation?.toLowerCase().includes(q) ||
+    u.place?.toLowerCase().includes(q);
+
+  // Split leaders into general (non-NRI, non-exec, non-advisory) and international (NRI, non-exec, non-advisory)
+  const generalLeaders = sortByDesignation(
+    leaders.filter(
+      (u) =>
+        u.nri !== "Yes" && !isExec(u) && !isAdvisory(u) && matchesSearch(u),
+    ),
   );
+  const intlLeaders = sortByDesignation(
+    leaders.filter(
+      (u) =>
+        u.nri === "Yes" && !isExec(u) && !isAdvisory(u) && matchesSearch(u),
+    ),
+  );
+
+  // Advisory board — split by NRI same as committee
+  const generalAdvisory = sortByDesignation(
+    leaders.filter((u) => isAdvisory(u) && u.nri !== "Yes" && matchesSearch(u)),
+  );
+  const intlAdvisory = sortByDesignation(
+    leaders.filter((u) => isAdvisory(u) && u.nri === "Yes" && matchesSearch(u)),
+  );
+
+  // Exec members — prepended to the members list
+  const execMembers = sortByDesignation(
+    leaders.filter((u) => isExec(u) && matchesSearch(u)),
+  );
+
   const filteredMembers = members.filter(
     (u) =>
       !q ||
@@ -274,7 +373,16 @@ const CommitteePage = () => {
       u.place?.toLowerCase().includes(q),
   );
 
-  const totalFiltered = filteredLeaders.length + filteredMembers.length;
+  // Combined members list: exec first, then regular members
+  const allMembers = [...execMembers, ...filteredMembers];
+
+  const totalFiltered =
+    generalLeaders.length +
+    intlLeaders.length +
+    generalAdvisory.length +
+    intlAdvisory.length +
+    execMembers.length +
+    filteredMembers.length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -335,80 +443,205 @@ const CommitteePage = () => {
           </div>
         )}
 
-        {/* Loading skeletons */}
-        {loading && (
-          <>
-            <div>
-              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-7" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <SkeletonCard key={i} />
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-7" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                  <SkeletonCard key={i} />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {!loading && !error && (
-          <>
-            {/* ── Committee section ── */}
-            {filteredLeaders.length > 0 && (
-              <section>
-                <SectionLabel icon={RiUserStarLine} label="Committee" />
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
-                  {filteredLeaders.map((user, i) => (
-                    <MemberCard key={user._id} user={user} index={i} isLeader />
-                  ))}
+        {/* ── Committee split section ── */}
+        {(loading ||
+          (!error &&
+            (generalLeaders.length > 0 || intlLeaders.length > 0))) && (
+          <section>
+            {/* Section header */}
+            {!loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45 }}
+                className="flex items-center gap-3 mb-8"
+              >
+                <div className="flex items-center gap-2 text-gray-700">
+                  <RiUserStarLine size={16} />
+                  <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                    Committee
+                  </span>
                 </div>
-              </section>
+                <div className="flex-1 h-px bg-gray-100" />
+              </motion.div>
             )}
 
-            {/* ── Members section ── */}
-            <section>
-              <SectionLabel icon={RiTeamLine} label="Members" />
-
-              {filteredMembers.length === 0 ? (
-                <div className="text-center py-20 text-gray-400">
-                  <RiTeamLine
-                    size={40}
-                    className="mx-auto mb-3 text-gray-200"
-                  />
-                  <p className="text-sm">
-                    {search
-                      ? "No members match your search."
-                      : "No members yet."}
-                  </p>
-                  {search && (
-                    <button
-                      onClick={() => setSearch("")}
-                      className="mt-3 text-sm text-blue-500 hover:text-blue-700 underline underline-offset-2"
-                    >
-                      Clear search
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
-                  {filteredMembers.map((user, i) => (
-                    <MemberCard
-                      key={user._id}
-                      user={user}
-                      index={i}
-                      isLeader={false}
+            {/* Two-panel split */}
+            <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+              {/* Left — General Committee */}
+              <div className="flex-1 min-w-0 hover:shadow-lg transition-shadow duration-300 rounded-2xl p-4 lg:p-6 bg-white border border-gray-100">
+                {loading ? (
+                  <>
+                    <div className="h-4 w-40 bg-gray-200 rounded animate-pulse mb-6" />
+                    <div className="grid grid-cols-3 gap-3">
+                      {[1, 2, 3].map((i) => (
+                        <SkeletonCard key={i} />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <SectionLabel
+                      icon={RiGroupLine}
+                      label="Central Committee"
+                      accent="blue"
                     />
-                  ))}
-                </div>
-              )}
-            </section>
-          </>
+                    {generalLeaders.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 text-gray-300 gap-2">
+                        <RiGroupLine size={32} />
+                        <p className="text-xs">No general committee members.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-3">
+                        {generalLeaders.map((user, i) => (
+                          <MemberCard
+                            key={user._id}
+                            user={user}
+                            index={i}
+                            isLeader
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* General Advisory Board */}
+                    {generalAdvisory.length > 0 && (
+                      <div className="mt-6 pt-6 border-t border-gray-100">
+                        <SectionLabel
+                          icon={RiShieldStarLine}
+                          label="Advisory Board"
+                          accent="amber"
+                        />
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {generalAdvisory.map((user, i) => (
+                            <MemberCard
+                              key={user._id}
+                              user={user}
+                              index={i}
+                              isLeader
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Vertical divider (desktop only) */}
+              <div className="hidden lg:block w-px bg-gray-100 self-stretch" />
+
+              {/* Right — International Committee */}
+              <div className="flex-1 min-w-0 hover:shadow-lg transition-shadow duration-300 rounded-2xl p-4 lg:p-6 bg-white border border-gray-100">
+                {loading ? (
+                  <>
+                    <div className="h-4 w-44 bg-gray-200 rounded animate-pulse mb-6" />
+                    <div className="grid grid-cols-3 gap-3">
+                      {[1, 2, 3].map((i) => (
+                        <SkeletonCard key={i} />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <SectionLabel
+                      icon={RiGlobalLine}
+                      label="International Committee"
+                      accent="indigo"
+                    />
+                    {intlLeaders.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 text-gray-300 gap-2">
+                        <RiGlobalLine size={32} />
+                        <p className="text-xs">
+                          No international committee members.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-3">
+                        {intlLeaders.map((user, i) => (
+                          <MemberCard
+                            key={user._id}
+                            user={user}
+                            index={i}
+                            isLeader
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* International Advisory Board */}
+                    {intlAdvisory.length > 0 && (
+                      <div className="mt-6 pt-6 border-t border-gray-100">
+                        <SectionLabel
+                          icon={RiShieldStarLine}
+                          label="Advisory Board"
+                          accent="amber"
+                        />
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {intlAdvisory.map((user, i) => (
+                            <MemberCard
+                              key={user._id}
+                              user={user}
+                              index={i}
+                              isLeader
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── Members section ── */}
+        {!loading && !error && (
+          <section>
+            <SectionLabel icon={RiTeamLine} label="Members" accent="blue" />
+
+            {allMembers.length === 0 ? (
+              <div className="text-center py-20 text-gray-400">
+                <RiTeamLine size={40} className="mx-auto mb-3 text-gray-200" />
+                <p className="text-sm">
+                  {search ? "No members match your search." : "No members yet."}
+                </p>
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="mt-3 text-sm text-blue-500 hover:text-blue-700 underline underline-offset-2"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-5">
+                {allMembers.map((user, i) => (
+                  <MemberCard
+                    key={user._id}
+                    user={user}
+                    index={i}
+                    isLeader={false}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Loading skeleton for members section */}
+        {loading && (
+          <section>
+            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-7" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </div>
