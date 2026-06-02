@@ -21,6 +21,8 @@ import {
   RiGalleryLine,
   RiLoader4Line,
   RiImage2Line,
+  RiPresentationLine,
+  RiFileTextLine,
 } from "react-icons/ri";
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -76,6 +78,41 @@ const LABELS = [
     toggleOn: "bg-rose-500",
     dropActive: "border-rose-400 bg-rose-50",
     tagBg: "bg-rose-500",
+  },
+  {
+    value: "posters",
+    label: "Posters",
+    Icon: RiPresentationLine,
+    pill: "bg-violet-50 text-violet-700 border-violet-200",
+    tab: "bg-violet-600 text-white border-violet-600",
+    tabIdle: "bg-white text-violet-600 border-violet-200 hover:bg-violet-50",
+    formActive: "bg-violet-50 border-violet-400 text-violet-700",
+    formIdle:
+      "bg-white border-stone-200 text-stone-400 hover:border-violet-300",
+    cardBorder: "border-violet-200",
+    cardGlow: "shadow-violet-100",
+    dot: "bg-violet-500",
+    btn: "bg-violet-600 hover:bg-violet-700 text-white",
+    toggleOn: "bg-violet-500",
+    dropActive: "border-violet-400 bg-violet-50",
+    tagBg: "bg-violet-500",
+  },
+  {
+    value: "report",
+    label: "Report",
+    Icon: RiFileTextLine,
+    pill: "bg-sky-50 text-sky-700 border-sky-200",
+    tab: "bg-sky-600 text-white border-sky-600",
+    tabIdle: "bg-white text-sky-600 border-sky-200 hover:bg-sky-50",
+    formActive: "bg-sky-50 border-sky-400 text-sky-700",
+    formIdle: "bg-white border-stone-200 text-stone-400 hover:border-sky-300",
+    cardBorder: "border-sky-200",
+    cardGlow: "shadow-sky-100",
+    dot: "bg-sky-500",
+    btn: "bg-sky-600 hover:bg-sky-700 text-white",
+    toggleOn: "bg-sky-500",
+    dropActive: "border-sky-400 bg-sky-50",
+    tagBg: "bg-sky-500",
   },
 ];
 
@@ -312,6 +349,9 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
 
   const meta = getLabelMeta(label);
 
+  // Split LABELS into two rows for the form selector (3 + 2)
+  const labelRows = [LABELS.slice(0, 3), LABELS.slice(3)];
+
   return (
     <div
       className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm"
@@ -340,26 +380,30 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-7 py-6 flex flex-col gap-5">
-          {/* Label selector */}
+          {/* Label selector — two rows */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2.5">
               Category
             </label>
-            <div className="flex gap-2.5">
-              {LABELS.map(
-                ({ value, label: lbl, Icon, formActive, formIdle }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setLabel(value)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all duration-150
-                    ${label === value ? formActive : formIdle}`}
-                  >
-                    <Icon size={13} />
-                    {lbl}
-                  </button>
-                ),
-              )}
+            <div className="flex flex-col gap-2">
+              {labelRows.map((row, rowIdx) => (
+                <div key={rowIdx} className="flex gap-2.5">
+                  {row.map(
+                    ({ value, label: lbl, Icon, formActive, formIdle }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setLabel(value)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border-2 text-xs font-semibold transition-all duration-150
+                      ${label === value ? formActive : formIdle}`}
+                      >
+                        <Icon size={13} />
+                        {lbl}
+                      </button>
+                    ),
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 

@@ -101,6 +101,11 @@ const MemberCard = ({ user, index, isLeader }) => {
             NRI
           </div>
         )}
+        {user.designation === "Exec. Member" && (
+          <div className="absolute top-2 left-3 flex items-center gap-0.5 bg-white/90 backdrop-blur-sm text-indigo-600 text-[8px] font-bold px-1 py-0.5 rounded-full border border-indigo-100 shadow-sm">
+            Exec.
+          </div>
+        )}
       </div>
 
       {/* Body */}
@@ -400,10 +405,7 @@ const CommitteePage = () => {
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
               Committee & Members
             </h1>
-            <p className="text-gray-400 text-base max-w-lg">
-              The people who make Kingstar what it is — our committee and every
-              proud member of the club.
-            </p>
+            
           </motion.div>
 
           {/* Search + stats row */}

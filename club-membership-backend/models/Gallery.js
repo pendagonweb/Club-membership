@@ -23,8 +23,8 @@ const gallerySchema = new mongoose.Schema(
     label: {
       type: String,
       enum: {
-        values: ["gallery", "newscutting", "news"],
-        message: "Label must be one of: gallery, newscutting, news",
+        values: ["gallery", "newscutting", "news", "posters", "report"],
+        message: "Label must be one of: gallery, newscutting, news, posters, report",
       },
       required: [true, "Label is required"],
       default: "gallery",

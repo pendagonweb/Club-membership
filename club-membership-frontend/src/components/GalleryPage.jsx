@@ -93,45 +93,56 @@ function Skeleton({ count = 8 }) {
 /* ────────────────────────────────────
    SECTION 1 — GALLERY
 ──────────────────────────────────── */
-function GallerySection({ images, loading, onOpen }) {
+function GallerySection({ items, loading, onOpen }) {
   return (
-    <section className="bg-gray-50 py-14 px-4">
+    <section className="bg-white py-14 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Heading */}
-        <div className="text-center mb-10">
-          <p className="text-xs font-semibold tracking-widest uppercase text-teal-600 mb-1">
-            Our Moments
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-            Gallery
-          </h2>
-          <div className="w-12 h-0.5 bg-teal-500 mx-auto mt-3 rounded-full" />
-        </div>
+        <h2 className="text-center text-3xl sm:text-5xl font-bold sm:py-2 mb-10">Gallery</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <Skeleton count={6} />
+          ) : items.length === 0 ? (
+            <p className="text-center text-gray-400 py-16">No photos yet.</p>
+          ) : (
+            items.map((item) => {
+              const imgs = item.images || [];
+              const preview = imgs.slice(0, 4);
 
-        {loading ? (
-          <Skeleton count={12} />
-        ) : images.length === 0 ? (
-          <p className="text-center text-gray-400 py-16">No photos yet.</p>
-        ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
-            {images.map((img, i) => (
-              <div
-                key={img.publicId || i}
-                className={`relative overflow-hidden rounded-lg bg-gray-200 cursor-pointer group ${
-                  i % 7 === 0 ? "row-span-2" : "aspect-square"
-                }`}
-                onClick={() => onOpen(images, i)}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-teal-600/0 group-hover:bg-teal-600/10 transition-colors duration-200" />
-              </div>
-            ))}
-          </div>
-        )}
+              return (
+                <div
+                  key={item._id}
+                  onClick={() => onOpen(imgs, 0)}
+                  className="bg-white rounded-[22px] overflow-hidden border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition"
+                >
+                  <div className="h-[220px] grid grid-cols-4 gap-[3px] p-[3px]">
+                    {preview.map((img, index) => (
+                      <div
+                        key={img.publicId || index}
+                        className="overflow-hidden bg-gray-100"
+                      >
+                        <img
+                          src={img.url}
+                          alt={item.title || ""}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between px-6 py-5">
+                    <h3 className="text-2xl font-bold text-gray-700 leading-snug">
+                      {item.title}
+                    </h3>
+
+                    <p className="text-sm font-bold text-gray-300 whitespace-nowrap">
+                      {imgs.length} imgs
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </section>
   );
@@ -328,13 +339,12 @@ export default function GalleryPage() {
       .finally(() => setLoadingNews(false));
   }, []);
 
-  const allImages = galleries.flatMap((g) => g.images || []);
   const openLightbox = (images, index) => setLightbox({ images, index });
 
   return (
     <div className="min-h-screen">
       <GallerySection
-        images={allImages}
+        items={galleries}
         loading={loadingGallery}
         onOpen={openLightbox}
       />
