@@ -21,6 +21,8 @@ import GalleryManager from "./pages/GalleryManager";
 import ActivityPage from "./pages/ActivityPage";
 import AdminLogoPanel from "./pages/AdminLogoPanel";
 import CommitteePage from "./pages/CommitteePage";
+import KingstarAboutPage from "./pages/KingstarAboutPage";
+import Gallery from "./pages/Gallery";
 
 function PublicLayout({ children }) {
   return (
@@ -131,6 +133,22 @@ function App() {
           element={
             <PublicLayout>
               <CommitteePage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <PublicLayout>
+              <KingstarAboutPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/gallery"
+          element={
+            <PublicLayout>
+              <Gallery/>
             </PublicLayout>
           }
         />

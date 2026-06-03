@@ -4,7 +4,7 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
-const navLinks = ["Home", "Activities", "Committee", "About"];
+const navLinks = ["Home", "Activities", "Committee", "Gallery", "About"];
 const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 export default function Header() {
