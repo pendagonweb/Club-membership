@@ -13,6 +13,7 @@ import {
   RiGlobalLine,
   RiGroupLine,
   RiShieldStarLine,
+  RiShareLine,
 } from "react-icons/ri";
 
 const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -109,24 +110,49 @@ const MemberCard = ({ user, index, isLeader }) => {
       </div>
 
       {/* Body */}
-      <div className="flex flex-col flex-1 p-4 gap-3 relative">
-        <div>
+      <div className="relative">
+        <div className="flex flex-col items-center pt-4 pb-2">
           {user.nickname && (
-            <h3 className=" font-bold text-gray-900 text-xs leading-snug line-clamp-1">
+            <h3 className=" font-bold text-center text-gray-900 text-xs leading-snug line-clamp-1">
               {user.nickname}
             </h3>
           )}
-          <p className="text-xs text-gray-400  italic line-clamp-1">
+          <p className="text-xs text-center text-gray-400  italic line-clamp-1">
             {user.name}
           </p>
 
           {isLeader && (
-            <span className="inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+            <span className="inline-block text-center mt-1 sm:text-[10px] text-[9px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
               {capitalize(user.designation)}
             </span>
           )}
         </div>
-        <div className="absolute -top-3 right-3 ">
+        {/* Action buttons row: share (left) + whatsapp (right) */}
+        <div className="absolute -top-3 left-3 right-3 flex justify-between">
+          {/* Share button — sends member details to WhatsApp */}
+          <button
+            onClick={() => {
+              const text =
+                ` *Member Details*\n\n` +
+                `• *Full Name:* ${user.name || "—"}\n` +
+                `• *Display / Nick Name:* ${user.nickname || "—"}\n` +
+                `• *Membership ID:* ${user.membershipId || "—"}\n` +
+                `• *Phone Number:* ${user.phone || "—"}\n` +
+                `• *Blood Group:* ${user.bloodGroup || "—"}`;
+              const encoded = encodeURIComponent(text);
+              window.open(
+                `https://wa.me/?text=${encoded}`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+            }}
+            title="Share member details on WhatsApp"
+            className="flex w-6 h-6 items-center justify-center rounded-full bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white text-xs font-semibold border border-blue-100 hover:border-blue-500 transition-all duration-200"
+          >
+            <RiShareLine size={14} />
+          </button>
+
+          {/* WhatsApp direct chat button */}
           {waLink ? (
             <a
               href={waLink}
@@ -137,7 +163,7 @@ const MemberCard = ({ user, index, isLeader }) => {
               <RiWhatsappLine size={16} />
             </a>
           ) : (
-            <div className="h-8" />
+            <div className="w-6 h-6" />
           )}
         </div>
       </div>
@@ -405,7 +431,6 @@ const CommitteePage = () => {
             <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-3">
               Committee & Members
             </h1>
-            
           </motion.div>
 
           {/* Search + stats row */}

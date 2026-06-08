@@ -155,7 +155,7 @@ router.get("/all-users", adminAuth, async (req, res) => {
 router.get("/committee", async (req, res) => {
   try {
     const users = await User.find({ membershipStatus: "approved" })
-      .select("name nickname designation photo bloodGroup place nri whatsapp")
+      .select("name membershipId phone nickname designation photo bloodGroup place nri whatsapp")
       .sort({ name: 1 });
 
     const leaders = users.filter((u) => u.designation !== "member");
