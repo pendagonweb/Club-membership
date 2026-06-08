@@ -139,6 +139,8 @@ const MemberCard = ({ user, index, isLeader }) => {
                 `• *Membership ID:* ${user.membershipId || "—"}\n` +
                 `• *Phone Number:* ${user.phone || "—"}\n` +
                 `• *Blood Group:* ${user.bloodGroup || "—"}`;
+              `🔗 Committee Members:\n` +
+                `https://kingstareriyapady.club/committee`;
               const encoded = encodeURIComponent(text);
               window.open(
                 `https://wa.me/?text=${encoded}`,

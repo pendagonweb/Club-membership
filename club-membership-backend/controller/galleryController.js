@@ -108,7 +108,7 @@ export const createGallery = async (req, res) => {
   const uploadedFiles = req.files ?? [];
 
   try {
-    const { title, description, label, order, isActive } = req.body;
+    const { title, description, date, label, order, isActive } = req.body;
 
     if (!uploadedFiles.length) {
       return res
@@ -124,6 +124,7 @@ export const createGallery = async (req, res) => {
     const gallery = await Gallery.create({
       title,
       description: description ?? "",
+      date: null,
       label,
       images,
       order: order ?? 0,
@@ -155,7 +156,7 @@ export const updateGallery = async (req, res) => {
   const uploadedFiles = req.files ?? [];
 
   try {
-    const allowedFields = ["title", "description", "label", "order", "isActive"];
+    const allowedFields = ["title", "description", "date", "label", "order", "isActive"];
     const updates = {};
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];

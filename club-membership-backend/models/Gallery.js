@@ -20,6 +20,10 @@ const gallerySchema = new mongoose.Schema(
       maxlength: [600, "Description cannot exceed 600 characters"],
       default: "",
     },
+     date: {
+      type: Date,
+      default: null,
+    },
     label: {
       type: String,
       enum: {

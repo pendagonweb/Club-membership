@@ -23,6 +23,7 @@ import AdminLogoPanel from "./pages/AdminLogoPanel";
 import CommitteePage from "./pages/CommitteePage";
 import KingstarAboutPage from "./pages/KingstarAboutPage";
 import Gallery from "./pages/Gallery";
+import PlayerRegistration from "./pages/Playerregistration";
 
 function PublicLayout({ children }) {
   return (
@@ -68,6 +69,14 @@ function App() {
           element={
             <PublicLayout>
               <VotingPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/player-register"
+          element={
+            <PublicLayout>
+              <PlayerRegistration />
             </PublicLayout>
           }
         />
