@@ -124,7 +124,7 @@ export const createGallery = async (req, res) => {
     const gallery = await Gallery.create({
       title,
       description: description ?? "",
-      date: null,
+      date,
       label,
       images,
       order: order ?? 0,

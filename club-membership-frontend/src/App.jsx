@@ -25,6 +25,7 @@ import KingstarAboutPage from "./pages/KingstarAboutPage";
 import Gallery from "./pages/Gallery";
 import PlayerRegistration from "./pages/Playerregistration";
 import PlayersAdmin from "./pages/Playersadmin";
+import Reports from "./pages/Report";
 
 function PublicLayout({ children }) {
   return (
@@ -78,6 +79,14 @@ function App() {
           element={
             <PublicLayout>
               <PlayersAdmin />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/report"
+          element={
+            <PublicLayout>
+              <Reports />
             </PublicLayout>
           }
         />

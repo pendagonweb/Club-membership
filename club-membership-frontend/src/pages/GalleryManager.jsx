@@ -270,6 +270,9 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
   const [label, setLabel] = useState(existing?.label ?? "gallery");
   const [order, setOrder] = useState(existing?.order ?? 0);
   const [isActive, setIsActive] = useState(existing?.isActive ?? true);
+  const [date, setDate] = useState(
+    existing?.date ? new Date(existing.date).toISOString().split("T")[0] : "",
+  );
   const [newFiles, setNewFiles] = useState([]);
   const [existImgs, setExistImgs] = useState(existing?.images ?? []);
   const [removedIds, setRemovedIds] = useState([]);
@@ -307,7 +310,8 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
       return toast("Add at least one image", "error");
     if (isEdit && existImgs.length === 0 && newFiles.length === 0)
       return toast("Gallery must have at least one image", "error");
-
+    if (label === "report" && !date)
+      return toast("Report date is required", "error");
     setSaving(true);
     try {
       if (isEdit && removedIds.length) {
@@ -328,6 +332,7 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
       form.append("label", label);
       form.append("order", order);
       form.append("isActive", isActive);
+      if (label === "report" && date) form.append("date", date);
       newFiles.forEach(({ file }) => form.append("images", file));
 
       if (isEdit) {
@@ -445,7 +450,20 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
               {description.length}/600
             </p>
           </div>
-
+          {/* Date — report only */}
+          {label === "report" && (
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">
+                Report Date <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent transition"
+              />
+            </div>
+          )}
           {/* Image upload */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">
