@@ -15,6 +15,6 @@ router.get("/lookup/:membershipId", fetchMemberByMembershipId);
 router.post("/register", registerPlayer);
 
 // Admin only: view all registrations
-router.get("/all", adminAuth, getAllPlayers);
+router.get("/all", getAllPlayers);
 
 export default router;

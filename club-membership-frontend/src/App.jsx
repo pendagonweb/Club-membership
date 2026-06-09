@@ -24,6 +24,7 @@ import CommitteePage from "./pages/CommitteePage";
 import KingstarAboutPage from "./pages/KingstarAboutPage";
 import Gallery from "./pages/Gallery";
 import PlayerRegistration from "./pages/Playerregistration";
+import PlayersAdmin from "./pages/Playersadmin";
 
 function PublicLayout({ children }) {
   return (
@@ -69,6 +70,14 @@ function App() {
           element={
             <PublicLayout>
               <VotingPage />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/player-list"
+          element={
+            <PublicLayout>
+              <PlayersAdmin />
             </PublicLayout>
           }
         />
