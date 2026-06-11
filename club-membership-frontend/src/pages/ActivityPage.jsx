@@ -14,6 +14,164 @@ const formatDate = (d) =>
 
 const CARDS_PER_PAGE = 9;
 
+// ─── Share Icon ─────────────────────────────────────────────────────────────
+
+function ShareIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  );
+}
+
+// ─── Share Button ────────────────────────────────────────────────────────────
+
+function ShareButton({ title, url }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const shareUrl = url || window.location.href;
+    const shareData = { title: title || "Check this out!", url: shareUrl };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (_) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      } catch (_) {}
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      title="Share"
+      className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200
+        bg-white/90 hover:bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-800 active:scale-95"
+    >
+      <ShareIcon />
+      <span>{copied ? "Copied!" : "Share"}</span>
+    </button>
+  );
+}
+
+// ─── Detail Modal ────────────────────────────────────────────────────────────
+
+function ActivityModal({ act, onClose }) {
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Prevent body scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white rounded-3xl overflow-hidden shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col"
+        >
+          {/* Image */}
+          <div className="relative h-56 sm:h-64 flex-shrink-0">
+            {act.image ? (
+              <img
+                src={act.image}
+                alt={act.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center text-blue-300 text-5xl">
+                📌
+              </div>
+            )}
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-lg transition-colors"
+            >
+              ✕
+            </button>
+            {/* Tag */}
+            {act.tag && (
+              <span className="absolute top-3 left-3 text-xs font-semibold bg-white/90 backdrop-blur px-3 py-1 rounded-full text-blue-600 shadow-sm">
+                {act.tag}
+              </span>
+            )}
+          </div>
+
+          {/* Body */}
+          <div className="p-6 overflow-y-auto flex-1">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h2 className="text-xl font-bold text-gray-900 leading-snug">
+                {act.title}
+              </h2>
+              {act.date && (
+                <span className="text-xs text-blue-500 font-semibold whitespace-nowrap mt-1 bg-blue-50 px-2.5 py-1 rounded-full">
+                  {formatDate(act.date)}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {act.description}
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-shrink-0">
+            <ShareButton title={act.title} />
+            <button
+              onClick={onClose}
+              className="text-sm font-semibold text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── sub-components ──────────────────────────────────────────────────────────
 
 const SkeletonCard = () => (
@@ -27,18 +185,24 @@ const SkeletonCard = () => (
   </div>
 );
 
-const ActivityCard = ({ act, index }) => (
+const ActivityCard = ({ act, index, onSelect }) => (
   <motion.div
     key={act._id}
     initial={{ opacity: 0, y: 28 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: 20 }}
-    transition={{ duration: 0.5, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
+    transition={{
+      duration: 0.5,
+      delay: index * 0.07,
+      ease: [0.22, 1, 0.36, 1],
+    }}
+    className="h-full"
   >
     <motion.div
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col"
+      onClick={() => onSelect(act)}
+      className="relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col cursor-pointer"
     >
       {/* Image */}
       <div className="relative overflow-hidden h-48 flex-shrink-0">
@@ -60,17 +224,30 @@ const ActivityCard = ({ act, index }) => (
         )}
       </div>
 
-      {/* Body */}
-      <div className="p-5 flex flex-col flex-1">
-        <div className="flex justify-between items-start gap-2 mb-1">
-          <h3 className="font-bold text-base leading-snug">{act.title}</h3>
+      {/* Body — fixed height so all cards align */}
+      <div className="p-5 pb-10 flex flex-col flex-1">
+        <div className="flex justify-between items-start gap-2 mb-2">
+          <h3 className="font-bold text-base leading-snug line-clamp-2">
+            {act.title}
+          </h3>
           {act.date && (
-            <span className="text-xs text-blue-500 font-medium whitespace-nowrap mt-0.5">
+            <span className="text-xs text-blue-500 font-medium whitespace-nowrap mt-0.5 flex-shrink-0">
               {formatDate(act.date)}
             </span>
           )}
         </div>
-        <p className="text-sm text-gray-500 leading-relaxed flex-1">{act.description}</p>
+        {/* Truncated to 3 lines — click card to see full */}
+        <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
+          {act.description}
+        </p>
+        <p className="text-xs text-blue-500 font-semibold mt-auto pt-3">
+          Read more →
+        </p>
+      </div>
+
+      {/* Share button — bottom-right corner */}
+      <div className="absolute bottom-3 right-3">
+        <ShareButton title={act.title} />
       </div>
     </motion.div>
   </motion.div>
@@ -138,17 +315,18 @@ const ActivityPage = () => {
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState("All");
   const [page, setPage] = useState(1);
+  const [selectedActivity, setSelectedActivity] = useState(null);
 
   // ── fetch ──
   useEffect(() => {
     const fetchActivities = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/activities`
+          `${import.meta.env.VITE_BACKEND_URL}/api/activities`,
         );
         if (!res.data.success) throw new Error(res.data.message);
         const past = res.data.data.filter(
-          (act) => new Date(act.date) <= new Date()
+          (act) => new Date(act.date) <= new Date(),
         );
         setActivities(past);
       } catch (err) {
@@ -162,7 +340,10 @@ const ActivityPage = () => {
 
   // ── derived tags ──
   const allTags = useMemo(() => {
-    const tags = ["All", ...new Set(activities.map((a) => a.tag).filter(Boolean))];
+    const tags = [
+      "All",
+      ...new Set(activities.map((a) => a.tag).filter(Boolean)),
+    ];
     return tags;
   }, [activities]);
 
@@ -181,7 +362,7 @@ const ActivityPage = () => {
   const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * CARDS_PER_PAGE,
-    page * CARDS_PER_PAGE
+    page * CARDS_PER_PAGE,
   );
 
   // reset page on filter change
@@ -192,7 +373,6 @@ const ActivityPage = () => {
   // ── render ──
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* ── Hero header ── */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-14 sm:py-20">
@@ -217,7 +397,11 @@ const ActivityPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              duration: 0.55,
+              delay: 0.15,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center"
           >
             {/* Search */}
@@ -245,7 +429,8 @@ const ActivityPage = () => {
             {/* Result count */}
             {!loading && !error && (
               <span className="text-sm text-gray-400 font-medium">
-                {filtered.length} activit{filtered.length === 1 ? "y" : "ies"} found
+                {filtered.length} activit{filtered.length === 1 ? "y" : "ies"}{" "}
+                found
               </span>
             )}
           </motion.div>
@@ -273,11 +458,12 @@ const ActivityPage = () => {
 
       {/* ── Content area ── */}
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-12">
-
         {/* Loading */}
         {loading && (
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         )}
 
@@ -306,7 +492,10 @@ const ActivityPage = () => {
             </p>
             {(search || activeTag !== "All") && (
               <button
-                onClick={() => { setSearch(""); setActiveTag("All"); }}
+                onClick={() => {
+                  setSearch("");
+                  setActiveTag("All");
+                }}
                 className="mt-4 text-sm text-blue-500 hover:text-blue-700 underline underline-offset-2"
               >
                 Clear filters
@@ -320,10 +509,15 @@ const ActivityPage = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={`${activeTag}-${search}-${page}`}
-              className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8"
+              className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 items-stretch"
             >
               {paginated.map((act, i) => (
-                <ActivityCard key={act._id} act={act} index={i} />
+                <ActivityCard
+                  key={act._id}
+                  act={act}
+                  index={i}
+                  onSelect={setSelectedActivity}
+                />
               ))}
             </motion.div>
           </AnimatePresence>
@@ -332,6 +526,14 @@ const ActivityPage = () => {
         {/* Pagination */}
         <Pagination current={page} total={totalPages} onChange={setPage} />
       </div>
+
+      {/* ── Detail Modal ── */}
+      {selectedActivity && (
+        <ActivityModal
+          act={selectedActivity}
+          onClose={() => setSelectedActivity(null)}
+        />
+      )}
     </div>
   );
 };

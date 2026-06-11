@@ -26,12 +26,16 @@ import Gallery from "./pages/Gallery";
 import PlayerRegistration from "./pages/Playerregistration";
 import PlayersAdmin from "./pages/Playersadmin";
 import Reports from "./pages/Report";
+import BottomNav from "./components/BottomNav";
+import ActivityDetailPage from "./pages/ActivityDetailPage";
+import SingleNewsPage from "./pages/SingleNewsPage";
 
 function PublicLayout({ children }) {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <div className="flex-grow">{children}</div>
+      <BottomNav />
       <Footer />
     </div>
   );
@@ -55,6 +59,14 @@ function App() {
           element={
             <PublicLayout>
               <Login />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/activities/:id"
+          element={
+            <PublicLayout>
+              <ActivityDetailPage />
             </PublicLayout>
           }
         />
@@ -87,6 +99,14 @@ function App() {
           element={
             <PublicLayout>
               <Reports />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/news/:id"
+          element={
+            <PublicLayout>
+              <SingleNewsPage/>
             </PublicLayout>
           }
         />

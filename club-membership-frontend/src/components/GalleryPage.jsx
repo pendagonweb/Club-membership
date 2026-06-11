@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -6,7 +7,66 @@ import "swiper/css";
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
-/* ─── Lightbox ─── */
+/* ─── Share Icon ─── */
+function ShareIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  );
+}
+
+/* ─── Share Button ─── */
+function ShareButton({ title, url, className = "" }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const shareUrl = url || window.location.href;
+    const shareData = { title: title || "Check this out!", url: shareUrl };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (_) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      } catch (_) {}
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      title="Share"
+      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200
+        bg-white/90 hover:bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-800
+        active:scale-95 ${className}`}
+    >
+      <ShareIcon />
+      <span>{copied ? "Copied!" : "Share"}</span>
+    </button>
+  );
+}
+
+/* ─── Lightbox (used only for Gallery & Posters) ─── */
 function Lightbox({ images, startIndex, onClose }) {
   const [idx, setIdx] = useState(startIndex);
   const prev = () => setIdx((i) => (i - 1 + images.length) % images.length);
@@ -36,13 +96,19 @@ function Lightbox({ images, startIndex, onClose }) {
       {images.length > 1 && (
         <>
           <button
-            onClick={(e) => { e.stopPropagation(); prev(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              prev();
+            }}
             className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white text-2xl flex items-center justify-center transition-colors z-10"
           >
             ‹
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); next(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              next();
+            }}
             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white text-2xl flex items-center justify-center transition-colors z-10"
           >
             ›
@@ -60,7 +126,10 @@ function Lightbox({ images, startIndex, onClose }) {
           {images.map((_, i) => (
             <button
               key={i}
-              onClick={(e) => { e.stopPropagation(); setIdx(i); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIdx(i);
+              }}
               className={`h-1.5 rounded-full transition-all duration-200 ${i === idx ? "bg-white w-5" : "bg-white/40 w-1.5"}`}
             />
           ))}
@@ -75,7 +144,10 @@ function Skeleton({ count = 8 }) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="aspect-square rounded-lg bg-gray-200 animate-pulse" />
+        <div
+          key={i}
+          className="aspect-square rounded-lg bg-gray-200 animate-pulse"
+        />
       ))}
     </div>
   );
@@ -88,7 +160,9 @@ function GallerySection({ items, loading, onOpen }) {
   return (
     <section className="bg-white py-14 px-4">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-center text-3xl sm:text-5xl font-bold sm:py-2 mb-10">Gallery</h2>
+        <h2 className="text-center text-3xl sm:text-5xl font-bold sm:py-2 mb-10">
+          Gallery
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             <Skeleton count={6} />
@@ -102,18 +176,32 @@ function GallerySection({ items, loading, onOpen }) {
                 <div
                   key={item._id}
                   onClick={() => onOpen(imgs, 0)}
-                  className="bg-white rounded-[22px] overflow-hidden border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition"
+                  className="relative bg-white rounded-[22px] overflow-hidden border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition"
                 >
                   <div className="h-[220px] grid grid-cols-4 gap-[3px] p-[3px]">
                     {preview.map((img, index) => (
-                      <div key={img.publicId || index} className="overflow-hidden bg-gray-100">
-                        <img src={img.url} alt={item.title || ""} className="w-full h-full object-cover" />
+                      <div
+                        key={img.publicId || index}
+                        className="overflow-hidden bg-gray-100"
+                      >
+                        <img
+                          src={img.url}
+                          alt={item.title || ""}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     ))}
                   </div>
                   <div className="flex items-center justify-between px-6 py-5">
-                    <h3 className="text-2xl font-bold text-gray-700 leading-snug">{item.title}</h3>
-                    <p className="text-sm font-bold text-gray-300 whitespace-nowrap">{imgs.length} imgs</p>
+                    <h3 className="text-2xl font-bold text-gray-700 leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm font-bold text-gray-300 whitespace-nowrap">
+                      {imgs.length} imgs
+                    </p>
+                  </div>
+                  <div className="absolute bottom-4 right-4">
+                    <ShareButton title={item.title} />
                   </div>
                 </div>
               );
@@ -126,23 +214,22 @@ function GallerySection({ items, loading, onOpen }) {
 }
 
 /* ────────────────────────────────────
-   SECTION 2 — POSTERS (Swiper infinite loop)
-   Poster ratio: 1080 × 1350 → 4:5
+   SECTION 2 — POSTERS
 ──────────────────────────────────── */
 function PostersSection({ items, loading, onOpen }) {
-  // Flatten every item's images into one flat array for the slider
   const allPosters = items.flatMap((item) =>
-    (item.images || []).map((img) => ({ ...img, title: item.title }))
+    (item.images || []).map((img) => ({ ...img, title: item.title })),
   );
 
   return (
     <section className="bg-gray-50 border-y border-gray-100 py-16 relative overflow-hidden">
-      {/* Heading */}
       <div className="text-center mb-10 px-4">
         <p className="text-xs font-semibold tracking-[0.2em] uppercase text-indigo-500 mb-2">
           Visual Collection
         </p>
-        <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Posters</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+          Posters
+        </h2>
         <div className="w-12 h-0.5 bg-indigo-400 mx-auto mt-3 rounded-full" />
       </div>
 
@@ -160,7 +247,6 @@ function PostersSection({ items, loading, onOpen }) {
         <p className="text-center text-gray-400 py-16">No posters yet.</p>
       ) : (
         <>
-          {/* Left / right edge fade */}
           <div className="pointer-events-none absolute left-0 top-0 h-full w-16 z-10 bg-gradient-to-r from-gray-50 to-transparent" />
           <div className="pointer-events-none absolute right-0 top-0 h-full w-16 z-10 bg-gradient-to-l from-gray-50 to-transparent" />
 
@@ -176,8 +262,8 @@ function PostersSection({ items, loading, onOpen }) {
             slidesPerView={2}
             spaceBetween={14}
             breakpoints={{
-              480:  { slidesPerView: 3, spaceBetween: 16 },
-              768:  { slidesPerView: 4, spaceBetween: 18 },
+              480: { slidesPerView: 3, spaceBetween: 16 },
+              768: { slidesPerView: 4, spaceBetween: 18 },
               1024: { slidesPerView: 5, spaceBetween: 20 },
               1280: { slidesPerView: 6, spaceBetween: 20 },
             }}
@@ -201,7 +287,6 @@ function PostersSection({ items, loading, onOpen }) {
                       🖼️
                     </div>
                   )}
-                  {/* Hover title overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
                     {img.title && (
                       <p className="text-white text-xs font-semibold leading-snug line-clamp-2">
@@ -221,6 +306,7 @@ function PostersSection({ items, loading, onOpen }) {
 
 /* ────────────────────────────────────
    SECTION 3 — NEWS CUTTING
+   Opens lightbox on click (no navigation)
 ──────────────────────────────────── */
 function NewsCuttingSection({ items, loading, onOpen }) {
   return (
@@ -230,31 +316,44 @@ function NewsCuttingSection({ items, loading, onOpen }) {
           <p className="text-xs font-semibold tracking-widest uppercase text-amber-600 mb-1">
             Press Coverage &amp; Clippings
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-amber-900">News Cutting</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-amber-900">
+            News Cutting
+          </h2>
           <div className="w-12 h-0.5 bg-amber-400 mx-auto mt-3 rounded-full" />
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-lg bg-amber-100 animate-pulse h-64" />
+              <div
+                key={i}
+                className="rounded-lg bg-amber-100 animate-pulse h-64"
+              />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <p className="text-center text-amber-400 py-16">No news cuttings yet.</p>
+          <p className="text-center text-amber-400 py-16">
+            No news cuttings yet.
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {items.map((item, idx) => (
               <div
                 key={item._id}
-                className={`bg-white border border-amber-200 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${idx === 0 ? "sm:col-span-2 lg:col-span-1" : ""}`}
+                className={`relative bg-white border border-amber-200 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${idx === 0 ? "sm:col-span-2 lg:col-span-1" : ""}`}
                 onClick={() => onOpen(item.images || [], 0)}
               >
                 <div className="relative aspect-video bg-amber-100 overflow-hidden">
                   {item.images?.[0]?.url ? (
-                    <img src={item.images[0].url} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                    <img
+                      src={item.images[0].url}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl">📰</div>
+                    <div className="w-full h-full flex items-center justify-center text-3xl">
+                      📰
+                    </div>
                   )}
                   {item.images?.length > 1 && (
                     <span className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">
@@ -262,12 +361,21 @@ function NewsCuttingSection({ items, loading, onOpen }) {
                     </span>
                   )}
                 </div>
-                <div className="p-4">
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-amber-500 mb-1">Press</p>
-                  <p className="text-sm font-semibold text-amber-900 leading-snug line-clamp-3">{item.title}</p>
+                <div className="p-4 pb-10">
+                  <p className="text-[10px] font-bold tracking-widest uppercase text-amber-500 mb-1">
+                    Press
+                  </p>
+                  <p className="text-sm font-semibold text-amber-900 leading-snug line-clamp-3">
+                    {item.title}
+                  </p>
                   {item.description && (
-                    <p className="text-xs text-amber-700/70 mt-2 line-clamp-2 leading-relaxed">{item.description}</p>
+                    <p className="text-xs text-amber-700/70 mt-2 line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
                   )}
+                </div>
+                <div className="absolute bottom-3 right-3">
+                  <ShareButton title={item.title} />
                 </div>
               </div>
             ))}
@@ -280,13 +388,18 @@ function NewsCuttingSection({ items, loading, onOpen }) {
 
 /* ────────────────────────────────────
    SECTION 4 — NEWS
+   Cards now navigate to /news/:id
 ──────────────────────────────────── */
-function NewsSection({ items, loading, onOpen }) {
+function NewsSection({ items, loading }) {
+  const navigate = useNavigate();
+
   return (
     <section className="bg-white py-14 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-10">
-          <p className="text-xs font-semibold tracking-widest uppercase text-rose-500 mb-1">Latest Updates</p>
+          <p className="text-xs font-semibold tracking-widest uppercase text-rose-500 mb-1">
+            Latest Updates
+          </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">News</h2>
           <div className="w-12 h-0.5 bg-rose-400 mx-auto mt-3 rounded-full" />
         </div>
@@ -294,7 +407,10 @@ function NewsSection({ items, loading, onOpen }) {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-xl bg-gray-100 animate-pulse h-64" />
+              <div
+                key={i}
+                className="rounded-xl bg-gray-100 animate-pulse h-64"
+              />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -304,14 +420,20 @@ function NewsSection({ items, loading, onOpen }) {
             {items.map((item, idx) => (
               <div
                 key={item._id}
-                className={`bg-white border border-gray-100 rounded-xl overflow-hidden cursor-pointer shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${idx === 0 ? "sm:col-span-2 lg:col-span-1" : ""}`}
-                onClick={() => onOpen(item.images || [], 0)}
+                className={`relative bg-white border border-gray-100 rounded-xl overflow-hidden cursor-pointer shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md ${idx === 0 ? "sm:col-span-2 lg:col-span-1" : ""}`}
+                onClick={() => navigate(`/news/${item._id}`)}
               >
                 <div className="relative aspect-video bg-gray-100 overflow-hidden">
                   {item.images?.[0]?.url ? (
-                    <img src={item.images[0].url} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                    <img
+                      src={item.images[0].url}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-3xl bg-gray-100">📡</div>
+                    <div className="w-full h-full flex items-center justify-center text-3xl bg-gray-100">
+                      📡
+                    </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                   {item.images?.length > 1 && (
@@ -320,12 +442,24 @@ function NewsSection({ items, loading, onOpen }) {
                     </span>
                   )}
                 </div>
-                <div className="p-4">
-                  <p className="text-sm font-semibold text-gray-800 leading-snug line-clamp-3">{item.title}</p>
+                <div className="p-4 pb-10">
+                  <p className="text-sm font-semibold text-gray-800 leading-snug line-clamp-3">
+                    {item.title}
+                  </p>
                   {item.description && (
-                    <p className="text-xs text-gray-400 mt-2 line-clamp-2 leading-relaxed">{item.description}</p>
+                    <p className="text-xs text-gray-400 mt-2 line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
                   )}
-                  <span className="inline-block mt-3 text-xs font-semibold text-rose-500 tracking-wide">Read more →</span>
+                  <span className="inline-block mt-3 text-xs font-semibold text-rose-500 tracking-wide">
+                    Read more →
+                  </span>
+                </div>
+                <div className="absolute bottom-3 right-3">
+                  <ShareButton
+                    title={item.title}
+                    url={`${window.location.origin}/news/${item._id}`}
+                  />
                 </div>
               </div>
             ))}
@@ -380,10 +514,22 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen">
-      <GallerySection items={galleries} loading={loadingGallery} onOpen={openLightbox} />
-      <PostersSection items={posters} loading={loadingPosters} onOpen={openLightbox} />
-      <NewsCuttingSection items={newsCuttings} loading={loadingNewsCutting} onOpen={openLightbox} />
-      <NewsSection items={news} loading={loadingNews} onOpen={openLightbox} />
+      <GallerySection
+        items={galleries}
+        loading={loadingGallery}
+        onOpen={openLightbox}
+      />
+      <PostersSection
+        items={posters}
+        loading={loadingPosters}
+        onOpen={openLightbox}
+      />
+      <NewsCuttingSection
+        items={newsCuttings}
+        loading={loadingNewsCutting}
+        onOpen={openLightbox}
+      />
+      <NewsSection items={news} loading={loadingNews} />
 
       {lightbox && (
         <Lightbox

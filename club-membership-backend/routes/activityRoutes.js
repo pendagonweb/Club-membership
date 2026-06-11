@@ -25,6 +25,7 @@ const uploadActivityImage = (req, res, next) => {
 
 // Public
 router.get("/activities", getPublicActivities);
+router.get("/activities/:id", getActivityById);
 
 // Admin
 router.get("/admin/activities", adminAuth, getAllActivities);

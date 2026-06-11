@@ -17,9 +17,6 @@ import {
 
 const router = express.Router();
 
-/* ── Reusable multi-file upload middleware (field name: "images", max 20) ──
-   Mirrors the uploadActivityImage wrapper from your activity route —
-   catches multer errors and returns a clean 400 instead of crashing.       */
 const uploadGalleryImages = (req, res, next) => {
   upload.array("images", 20)(req, res, (err) => {
     if (err) {
@@ -29,11 +26,6 @@ const uploadGalleryImages = (req, res, next) => {
   });
 };
 
-/* ─────────────────────────────────────────────
-   PUBLIC
-───────────────────────────────────────────── */
-// GET /galleries          → all active galleries (optional ?label=news)
-// GET /galleries/:id      → single active gallery
 router.get("/galleries", getPublicGalleries);
 router.get("/galleries/:id", getPublicGalleryById);
 

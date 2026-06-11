@@ -8,8 +8,6 @@ import {
   HiChartBar,
   HiPencil,
   HiLogout,
-  HiHome,
-  HiClipboardCheck,
   HiCamera,
   HiCheck,
   HiArrowLeft,
@@ -18,9 +16,6 @@ import {
   HiExclamationCircle,
   HiSave,
   HiX,
-  HiInformationCircle,
-  HiUserGroup,
-  HiSparkles,
   HiEye,
   HiEyeOff,
 } from "react-icons/hi";
@@ -355,12 +350,10 @@ export default function MemberDashboard() {
             <div className="overflow-hidden flex-1">
               <div className="flex w-max">
                 <span className="banner-marquee text-white text-xs font-semibold leading-snug pr-16">
-                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27 
+                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27
                 </span>
-                <span
-                  className="banner-marquee text-white text-xs font-semibold leading-snug pr-16"
-                >
-                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27 
+                <span className="banner-marquee text-white text-xs font-semibold leading-snug pr-16">
+                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27
                 </span>
               </div>
             </div>
@@ -549,43 +542,6 @@ export default function MemberDashboard() {
 
         <div className="h-2 md:hidden" />
       </main>
-
-      {/* ── MOBILE BOTTOM TAB BAR ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 safe-area-bottom">
-        <div className="flex items-center justify-around px-2 py-1">
-          <TabBtn
-            icon={<HiHome className="text-xl" />}
-            label="Home"
-            active={activeTab === "home"}
-            onClick={() => setActiveTab("home")}
-          />
-          <TabBtn
-            icon={<HiSparkles className="text-xl" />}
-            label="Activities"
-            active={false}
-            onClick={() => navigate("/activities")}
-          />
-          <TabBtn
-            icon={<HiUserGroup className="text-xl" />}
-            label="Members"
-            active={false}
-            onClick={() => navigate("/committee")}
-          />
-          <TabBtn
-            icon={<HiInformationCircle className="text-xl" />}
-            label="About"
-            active={false}
-            onClick={() => navigate("/about")}
-          />
-          <TabBtn
-            icon={<HiLogout className="text-xl" />}
-            label="Logout"
-            active={false}
-            danger
-            onClick={handleLogout}
-          />
-        </div>
-      </nav>
 
       {showEdit && (
         <EditProfileModal

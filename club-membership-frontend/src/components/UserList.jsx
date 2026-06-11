@@ -657,6 +657,7 @@ Kingstar Arts & Sports Club`;
                         }
                       >
                         <option value="">— Select —</option>
+                        <option value="member">Member</option>
                         <option value="President">President</option>
                         <option value="Gen. Secretary">Gen. Secretary</option>
                         <option value="Treasurer">Treasurer</option>

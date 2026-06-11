@@ -1,12 +1,73 @@
 // components/ActivitiesSection.jsx
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+/* ─── Share Icon ─── */
+function ShareIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  );
+}
+
+/* ─── Share Button ─── */
+function ShareButton({ title, url }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const shareUrl = url || window.location.href;
+    const shareData = { title: title || "Check this out!", url: shareUrl };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (_) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      } catch (_) {}
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      title="Share"
+      className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200
+        bg-white/90 hover:bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-800 active:scale-95"
+    >
+      <ShareIcon />
+      <span>{copied ? "Copied!" : "Share"}</span>
+    </button>
+  );
+}
+
+/* ─── Main Section ─── */
 const ActivitiesSection = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchActivities = async () => {
@@ -15,7 +76,6 @@ const ActivitiesSection = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/activities`,
         );
         if (!res.data.success) throw new Error(res.data.message);
-        setActivities(res.data.data);
         setActivities(
           res.data.data.filter((act) => new Date(act.date) <= new Date()),
         );
@@ -84,7 +144,7 @@ const ActivitiesSection = () => {
 
         {/* Cards */}
         {!loading && !error && activities.length > 0 && (
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
             {activities.map((act, i) => (
               <motion.div
                 key={act._id}
@@ -96,13 +156,16 @@ const ActivitiesSection = () => {
                   delay: i * 0.1,
                   ease: [0.22, 1, 0.36, 1],
                 }}
+                className="h-full"
               >
                 <motion.div
                   whileHover={{ y: -6 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group"
+                  onClick={() => navigate(`/activities/${act._id}`)}
+                  className="relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-300 group h-full flex flex-col cursor-pointer"
                 >
-                  <div className="relative overflow-hidden h-44">
+                  {/* Image */}
+                  <div className="relative overflow-hidden h-44 flex-shrink-0">
                     {act.image ? (
                       <img
                         src={act.image}
@@ -120,11 +183,15 @@ const ActivitiesSection = () => {
                       </span>
                     )}
                   </div>
-                  <div className="p-5">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-bold text-lg mb-1">{act.title}</h3>
+
+                  {/* Body */}
+                  <div className="p-5 pb-10 flex flex-col flex-1">
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                      <h3 className="font-bold text-lg leading-snug line-clamp-2">
+                        {act.title}
+                      </h3>
                       {act.date && (
-                        <p className="text-xs text-blue-500 font-medium mb-2">
+                        <p className="text-xs text-blue-500 font-medium whitespace-nowrap flex-shrink-0 mt-0.5">
                           {new Date(act.date).toLocaleDateString("en-GB", {
                             day: "numeric",
                             month: "short",
@@ -133,9 +200,20 @@ const ActivitiesSection = () => {
                         </p>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 leading-relaxed">
+                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
                       {act.description}
                     </p>
+                    <p className="text-xs text-blue-500 font-semibold mt-auto pt-3">
+                      Read more →
+                    </p>
+                  </div>
+
+                  {/* Share button */}
+                  <div className="absolute bottom-3 right-3">
+                    <ShareButton
+                      title={act.title}
+                      url={`${window.location.origin}/activities/${act._id}`}
+                    />
                   </div>
                 </motion.div>
               </motion.div>
