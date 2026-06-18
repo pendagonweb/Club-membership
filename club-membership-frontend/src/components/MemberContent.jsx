@@ -14,6 +14,9 @@ export default function MembershipCard({ user }) {
   if (!user) return null; // no user data yet
 
   const STATIC_VALID_UPTO = "31/03/2027";
+  const valiedUpto = user.expiryDate
+    ? new Date(user.expiryDate).toLocaleDateString()
+    : STATIC_VALID_UPTO;
 
   return (
     <div className="w-[300px] h-[200px] bg-[#f4f1f1] relative overflow-hidden rounded-xl shadow-xl ">
@@ -86,7 +89,7 @@ export default function MembershipCard({ user }) {
           <p className="font-semibold">{user.bloodGroup}</p>
           <p>VALID UPTO</p>
           <p>:</p>
-          <p className="font-semibold">{user.validUpto || STATIC_VALID_UPTO}</p>
+          <p className="font-semibold">{valiedUpto}</p>
         </div>
       </div>
 

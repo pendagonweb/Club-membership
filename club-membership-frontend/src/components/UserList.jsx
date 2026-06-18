@@ -5,6 +5,7 @@ import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
 // ─── PDF Export Modal ────────────────────────────────────────────────────────
 const ALL_FIELDS = [
+  { key: "photo", label: "Photo" },
   { key: "membershipId", label: "Membership ID" },
   { key: "name", label: "Name" },
   { key: "fatherName", label: "Father's Name" },
@@ -17,12 +18,22 @@ const ALL_FIELDS = [
   { key: "address", label: "Address" },
   { key: "place", label: "Place" },
   { key: "gender", label: "Gender" },
-  { key: "nri", label: "NRI" },
   { key: "membershipStatus", label: "Status" },
+  { key: "designation", label: "Designation" },
+  { key: "expiryDate", label: "Valid Upto" },
+  { key: "paymentAmount", label: "Amount Paid" },
 ];
 
 function ExportPdfModal({ users, onClose }) {
-  const [selected, setSelected] = useState(["name", "phone"]);
+  const [selected, setSelected] = useState([
+    "photo",
+    "membershipId",
+    "name",
+    "phone",
+    "designation",
+    "expiryDate",
+    "paymentAmount",
+  ]);
   const [filterStatus, setFilterStatus] = useState("all");
 
   const toggle = (key) =>
@@ -43,6 +54,20 @@ function ExportPdfModal({ users, onClose }) {
     [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
     setSelected(next);
   };
+  const toBase64 = (url) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/jpeg"));
+      };
+      img.onerror = () => resolve(null); // skip if image fails
+      img.src = url;
+    });
 
   const exportPdf = async () => {
     if (selected.length === 0) {
@@ -63,60 +88,228 @@ function ExportPdfModal({ users, onClose }) {
     await loadScript(
       "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
     );
-    await loadScript(
-      "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js",
-    );
 
     const { jsPDF } = window.jspdf;
 
-    // ── Updated filter logic ──────────────────────────────────────────────
-    const filteredUsers =
+    // ── Filter logic ──────────────────────────────────────────────────────
+    const filteredUsers = (
       filterStatus === "all"
         ? users
         : filterStatus === "nri"
           ? users.filter((u) => u.nri === "Yes")
-          : users.filter((u) => u.membershipStatus === filterStatus);
+          : users.filter((u) => u.membershipStatus === filterStatus)
+    ).sort((a, b) =>
+      String(a.membershipId || "").localeCompare(
+        String(b.membershipId || ""),
+        undefined,
+        { numeric: true },
+      ),
+    );
     // ─────────────────────────────────────────────────────────────────────
 
-    const doc = new jsPDF({ orientation: "landscape" });
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+    const PAGE_W = doc.internal.pageSize.getWidth(); // 210
+    const PAGE_H = doc.internal.pageSize.getHeight(); // 297
+    const MARGIN = 8;
+    const GAP = 2.5;
+    const COLS = 3;
 
-    doc.setFontSize(14);
-    doc.text("Kingstar Arts & Sports Club – Member List", 14, 14);
-    doc.setFontSize(9);
-    doc.text(
-      `Filter: ${filterStatus.toUpperCase()}   |   Total: ${filteredUsers.length}   |   Generated: ${new Date().toLocaleDateString()}`,
-      14,
-      21,
+    const HEADER_H = 14;
+    const TILE_W = (PAGE_W - MARGIN * 2 - GAP * (COLS - 1)) / COLS;
+
+    const hasPhoto = selected.includes("photo");
+    const PHOTO_SIZE = hasPhoto ? 14 : 0; // smaller, left-aligned photo
+    const textFields = selected.filter((k) => k !== "photo");
+    const LINE_H = 3.4;
+    const TILE_PADDING = 2;
+    // Details column sits to the right of the photo (or full width if no photo)
+    const DETAILS_X_OFFSET = hasPhoto ? PHOTO_SIZE + TILE_PADDING + 1.5 : 0;
+    const DETAILS_W = TILE_W - TILE_PADDING * 2 - DETAILS_X_OFFSET;
+    // Tile height: the taller of (photo) or (stacked text lines), plus padding
+    const textBlockH = textFields.length * LINE_H;
+    const TILE_H =
+      TILE_PADDING * 2 + Math.max(hasPhoto ? PHOTO_SIZE : 0, textBlockH);
+
+    // Preload all photos as base64 first (if needed)
+    const photoMap = {};
+    if (hasPhoto) {
+      await Promise.all(
+        filteredUsers.map(async (u) => {
+          if (u.photo) {
+            photoMap[u._id] = await toBase64(u.photo);
+          }
+        }),
+      );
+    }
+
+    const fieldValue = (u, key) => {
+      let val = u[key] ?? "—";
+      if (key === "dob" && val && val !== "—") {
+        val = new Date(val).toLocaleDateString();
+      }
+      if (key === "expiryDate") {
+        const dateStr =
+          val && val !== "—"
+            ? new Date(val).toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : new Date("2027-03-31").toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        val = `Expiry: ${dateStr}`;
+      }
+      if (key === "paymentAmount" && val && val !== "—") {
+        val = `Rs. ${val}`;
+      }
+      if (val === "" || val === null || val === undefined) val = "—";
+      return String(val);
+    };
+
+    // Header (drawn on every page)
+    const drawPageHeader = (pageNum, totalPages) => {
+      doc.setFontSize(13);
+      doc.setFont(undefined, "bold");
+      doc.text("Kingstar Arts & Sports Club – Member List", MARGIN, 11);
+      doc.setFontSize(7.5);
+      doc.setFont(undefined, "normal");
+      doc.text(
+        `Filter: ${filterStatus.toUpperCase()}   |   Total: ${filteredUsers.length}   |   Generated: ${new Date().toLocaleDateString()}`,
+        MARGIN,
+        15.5,
+      );
+      doc.setFontSize(7);
+      doc.text(`Page ${pageNum}/${totalPages}`, PAGE_W - MARGIN - 14, 11);
+    };
+
+    const TOP_START_Y = MARGIN + HEADER_H + 3;
+    const rowsPerPage = Math.floor(
+      (PAGE_H - TOP_START_Y - MARGIN) / (TILE_H + GAP),
+    );
+    const tilesPerPage = rowsPerPage * COLS;
+    const totalPages = Math.max(
+      1,
+      Math.ceil(filteredUsers.length / tilesPerPage),
     );
 
-    const columns = selected.map((key) => ({
-      header: ALL_FIELDS.find((f) => f.key === key)?.label || key,
-      dataKey: key,
-    }));
+    const drawTile = (u, x, y) => {
+      // Card border
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(x, y, TILE_W, TILE_H, 1.2, 1.2, "S");
 
-    const rows = filteredUsers.map((u, i) => {
-      const row = { "#": i + 1 };
-      selected.forEach((key) => {
-        let val = u[key] ?? "—";
-        if (key === "dob" && val && val !== "—")
-          val = new Date(val).toLocaleDateString();
-        row[key] = val;
+      // NRI badge — top-right corner
+      if (u.nri === "Yes") {
+        const badgeW = 9;
+        const badgeH = 3.6;
+        const badgeX = x + TILE_W - badgeW - 1.2;
+        const badgeY = y + 1.2;
+
+        doc.setFillColor(22, 163, 74); // green-600
+        doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, "F");
+
+        doc.setFontSize(5.2);
+        doc.setFont(undefined, "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text("NRI", badgeX + badgeW / 2, badgeY + badgeH / 2 + 1, {
+          align: "center",
+        });
+
+        // reset text color/font for the rest of the tile
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, "normal");
+      }
+
+      const contentY = y + TILE_PADDING;
+
+      if (hasPhoto) {
+        const b64 = photoMap[u._id];
+        const photoX = x + TILE_PADDING;
+        const photoY =
+          contentY + (Math.max(PHOTO_SIZE, textBlockH) - PHOTO_SIZE) / 2;
+        if (b64) {
+          try {
+            doc.addImage(b64, "JPEG", photoX, photoY, PHOTO_SIZE, PHOTO_SIZE);
+          } catch (e) {
+            // ignore broken image
+          }
+        } else {
+          doc.setDrawColor(230, 230, 230);
+          doc.setFillColor(245, 245, 245);
+          doc.roundedRect(photoX, photoY, PHOTO_SIZE, PHOTO_SIZE, 1, 1, "FD");
+          doc.setFontSize(5);
+          doc.setTextColor(180, 180, 180);
+          doc.text(
+            "No Photo",
+            photoX + PHOTO_SIZE / 2,
+            photoY + PHOTO_SIZE / 2 + 1,
+            {
+              align: "center",
+            },
+          );
+        }
+      }
+
+      // Details column, left-aligned, vertically centered against the photo
+      const detailsX = x + TILE_PADDING + DETAILS_X_OFFSET;
+      let cursorY =
+        contentY + (Math.max(PHOTO_SIZE, textBlockH) - textBlockH) / 2;
+
+      textFields.forEach((key) => {
+        const value = fieldValue(u, key);
+        const isName = key === "name";
+        const isDesignation = key === "designation";
+
+        doc.setFontSize(isName ? 8 : 6.3);
+        doc.setFont(undefined, isName || isDesignation ? "bold" : "normal");
+
+        if (isDesignation) {
+          doc.setTextColor(180, 83, 9); // amber-700 — distinct accent color
+        } else {
+          doc.setTextColor(20, 20, 20);
+        }
+
+        const fullLine = `${value}`;
+        const truncated =
+          doc.splitTextToSize(fullLine, DETAILS_W)[0] || fullLine;
+
+        doc.text(truncated, detailsX, cursorY + 2.2, {
+          align: "left",
+          maxWidth: DETAILS_W,
+        });
+        cursorY += LINE_H;
       });
-      return row;
-    });
 
-    doc.autoTable({
-      startY: 26,
-      columns: [{ header: "#", dataKey: "#" }, ...columns],
-      body: rows,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: {
-        fillColor: [31, 41, 55],
-        textColor: 255,
-        fontStyle: "bold",
-      },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
-      margin: { left: 14, right: 14 },
+      doc.setFont(undefined, "normal");
+      doc.setTextColor(0, 0, 0);
+    };
+
+    let pageNum = 1;
+    drawPageHeader(pageNum, totalPages);
+
+    filteredUsers.forEach((u, idx) => {
+      const posOnPage = idx % tilesPerPage;
+
+      if (idx > 0 && posOnPage === 0) {
+        doc.addPage();
+        pageNum += 1;
+        drawPageHeader(pageNum, totalPages);
+      }
+
+      const row = Math.floor(posOnPage / COLS);
+      const col = posOnPage % COLS;
+
+      const x = MARGIN + col * (TILE_W + GAP);
+      const y = TOP_START_Y + row * (TILE_H + GAP);
+
+      drawTile(u, x, y);
     });
 
     doc.save("kingstar-members.pdf");
@@ -142,7 +335,6 @@ function ExportPdfModal({ users, onClose }) {
             <p className="text-sm font-semibold text-gray-700 mb-2">
               Filter Members
             </p>
-            {/* ── Updated: 4-button row ──────────────────────────────────── */}
             <div className="flex gap-2">
               {["all", "approved", "rejected", "nri"].map((s) => (
                 <button
@@ -160,7 +352,6 @@ function ExportPdfModal({ users, onClose }) {
                 </button>
               ))}
             </div>
-            {/* ─────────────────────────────────────────────────────────── */}
           </div>
 
           {/* Field Selection */}
@@ -190,7 +381,7 @@ function ExportPdfModal({ users, onClose }) {
           {selected.length > 0 && (
             <div>
               <p className="text-sm font-semibold text-gray-700 mb-2">
-                Column Order (drag to reorder)
+                Field Order in Tile (drag to reorder)
               </p>
               <div className="space-y-1">
                 {selected.map((key, idx) => {
@@ -225,6 +416,10 @@ function ExportPdfModal({ users, onClose }) {
                   );
                 })}
               </div>
+              <p className="text-xs text-gray-400 mt-2">
+                Tiles render 3 per row — Photo (if selected) sits on the left of
+                each tile with the fields above stacked on the right, in order.
+              </p>
             </div>
           )}
         </div>
@@ -430,7 +625,7 @@ Member Details:
 • Place: ${user.address || "—"}   
 • Blood Group: ${user.bloodGroup || "—"}
 • Password: ${user.password || "—"}
-• Valid Upto: 31/03/2027
+• Valid Upto: ${user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : STATIC_VALID_UPTO}
 
 _Thank you for becoming a member of Kingstar Arts & Sports Club._
 

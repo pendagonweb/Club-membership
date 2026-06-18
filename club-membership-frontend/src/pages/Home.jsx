@@ -165,9 +165,9 @@ export default function Home() {
             className="mt-16 flex flex-wrap justify-center gap-8 sm:gap-14"
           >
             {[
-              ["1,200+", "Members"],
+              ["300+", "Members"],
               ["80+", "Events"],
-              ["15+", "Awards"],
+              ["5+", "Awards"],
             ].map(([num, label]) => (
               <div key={label} className="text-center">
                 <p className="text-2xl sm:text-3xl font-bold text-blue-600">
@@ -218,6 +218,21 @@ export default function Home() {
             >
               Learn more about us <ChevronRight size={16} />
             </Link>
+            <div className="flex flex-wrap gap-4 mt-4">
+              <Link
+                to="/committee"
+                className="text-xs border border-blue-200 bg-blue-500 text-white px-4 py-3 rounded-full inline-flex items-center justify-center"
+              >
+                Kingstar International Committee
+              </Link>
+
+              <Link
+                to="/committee"
+                className="text-xs border border-blue-200 bg-white text-blue-500 px-4 py-3 rounded-full inline-flex items-center justify-center"
+              >
+                Kingstar Central Committee
+              </Link>
+            </div>
           </FadeUp>
 
           <FadeUp delay={0.15}>
@@ -242,6 +257,25 @@ export default function Home() {
         </div>
       </section>
       <EventsSection />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 py-4 px-12">
+        {[
+          "Sports",
+          "Arts & Culture",
+          "Social Welfare & Charity",
+          "Community First",
+          "Medical Assistance",
+          "Educational Aid",
+          "Marriage Assistance",
+          "Land for Grooms",
+        ].map((item) => (
+          <div
+            key={item}
+            className="border border-blue-200 rounded-full px-4 py-3 text-center text-sm font-medium text-gray-700 bg-white hover:bg-blue-50 transition"
+          >
+            {item}
+          </div>
+        ))}
+      </div>
       <ActivitiesSection />
       {/* ── 5. GALLERY ───────────────────────────────────────── */}
       <GalleryPage />

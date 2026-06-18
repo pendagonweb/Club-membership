@@ -348,7 +348,8 @@ export default function MemberRegister() {
     if (!formData.password || formData.password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
     if (!photo) newErrors.photo = "Profile photo is required";
-    if (!paymentScreenshot)
+    const age = Number(formData.age);
+    if (!paymentScreenshot && !(age && age < 18))
       newErrors.payment = "Payment screenshot is required";
 
     setErrors(newErrors);
@@ -389,8 +390,7 @@ export default function MemberRegister() {
       );
       data.append("whatsapp", sameAsPhone ? formData.phone : formData.whatsapp);
       data.append("photo", photo);
-      data.append("paymentProof", paymentScreenshot);
-
+      if (paymentScreenshot) data.append("paymentProof", paymentScreenshot);
       await axios.post(`${VITE_BACKEND_URL}/api/auth/register`, data);
       setShowSuccessModal(true);
     } catch (err) {
@@ -758,6 +758,11 @@ export default function MemberRegister() {
                 <div>
                   <label className="text-sm font-medium">
                     Payment Screenshot
+                    {Number(formData.age) > 0 && Number(formData.age) < 18 && (
+                      <span className="text-green-600 text-xs font-normal ml-2">
+                        (Optional for under 18)
+                      </span>
+                    )}
                   </label>
                   <div className="relative border-2 border-dashed rounded-2xl p-4 text-center hover:border-blue-400 transition">
                     {paymentScreenshot ? (

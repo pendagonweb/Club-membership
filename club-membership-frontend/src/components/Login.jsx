@@ -82,6 +82,7 @@ export default function Login() {
 
       // ADD THIS
       localStorage.setItem("userlogged", "true");
+      window.dispatchEvent(new Event("storage"));
 
       navigate("/dashboard");
     } catch (err) {

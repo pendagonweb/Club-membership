@@ -65,10 +65,19 @@ router.put("/approve/:id", adminAuth, async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
 
-    if (!user.photo || !user.paymentProof) {
+    const isMinor = Number(user.age) > 0 && Number(user.age) < 18;
+
+    if (!user.photo) {
       return res.status(400).json({
         success: false,
-        message: "Profile photo and payment proof are required before approval",
+        message: "Profile photo is required before approval",
+      });
+    }
+
+    if (!isMinor && !user.paymentProof) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment proof is required before approval",
       });
     }
     // Find last approved user's membership number
@@ -155,7 +164,9 @@ router.get("/all-users", adminAuth, async (req, res) => {
 router.get("/committee", async (req, res) => {
   try {
     const users = await User.find({ membershipStatus: "approved" })
-      .select("name membershipId phone nickname designation photo bloodGroup place nri whatsapp")
+      .select(
+        "name membershipId phone nickname designation photo bloodGroup place nri whatsapp",
+      )
       .sort({ name: 1 });
 
     const leaders = users.filter((u) => u.designation !== "member");

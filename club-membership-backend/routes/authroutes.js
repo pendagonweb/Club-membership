@@ -101,10 +101,19 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       });
     }
 
-    if (!req.files?.photo || !req.files?.paymentProof) {
+    if (!req.files?.photo) {
       return res.status(400).json({
         success: false,
-        message: "Photo and payment proof are required",
+        message: "Photo is required",
+      });
+    }
+
+    const isMinor = Number(age) > 0 && Number(age) < 18;
+
+    if (!isMinor && !req.files?.paymentProof) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment proof is required",
       });
     }
 
@@ -197,8 +206,10 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       photo: req.files.photo[0].path,
       photoId: req.files.photo[0].filename,
 
-      paymentProof: req.files.paymentProof[0].path,
-      paymentProofId: req.files.paymentProof[0].filename,
+      ...(req.files.paymentProof && {
+        paymentProof: req.files.paymentProof[0].path,
+        paymentProofId: req.files.paymentProof[0].filename,
+      }),
     });
 
     res.status(201).json({

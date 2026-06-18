@@ -203,7 +203,7 @@ export default function KingstarAboutPage() {
     },
     {
       icon: MdVolunteerActivism,
-      title: "Social Welfare",
+      title: "Social Welfare & Charity",
       desc: "Medical aid, education support, marriage and housing assistance — standing with those in need.",
       accent: "bg-emerald-500",
       delay: 2,
@@ -276,7 +276,7 @@ export default function KingstarAboutPage() {
   return (
     <div
       className="min-h-screen overflow-x-hidden bg-gradient-to-br from-white via-blue-50/40 to-sky-50/60"
-      style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
+      
     >
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section

@@ -31,6 +31,7 @@ export default function BottomNav() {
 
   const handleLogout = () => {
     localStorage.setItem("userlogged", "false");
+    window.dispatchEvent(new Event("storage"));
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     navigate("/login");

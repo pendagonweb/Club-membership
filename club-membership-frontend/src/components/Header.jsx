@@ -12,9 +12,28 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [logo, setLogo] = useState(null); // { url, altText }
 
-  const isLoggedIn = localStorage.getItem("userlogged") === "true";
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    () => localStorage.getItem("userlogged") === "true",
+  );
+
+  useEffect(() => {
+    // Sync when another tab or the same page changes localStorage
+    const handleStorage = () => {
+      setIsLoggedIn(localStorage.getItem("userlogged") === "true");
+    };
+    window.addEventListener("storage", handleStorage);
+
+    // Also poll on focus in case login happened in same tab
+    window.addEventListener("focus", handleStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", handleStorage);
+    };
+  }, []);
 
   /* ── scroll listener ── */
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
@@ -72,26 +91,22 @@ export default function Header() {
         {/* Right Buttons */}
         <div className="hidden md:flex items-center gap-3">
           {/* LOGIN / DASHBOARD */}
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-            <Link
-              to={isLoggedIn ? "/dashboard" : "/login"}
-              className="px-4 py-2 text-blue-600 font-semibold text-sm rounded-full border border-blue-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
-            >
-              {isLoggedIn ? "Dashboard" : "Login"}
-            </Link>
-          </motion.div>
+          <Link
+            to={isLoggedIn ? "/dashboard" : "/login"}
+            className="px-4 py-2 text-blue-600 font-semibold text-sm rounded-full border border-blue-200 hover:border-blue-400 hover:bg-blue-50 active:scale-95 transition-all duration-200"
+          >
+            {isLoggedIn ? "Dashboard" : "Login"}
+          </Link>
 
           {/* REGISTER BUTTON */}
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-            <Link
-              to="/register"
-              className="relative overflow-hidden bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all duration-200 group"
-            >
-              <span className="relative z-10">Become a Member</span>
-              {/* Shine Effect */}
-              <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12" />
-            </Link>
-          </motion.div>
+          <Link
+            to="/register"
+            className="relative overflow-hidden bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 active:scale-95 transition-all duration-200 group"
+          >
+            <span className="relative z-10">Become a Member</span>
+            {/* Shine Effect */}
+            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-500 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none" />
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
