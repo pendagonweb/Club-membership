@@ -108,7 +108,7 @@ router.post("/register", uploadRegisterFiles, async (req, res) => {
       });
     }
 
-    const isMinor = Number(age) > 0 && Number(age) < 18;
+    const isMinor = Number(age) > 0 && Number(age) < 20;
 
     if (!isMinor && !req.files?.paymentProof) {
       return res.status(400).json({

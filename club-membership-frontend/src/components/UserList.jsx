@@ -3,6 +3,21 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
+// ─── Helper ──────────────────────────────────────────────────────────────────
+const isJunior = (dob) => {
+  if (!dob) return false;
+  const birth = new Date(dob);
+  if (isNaN(birth)) return false;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const hasBirthdayPassed =
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
+  if (!hasBirthdayPassed) age--;
+  return age < 20;
+};
+
 // ─── PDF Export Modal ────────────────────────────────────────────────────────
 const ALL_FIELDS = [
   { key: "photo", label: "Photo" },
@@ -54,6 +69,7 @@ function ExportPdfModal({ users, onClose }) {
     [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
     setSelected(next);
   };
+
   const toBase64 = (url) =>
     new Promise((resolve) => {
       const img = new Image();
@@ -65,7 +81,7 @@ function ExportPdfModal({ users, onClose }) {
         canvas.getContext("2d").drawImage(img, 0, 0);
         resolve(canvas.toDataURL("image/jpeg"));
       };
-      img.onerror = () => resolve(null); // skip if image fails
+      img.onerror = () => resolve(null);
       img.src = url;
     });
 
@@ -91,13 +107,14 @@ function ExportPdfModal({ users, onClose }) {
 
     const { jsPDF } = window.jspdf;
 
-    // ── Filter logic ──────────────────────────────────────────────────────
     const filteredUsers = (
       filterStatus === "all"
         ? users
         : filterStatus === "nri"
           ? users.filter((u) => u.nri === "Yes")
-          : users.filter((u) => u.membershipStatus === filterStatus)
+          : filterStatus === "junior"
+            ? users.filter((u) => isJunior(u.dob))
+            : users.filter((u) => u.membershipStatus === filterStatus)
     ).sort((a, b) =>
       String(a.membershipId || "").localeCompare(
         String(b.membershipId || ""),
@@ -105,15 +122,14 @@ function ExportPdfModal({ users, onClose }) {
         { numeric: true },
       ),
     );
-    // ─────────────────────────────────────────────────────────────────────
 
     const doc = new jsPDF({
       orientation: "portrait",
       unit: "mm",
       format: "a4",
     });
-    const PAGE_W = doc.internal.pageSize.getWidth(); // 210
-    const PAGE_H = doc.internal.pageSize.getHeight(); // 297
+    const PAGE_W = doc.internal.pageSize.getWidth();
+    const PAGE_H = doc.internal.pageSize.getHeight();
     const MARGIN = 8;
     const GAP = 2.5;
     const COLS = 3;
@@ -122,19 +138,16 @@ function ExportPdfModal({ users, onClose }) {
     const TILE_W = (PAGE_W - MARGIN * 2 - GAP * (COLS - 1)) / COLS;
 
     const hasPhoto = selected.includes("photo");
-    const PHOTO_SIZE = hasPhoto ? 14 : 0; // smaller, left-aligned photo
+    const PHOTO_SIZE = hasPhoto ? 14 : 0;
     const textFields = selected.filter((k) => k !== "photo");
     const LINE_H = 3.4;
     const TILE_PADDING = 2;
-    // Details column sits to the right of the photo (or full width if no photo)
     const DETAILS_X_OFFSET = hasPhoto ? PHOTO_SIZE + TILE_PADDING + 1.5 : 0;
     const DETAILS_W = TILE_W - TILE_PADDING * 2 - DETAILS_X_OFFSET;
-    // Tile height: the taller of (photo) or (stacked text lines), plus padding
     const textBlockH = textFields.length * LINE_H;
     const TILE_H =
       TILE_PADDING * 2 + Math.max(hasPhoto ? PHOTO_SIZE : 0, textBlockH);
 
-    // Preload all photos as base64 first (if needed)
     const photoMap = {};
     if (hasPhoto) {
       await Promise.all(
@@ -173,7 +186,6 @@ function ExportPdfModal({ users, onClose }) {
       return String(val);
     };
 
-    // Header (drawn on every page)
     const drawPageHeader = (pageNum, totalPages) => {
       doc.setFontSize(13);
       doc.setFont(undefined, "bold");
@@ -200,12 +212,11 @@ function ExportPdfModal({ users, onClose }) {
     );
 
     const drawTile = (u, x, y) => {
-      // Card border
       doc.setDrawColor(220, 220, 220);
       doc.setLineWidth(0.2);
       doc.roundedRect(x, y, TILE_W, TILE_H, 1.2, 1.2, "S");
 
-      // NRI badge — top-right corner
+      // ── NRI badge — top-right corner ──────────────────────────────────
       if (u.nri === "Yes") {
         const badgeW = 9;
         const badgeH = 3.6;
@@ -222,7 +233,28 @@ function ExportPdfModal({ users, onClose }) {
           align: "center",
         });
 
-        // reset text color/font for the rest of the tile
+        doc.setTextColor(0, 0, 0);
+        doc.setFont(undefined, "normal");
+      }
+
+      // ── Junior badge — below NRI (or top-right if no NRI) ────────────
+      if (isJunior(u.dob)) {
+        const badgeW = 11;
+        const badgeH = 3.6;
+        const badgeX = x + TILE_W - badgeW - 1.2;
+        // Stack below NRI badge if both present, otherwise sit at top-right
+        const badgeY = u.nri === "Yes" ? y + 1.2 + 3.6 + 1 : y + 1.2;
+
+        doc.setFillColor(99, 102, 241); // indigo-500
+        doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, "F");
+
+        doc.setFontSize(5.2);
+        doc.setFont(undefined, "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text("JUNIOR", badgeX + badgeW / 2, badgeY + badgeH / 2 + 1, {
+          align: "center",
+        });
+
         doc.setTextColor(0, 0, 0);
         doc.setFont(undefined, "normal");
       }
@@ -250,14 +282,11 @@ function ExportPdfModal({ users, onClose }) {
             "No Photo",
             photoX + PHOTO_SIZE / 2,
             photoY + PHOTO_SIZE / 2 + 1,
-            {
-              align: "center",
-            },
+            { align: "center" },
           );
         }
       }
 
-      // Details column, left-aligned, vertically centered against the photo
       const detailsX = x + TILE_PADDING + DETAILS_X_OFFSET;
       let cursorY =
         contentY + (Math.max(PHOTO_SIZE, textBlockH) - textBlockH) / 2;
@@ -271,7 +300,7 @@ function ExportPdfModal({ users, onClose }) {
         doc.setFont(undefined, isName || isDesignation ? "bold" : "normal");
 
         if (isDesignation) {
-          doc.setTextColor(180, 83, 9); // amber-700 — distinct accent color
+          doc.setTextColor(180, 83, 9);
         } else {
           doc.setTextColor(20, 20, 20);
         }
@@ -335,8 +364,8 @@ function ExportPdfModal({ users, onClose }) {
             <p className="text-sm font-semibold text-gray-700 mb-2">
               Filter Members
             </p>
-            <div className="flex gap-2">
-              {["all", "approved", "rejected", "nri"].map((s) => (
+            <div className="flex gap-2 flex-wrap">
+              {["all", "approved", "rejected", "nri", "junior"].map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterStatus(s)}
@@ -344,11 +373,17 @@ function ExportPdfModal({ users, onClose }) {
                     filterStatus === s
                       ? s === "nri"
                         ? "bg-green-700 text-white border-green-700"
-                        : "bg-gray-900 text-white border-gray-900"
+                        : s === "junior"
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "bg-gray-900 text-white border-gray-900"
                       : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  {s === "nri" ? "NRI" : s.charAt(0).toUpperCase() + s.slice(1)}
+                  {s === "nri"
+                    ? "NRI"
+                    : s === "junior"
+                      ? "Junior"
+                      : s.charAt(0).toUpperCase() + s.slice(1)}
                 </button>
               ))}
             </div>
@@ -454,7 +489,7 @@ export default function AdminUserList() {
   const [editForm, setEditForm] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [search, setSearch] = useState(""); // ← NEW
+  const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [showExportModal, setShowExportModal] = useState(false);
   const navigate = useNavigate();
@@ -519,14 +554,15 @@ export default function AdminUserList() {
     { code: "+44", label: "🇬🇧 +44" },
     { code: "+971", label: "🇦🇪 +971" },
     { code: "+974", label: "🇶🇦 +974" },
+    { code: "+973", label: "🇧🇭 +973" },
     { code: "+966", label: "🇸🇦 +966" },
+    { code: "+965", label: "🇰🇼 +965" },
     { code: "+968", label: "🇴🇲 +968" },
     { code: "+60", label: "🇲🇾 +60" },
     { code: "+65", label: "🇸🇬 +65" },
     { code: "+61", label: "🇦🇺 +61" },
   ];
 
-  // Splits "+919876543210" → { code: "+91", number: "9876543210" }
   function splitPhone(full = "") {
     const cleaned = full.trim();
     const sorted = [...COUNTRY_CODES].sort(
@@ -536,7 +572,6 @@ export default function AdminUserList() {
     for (const { code } of sorted) {
       if (cleaned.startsWith(code)) {
         let number = cleaned.slice(code.length).replace(/\D/g, "");
-        // ✅ Fix legacy double-prefix: if number still starts with same code digits, strip again
         const codeDigits = code.replace("+", "");
         if (number.startsWith(codeDigits)) {
           number = number.slice(codeDigits.length);
@@ -548,6 +583,7 @@ export default function AdminUserList() {
     const stripped = cleaned.replace(/^\+\d{1,4}/, "").replace(/\D/g, "");
     return { code: "+91", number: stripped };
   }
+
   const openEditModal = (user) => {
     const ph = splitPhone(user.phone || "");
     const wa = splitPhone(user.whatsapp || "");
@@ -607,30 +643,28 @@ export default function AdminUserList() {
 
     let message = "";
     if (user.membershipStatus === "approved") {
-      message = `Hello ${user.name}, Welcome to Kingstar Arts & Sports Club.
+      message = `Hello *${user.name}*, Welcome to Kingstar Arts & Sports Club.
 🎉 Your membership has been approved!
 
-Membership ID: *${user.membershipId}*
-Login Mob No.: ${user.phone}
+🆔 Membership ID: *${user.membershipId}*
+🔐 Password: *${user.password || "—"}*
+✳️ Registered Mob No.: ${user.phone}
 
-*Download your Membership* 👇
+Membership Validity: ${user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : STATIC_VALID_UPTO}
+
+📥 Download your Membership 👇
 https://kingstareriyapady.club/login
-
-_________________
 
 Member Details:
 • Full Name: ${user.name}
 • Display / Nick Name: ${user.nickname || "—"}
 • Father's Name: ${user.fatherName || "—"}
-• Place: ${user.address || "—"}   
+• Place: ${user.address || "—"}
 • Blood Group: ${user.bloodGroup || "—"}
-• Password: ${user.password || "—"}
-• Valid Upto: ${user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : STATIC_VALID_UPTO}
 
-_Thank you for becoming a member of Kingstar Arts & Sports Club._
+Thank you for becoming a member of Kingstar Arts & Sports Club.
 
-------------------------------
-- Sabit Aboobacker (Gen. Sec)
+Sabit Aboobacker (Gen. Sec)
 📞 91 9747656653`;
     } else if (user.membershipStatus === "rejected") {
       message = `Hello ${user.name}, 
@@ -680,6 +714,7 @@ Kingstar Arts & Sports Club`;
   const filteredUsers = q
     ? statusFiltered.filter((u) => {
         if (q === "nri") return u.nri === "Yes";
+        if (q === "junior") return isJunior(u.dob);
         return (
           (u.name || "").toLowerCase().includes(q) ||
           String(u.membershipId || "")
@@ -708,7 +743,7 @@ Kingstar Arts & Sports Club`;
           </div>
         </div>
 
-        {/* ── Search Bar ── NEW ─────────────────────────────────────────── */}
+        {/* Search Bar */}
         <div className="mb-4 relative">
           <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 pointer-events-none">
             🔍
@@ -717,7 +752,7 @@ Kingstar Arts & Sports Club`;
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder='Search by name, membership ID, or type "nri"…'
+            placeholder='Search by name, membership ID, or type "nri" / "junior"…'
             className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           {search && (
@@ -940,7 +975,6 @@ Kingstar Arts & Sports Club`;
                 </p>
                 <div className="space-y-3">
                   <div className="gap-3">
-                    {/* Phone */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1.5">
                         Phone
@@ -974,7 +1008,6 @@ Kingstar Arts & Sports Club`;
                       </div>
                     </div>
 
-                    {/* WhatsApp */}
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1.5">
                         WhatsApp
@@ -1109,6 +1142,7 @@ Kingstar Arts & Sports Club`;
           </div>
         </div>
       )}
+
       {/* EXPORT PDF MODAL */}
       {showExportModal && (
         <ExportPdfModal
@@ -1130,6 +1164,7 @@ function UserCard({
   getWhatsAppLink,
 }) {
   const [expanded, setExpanded] = useState(false);
+
   const getEffectiveDays = () => {
     const staticExpiry = new Date("2027-03-31");
     staticExpiry.setHours(0, 0, 0, 0);
@@ -1137,7 +1172,6 @@ function UserCard({
     const memberExpiry = user.expiryDate
       ? new Date(user.expiryDate)
       : staticExpiry;
-
     memberExpiry.setHours(0, 0, 0, 0);
 
     const expiry = memberExpiry < staticExpiry ? memberExpiry : staticExpiry;
@@ -1151,6 +1185,7 @@ function UserCard({
   const days = getEffectiveDays();
   const isExpired = days <= 0;
   const isExpiringSoon = days <= 30 && !isExpired;
+  const junior = isJunior(user.dob);
 
   return (
     <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 w-full flex flex-col">
@@ -1164,9 +1199,21 @@ function UserCard({
           <div className="flex flex-col">
             <p className="font-semibold text-lg">{user.name}</p>
             <p className="text-xs text-gray-600">ID: {user.membershipId}</p>
-            {user.nri === "Yes" && (
-              <p className="text-xs font-semibold text-green-600">NRI</p>
-            )}
+
+            {/* ── Badges row ─────────────────────────────────────────── */}
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              {user.nri === "Yes" && (
+                <span className="text-[10px] font-bold text-white bg-green-600 px-1.5 py-0.5 rounded">
+                  NRI
+                </span>
+              )}
+              {junior && (
+                <span className="text-[10px] font-bold text-white bg-indigo-500 px-1.5 py-0.5 rounded">
+                  JUNIOR
+                </span>
+              )}
+            </div>
+
             {user.photo && (
               <a
                 href={user.photo}
@@ -1179,7 +1226,7 @@ function UserCard({
           </div>
         </div>
 
-        {/* ── Days badge + expand button ──────────────────────────────── */}
+        {/* Days badge + expand button */}
         <div className="flex items-center gap-4 ml-auto">
           <div
             className={`flex flex-col items-center justify-center rounded-xl px-2.5 py-1.5 min-w-[52px] border ${
@@ -1261,6 +1308,9 @@ function UserCard({
           </p>
           <p>
             <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
+          </p>
+          <p>
+            <b>Junior:</b> {junior ? "Yes 🟣" : "No"}
           </p>
           <p>
             <b>Expiry Date:</b>{" "}

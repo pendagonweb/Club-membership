@@ -1,6 +1,6 @@
 import React from "react";
 
-// Assets (user said they will provide all images)
+// Assets
 import BgMain from "../assets/hashtag.webp";
 import Hashtag from "../assets/hashtag2.webp";
 import Logo from "../assets/logoFile.webp";
@@ -11,17 +11,36 @@ import Stamp from "../assets/stamp.webp";
 import Signature from "../assets/Signatur.webp";
 
 export default function MembershipCard({ user }) {
-  if (!user) return null; // no user data yet
+  if (!user) return null;
 
   const STATIC_VALID_UPTO = "31/03/2027";
+
   const valiedUpto = user.expiryDate
     ? new Date(user.expiryDate).toLocaleDateString()
     : STATIC_VALID_UPTO;
 
+  const isJunior = Number(user.age) < 20;
+
+  const cardBg = isJunior ? "#fff4e8" : "#f4f1f1";
+
+  const headerBackground = isJunior
+    ? "linear-gradient(45deg, #16dea0 0%, #8d46ee 100%)"
+    : "linear-gradient(45deg, #203a8f 0%, #1e40af 100%)";
+
+  const textColorClass = isJunior ? "text-[#9a3412]" : "text-color";
+
   return (
-    <div className="w-[300px] h-[200px] bg-[#f4f1f1] relative overflow-hidden rounded-xl shadow-xl ">
-      {/* Top Blue Header */}
-      <div className="w-[270px] h-[60px] bg-gradient-to-r relative overflow-hidden from-[#203a8f] rounded-xl to-[#1f6bd6] m-4">
+    <div
+      className="w-[300px] h-[200px] relative overflow-hidden rounded-xl shadow-xl"
+      style={{ backgroundColor: cardBg }}
+    >
+      {/* Top Header */}
+      <div
+        className="w-[270px] h-[60px] relative overflow-hidden rounded-xl m-4"
+        style={{
+          background: headerBackground,
+        }}
+      >
         <img
           src={Lines2}
           alt="Card Background"
@@ -40,8 +59,8 @@ export default function MembershipCard({ user }) {
       <img src={Logo} alt="logo" className="absolute top-6 left-6 w-7" />
 
       {/* Header Text */}
-      <div className="absolute -right-17 -top-8 w-[320px] ">
-        <img src={name} alt="logo" className=" " />
+      <div className="absolute -right-17 -top-8 w-[320px]">
+        <img src={name} alt="logo" />
       </div>
 
       {/* Hashtag */}
@@ -52,7 +71,12 @@ export default function MembershipCard({ user }) {
       />
 
       {/* Profile Image */}
-      <div className="absolute top-[42px] left-10 w-19 h-19 rounded-full border-[4px] profile-border overflow-hidden bg-white">
+      <div
+        className="absolute top-[42px] left-10 w-19 h-19 rounded-full overflow-hidden bg-white"
+        style={{
+          border: `4px solid ${isJunior ? "#16dea0" : "#203a8f"}`,
+        }}
+      >
         <img
           src={user.photo}
           alt="profile"
@@ -61,32 +85,34 @@ export default function MembershipCard({ user }) {
       </div>
 
       {/* Name & ID */}
-      <div className="absolute  NID uppercase">
-        <p className=" font-bold leading-5 text-color toUpperCase() text-[15px]">
+      <div className="absolute NID uppercase">
+        <p className={`font-bold leading-5 text-[15px] ${textColorClass}`}>
           {user.nickname}
         </p>
-        <p className="text-color toUpperCase() text-[10px]">
-          {user.membershipId}
-        </p>
+        <p className={`text-[10px] ${textColorClass}`}>{user.membershipId}</p>
       </div>
 
       {/* Member Details */}
       <div className="absolute bottom-5 left-7 text-[6px]">
-        <div className="grid grid-cols-[50px_10px_auto] ">
+        <div className="grid grid-cols-[50px_10px_auto]">
           <p>FULL NAME</p>
           <p>:</p>
           <p className="font-semibold">{user.name}</p>
+
           <p>MEMBERSHIP ID</p>
           <p>:</p>
           <p className="font-semibold">{user.membershipId}</p>
+
           <p>MOBILE NO</p>
           <p>:</p>
           <p className="font-semibold">
             {"X".repeat(user.phone.length - 4) + user.phone.slice(-4)}
-          </p>{" "}
+          </p>
+
           <p>BLOOD GROUP</p>
           <p>:</p>
-          <p className="font-semibold">{user.bloodGroup}</p>
+          <p className="font-semibold">{user.bloodGroup || "NIL"}</p>
+
           <p>VALID UPTO</p>
           <p>:</p>
           <p className="font-semibold">{valiedUpto}</p>
@@ -111,10 +137,6 @@ export default function MembershipCard({ user }) {
         </p>
         <p className="font-medium text-[3px] text-gray-600">(Gen. Secretary)</p>
       </div>
-
-      {/* Bottom Waves */}
-      {/* <img src={LinesFlip} alt="wave" className="absolute bottom-0 left-0 w-full opacity-60" /> */}
-      {/* <img src={Lines2} alt="wave2" className="absolute bottom-0 left-0 w-full opacity-40" /> */}
     </div>
   );
 }

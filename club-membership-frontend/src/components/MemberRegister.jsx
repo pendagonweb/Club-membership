@@ -349,7 +349,7 @@ export default function MemberRegister() {
       newErrors.password = "Password must be at least 6 characters";
     if (!photo) newErrors.photo = "Profile photo is required";
     const age = Number(formData.age);
-    if (!paymentScreenshot && !(age && age < 18))
+    if (!paymentScreenshot && !(age && age < 20))
       newErrors.payment = "Payment screenshot is required";
 
     setErrors(newErrors);
@@ -758,9 +758,9 @@ export default function MemberRegister() {
                 <div>
                   <label className="text-sm font-medium">
                     Payment Screenshot
-                    {Number(formData.age) > 0 && Number(formData.age) < 18 && (
+                    {Number(formData.age) > 0 && Number(formData.age) < 20 && (
                       <span className="text-green-600 text-xs font-normal ml-2">
-                        (Optional for under 18)
+                        (Optional for under 20)
                       </span>
                     )}
                   </label>

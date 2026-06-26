@@ -65,7 +65,7 @@ router.put("/approve/:id", adminAuth, async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
 
-    const isMinor = Number(user.age) > 0 && Number(user.age) < 18;
+    const isMinor = Number(user.age) > 0 && Number(user.age) < 19;
 
     if (!user.photo) {
       return res.status(400).json({
