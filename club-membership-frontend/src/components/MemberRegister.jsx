@@ -755,37 +755,34 @@ export default function MemberRegister() {
                 </div>
 
                 {/* PAYMENT SCREENSHOT */}
-                <div>
-                  <label className="text-sm font-medium">
-                    Payment Screenshot
-                    {Number(formData.age) > 0 && Number(formData.age) < 20 && (
-                      <span className="text-green-600 text-xs font-normal ml-2">
-                        (Optional for under 20)
-                      </span>
-                    )}
-                  </label>
-                  <div className="relative border-2 border-dashed rounded-2xl p-4 text-center hover:border-blue-400 transition">
-                    {paymentScreenshot ? (
-                      <img
-                        src={URL.createObjectURL(paymentScreenshot)}
-                        className="w-32 mx-auto rounded-lg shadow"
+                {!(Number(formData.age) > 0 && Number(formData.age) < 20) && (
+                  <div>
+                    <label className="text-sm font-medium">
+                      Payment Screenshot
+                    </label>
+                    <div className="relative border-2 border-dashed rounded-2xl p-4 text-center hover:border-blue-400 transition">
+                      {paymentScreenshot ? (
+                        <img
+                          src={URL.createObjectURL(paymentScreenshot)}
+                          className="w-32 mx-auto rounded-lg shadow"
+                        />
+                      ) : (
+                        <p className="text-[11px] text-gray-500">
+                          Upload payment screenshot / രസീത് അപ്ലോഡ് ചെയ്യുക
+                        </p>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePaymentChange}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
                       />
-                    ) : (
-                      <p className="text-[11px] text-gray-500">
-                        Upload payment screenshot / രസീത് അപ്ലോഡ് ചെയ്യുക
-                      </p>
+                    </div>
+                    {errors.payment && (
+                      <p className="text-red-500 text-xs">{errors.payment}</p>
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePaymentChange}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
                   </div>
-                  {errors.payment && (
-                    <p className="text-red-500 text-xs">{errors.payment}</p>
-                  )}
-                </div>
+                )}
               </div>
 
               {/* QR */}
