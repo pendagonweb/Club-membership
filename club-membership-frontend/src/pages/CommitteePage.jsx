@@ -72,8 +72,12 @@ const Avatar = ({ photo, name }) => {
 };
 
 /* ── Unified Member Card ─────────────────────────────────────────────────── */
+const isMembershipExpired = (user) =>
+  !!user.expiryDate && new Date(user.expiryDate) < new Date();
+
 const MemberCard = ({ user, index, isLeader }) => {
   const waLink = whatsappLink(user.whatsapp || user.phone);
+  const expired = isMembershipExpired(user);
 
   return (
     <motion.div
@@ -85,7 +89,9 @@ const MemberCard = ({ user, index, isLeader }) => {
         delay: (index % 6) * 0.08,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-blue-100 hover:shadow-xl transition-all duration-300 flex flex-col"
+      className={`group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-blue-100 hover:shadow-xl transition-all duration-300 flex flex-col ${
+        expired ? "grayscale" : ""
+      }`}
     >
       {/* Leader accent bar */}
       {isLeader && (
@@ -95,6 +101,12 @@ const MemberCard = ({ user, index, isLeader }) => {
       {/* Photo */}
       <div className="relative w-full overflow-hidden aspect-square bg-gray-100">
         <Avatar photo={user.photo} name={user.name} />
+
+        {expired && (
+          <div className="absolute inset-x-0 bottom-0 bg-black/70 text-white text-[8px] font-bold uppercase tracking-wider text-center py-1">
+            Expired
+          </div>
+        )}
 
         {user.nri === "Yes" && (
           <div className="absolute top-2 right-3 flex items-center gap-0.5 bg-white/90 backdrop-blur-sm text-indigo-600 text-[8px] font-bold px-1 py-0.5 rounded-full border border-indigo-100 shadow-sm">
@@ -365,6 +377,14 @@ const CommitteePage = () => {
       u.designation?.toLowerCase().replace(/\s+/g, " ").trim(),
     );
 
+  // Junior members are those under 20 years of age.
+  // Guard against missing/invalid age so they don't accidentally
+  // get sorted into the wrong bucket.
+  const isJunior = (u) => {
+    const age = Number(u.age);
+    return Number.isFinite(age) && age < 20;
+  };
+
   const matchesSearch = (u) =>
     !q ||
     u.name?.toLowerCase().includes(q) ||
@@ -406,8 +426,13 @@ const CommitteePage = () => {
       u.place?.toLowerCase().includes(q),
   );
 
-  // Combined members list: exec first, then regular members
-  const allMembers = [...execMembers, ...filteredMembers];
+  // Keep regular (non-junior) members first, junior members (age < 20) pushed to the end
+  const regularMembers = filteredMembers.filter((u) => !isJunior(u));
+  const juniorMembers = filteredMembers.filter((u) => isJunior(u));
+  console.log("Junior members count:", juniorMembers.length);
+
+  // Regular (non-junior) members list: exec first, then everyone else
+  const allMembers = [...execMembers, ...regularMembers];
 
   const totalFiltered =
     generalLeaders.length +
@@ -658,6 +683,27 @@ const CommitteePage = () => {
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {/* ── Junior Members section ── */}
+        {!loading && !error && juniorMembers.length > 0 && (
+          <section>
+            <SectionLabel
+              icon={RiTeamLine}
+              label="Junior Members"
+              accent="amber"
+            />
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-5">
+              {juniorMembers.map((user, i) => (
+                <MemberCard
+                  key={user._id}
+                  user={user}
+                  index={i}
+                  isLeader={false}
+                />
+              ))}
+            </div>
           </section>
         )}
 

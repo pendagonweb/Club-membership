@@ -165,7 +165,7 @@ router.get("/committee", async (req, res) => {
   try {
     const users = await User.find({ membershipStatus: "approved" })
       .select(
-        "name membershipId phone nickname designation photo bloodGroup place nri whatsapp",
+        "name age membershipId phone nickname designation photo bloodGroup place nri whatsapp",
       )
       .sort({ name: 1 });
 
