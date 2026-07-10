@@ -79,6 +79,15 @@ const MemberCard = ({ user, index, isLeader }) => {
   const waLink = whatsappLink(user.whatsapp || user.phone);
   const expired = isMembershipExpired(user);
 
+  // Security note:
+  // We do NOT trust any client-side flag (e.g. localStorage "userlogged")
+  // to decide whether to show contact actions, since that can be faked
+  // by anyone via devtools. Instead we only show these buttons if the
+  // backend actually included phone/whatsapp fields in the response,
+  // which it should only do for verified/authenticated requests
+  // (see backend JWT verification + field-stripping logic).
+  const hasContactAccess = Boolean(user.phone || user.whatsapp);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -139,47 +148,51 @@ const MemberCard = ({ user, index, isLeader }) => {
             </span>
           )}
         </div>
-        {/* Action buttons row: share (left) + whatsapp (right) */}
-        <div className="absolute -top-3 left-3 right-3 flex justify-between">
-          {/* Share button — sends member details to WhatsApp */}
-          <button
-            onClick={() => {
-              const text =
-                ` *Member Details*\n\n` +
-                `• *Full Name:* ${user.name || "—"}\n` +
-                `• *Display / Nick Name:* ${user.nickname || "—"}\n` +
-                `• *Membership ID:* ${user.membershipId || "—"}\n` +
-                `• *Phone Number:* ${user.phone || "—"}\n` +
-                `• *Blood Group:* ${user.bloodGroup || "—"}\n` +
-                `• *Committee Members:*\n` +
-                `https://kingstareriyapady.club/committee`;
-              const encoded = encodeURIComponent(text);
-              window.open(
-                `https://wa.me/?text=${encoded}`,
-                "_blank",
-                "noopener,noreferrer",
-              );
-            }}
-            title="Share member details on WhatsApp"
-            className="flex w-6 h-6 items-center justify-center rounded-full bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white text-xs font-semibold border border-blue-100 hover:border-blue-500 transition-all duration-200"
-          >
-            <RiShareLine size={14} />
-          </button>
 
-          {/* WhatsApp direct chat button */}
-          {waLink ? (
-            <a
-              href={waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-6 h-6 items-center justify-center rounded-full bg-green-50 hover:bg-green-500 text-green-600 hover:text-white text-xs font-semibold border border-green-100 hover:border-green-500 transition-all duration-200"
+        {/* Action buttons row: share (left) + whatsapp (right) — only rendered
+            when the backend actually gave us contact data for this user */}
+        {hasContactAccess && (
+          <div className="absolute -top-3 left-3 right-3 flex justify-between">
+            {/* Share button — sends member details to WhatsApp */}
+            <button
+              onClick={() => {
+                const text =
+                  ` *Member Details*\n\n` +
+                  `• *Full Name:* ${user.name || "—"}\n` +
+                  `• *Display / Nick Name:* ${user.nickname || "—"}\n` +
+                  `• *Membership ID:* ${user.membershipId || "—"}\n` +
+                  `• *Phone Number:* ${user.phone || "—"}\n` +
+                  `• *Blood Group:* ${user.bloodGroup || "—"}\n` +
+                  `• *Committee Members:*\n` +
+                  `https://kingstareriyapady.club/committee`;
+                const encoded = encodeURIComponent(text);
+                window.open(
+                  `https://wa.me/?text=${encoded}`,
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
+              title="Share member details on WhatsApp"
+              className="flex w-6 h-6 items-center justify-center rounded-full bg-blue-50 hover:bg-blue-500 text-blue-600 hover:text-white text-xs font-semibold border border-blue-100 hover:border-blue-500 transition-all duration-200"
             >
-              <RiWhatsappLine size={16} />
-            </a>
-          ) : (
-            <div className="w-6 h-6" />
-          )}
-        </div>
+              <RiShareLine size={14} />
+            </button>
+
+            {/* WhatsApp direct chat button */}
+            {waLink ? (
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-6 h-6 items-center justify-center rounded-full bg-green-50 hover:bg-green-500 text-green-600 hover:text-white text-xs font-semibold border border-green-100 hover:border-green-500 transition-all duration-200"
+              >
+                <RiWhatsappLine size={16} />
+              </a>
+            ) : (
+              <div className="w-6 h-6" />
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -323,7 +336,10 @@ const CommitteePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${BASE}/api/admin/committee`);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${BASE}/api/admin/committee`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!res.data.success) throw new Error(res.data.message);
         setLeaders(res.data.data.leaders);
         setMembers(res.data.data.members);
@@ -429,7 +445,6 @@ const CommitteePage = () => {
   // Keep regular (non-junior) members first, junior members (age < 20) pushed to the end
   const regularMembers = filteredMembers.filter((u) => !isJunior(u));
   const juniorMembers = filteredMembers.filter((u) => isJunior(u));
-  console.log("Junior members count:", juniorMembers.length);
 
   // Regular (non-junior) members list: exec first, then everyone else
   const allMembers = [...execMembers, ...regularMembers];
