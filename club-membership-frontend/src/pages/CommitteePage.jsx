@@ -53,6 +53,8 @@ const whatsappLink = (number) => {
   return waNumber ? `https://wa.me/${waNumber}` : null;
 };
 
+const isUserLogged = () => localStorage.getItem("userlogged") === "true";
+
 /* ── Avatar ──────────────────────────────────────────────────────────────── */
 const Avatar = ({ photo, name }) => {
   const initials = name
@@ -78,15 +80,7 @@ const isMembershipExpired = (user) =>
 const MemberCard = ({ user, index, isLeader }) => {
   const waLink = whatsappLink(user.whatsapp || user.phone);
   const expired = isMembershipExpired(user);
-
-  // Security note:
-  // We do NOT trust any client-side flag (e.g. localStorage "userlogged")
-  // to decide whether to show contact actions, since that can be faked
-  // by anyone via devtools. Instead we only show these buttons if the
-  // backend actually included phone/whatsapp fields in the response,
-  // which it should only do for verified/authenticated requests
-  // (see backend JWT verification + field-stripping logic).
-  const hasContactAccess = Boolean(user.phone || user.whatsapp);
+  const loggedIn = isUserLogged();
 
   return (
     <motion.div
@@ -148,10 +142,9 @@ const MemberCard = ({ user, index, isLeader }) => {
             </span>
           )}
         </div>
-
-        {/* Action buttons row: share (left) + whatsapp (right) — only rendered
-            when the backend actually gave us contact data for this user */}
-        {hasContactAccess && (
+        {/* Action buttons row: share (left) + whatsapp (right) */}
+        {/* Action buttons row: share (left) + whatsapp (right) — only for logged-in users */}
+        {loggedIn && (
           <div className="absolute -top-3 left-3 right-3 flex justify-between">
             {/* Share button — sends member details to WhatsApp */}
             <button
@@ -336,10 +329,7 @@ const CommitteePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${BASE}/api/admin/committee`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const res = await axios.get(`${BASE}/api/admin/committee`);
         if (!res.data.success) throw new Error(res.data.message);
         setLeaders(res.data.data.leaders);
         setMembers(res.data.data.members);
