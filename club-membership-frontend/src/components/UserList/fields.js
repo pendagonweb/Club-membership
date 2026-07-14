@@ -1,0 +1,30 @@
+export const ALL_FIELDS = [
+  { key: "photo", label: "Photo" },
+  { key: "membershipId", label: "Membership ID" },
+  { key: "name", label: "Name" },
+  { key: "fatherName", label: "Father's Name" },
+  { key: "nickname", label: "Nickname" },
+  { key: "phone", label: "Phone" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "email", label: "Email" },
+  { key: "dob", label: "Date of Birth" },
+  { key: "aadhaar", label: "Aadhaar Number" },
+  { key: "bloodGroup", label: "Blood Group" },
+  { key: "address", label: "Address" },
+  { key: "place", label: "Place" },
+  { key: "gender", label: "Gender" },
+  { key: "membershipStatus", label: "Status" },
+  { key: "designation", label: "Designation" },
+  { key: "expiryDate", label: "Valid Upto" },
+  { key: "paymentAmount", label: "Amount Paid" },
+];
+
+export const DEFAULT_SELECTED_FIELDS = [
+  "photo",
+  "membershipId",
+  "name",
+  "phone",
+  "designation",
+  "expiryDate",
+  "paymentAmount",
+];

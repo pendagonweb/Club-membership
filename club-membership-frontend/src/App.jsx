@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AdminPage from "./components/AdminPage";
-import UserList from "./components/UserList";
+import UserList from "./components/UserList/UserList";
 import AdminLayout from "./components/AdminLayout";
 import Login from "./components/Login";
 import MemberRegister from "./components/MemberRegister";

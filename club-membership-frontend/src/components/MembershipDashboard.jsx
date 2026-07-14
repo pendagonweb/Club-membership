@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Cropper from "react-easy-crop";
 import {
@@ -19,6 +19,7 @@ import {
   HiEye,
   HiEyeOff,
 } from "react-icons/hi";
+import KingInterLogo from "../assets/KingInternationalLogo.webp";
 import MembershipCard from "../pages/MemberCard";
 
 /* ======================
@@ -341,32 +342,59 @@ export default function MemberDashboard() {
     animation: speakerBounce 1s ease-in-out infinite;
   }
 `}</style>
+        <Link to="/vote">
+          <div className="mx-3 mt-3 md:mx-0 md:mt-0 banner-glow bg-gradient-to-r from-[#9f47dd] to-[#24c5bc] rounded-2xl flex items-center justify-between gap-2 px-2 py-3 overflow-hidden">
+            <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+              <span>
+                <img
+                  src={KingInterLogo}
+                  alt="King International Logo"
+                  className="w-20 h-20 rounded-full"
+                />
+              </span>
 
-        <div className="mx-3 mt-3 md:mx-0 md:mt-0 banner-glow bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl flex items-center justify-between gap-2 px-4 py-3 overflow-hidden">
-          <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-            <span className="speaker-bounce shrink-0">
-              <HiSpeakerphone className="text-white text-lg" />
-            </span>
-            {/* Marquee wrapper */}
-            <div className="overflow-hidden flex-1">
-              <div className="flex w-max">
-                <span className="banner-marquee text-white text-xs font-semibold leading-snug pr-16">
-                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27
-                </span>
-                <span className="banner-marquee text-white text-xs font-semibold leading-snug pr-16">
-                  KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27
-                </span>
+              <div className="overflow-hidden flex-1">
+                <div className="text-white text-xs font-semibold">ELECTION</div>
+                <div className="flex w-max">
+                  <span className="banner-marquee text-white text-lg font-semibold leading-snug pr-16">
+                    KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27 14th & 15th
+                    July 2024
+                  </span>
+                  <span className="banner-marquee text-white text-lg font-semibold leading-snug pr-16">
+                    KINGSTAR INTERNATIONAL COUNCIL ELECTION 2026-27 14th & 15th
+                    July 2024
+                  </span>
+                </div>
               </div>
             </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate("/vote");
+                }}
+                className="vote-btn-glow shrink-0 flex items-center gap-1 bg-[#9f47dd] border border-white/40 text-white text-sm font-bold px-2 py-1.5 rounded-full active:bg-white/40 transition"
+              >
+                <HiCheckCircle size={18} />
+                Vote
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate("/results");
+                }}
+                className="vote-btn-glow shrink-0 flex items-center gap-1 bg-[#9f47dd] border border-white/40 text-white text-sm font-bold px-2 py-1.5 rounded-full active:bg-white/40 transition"
+              >
+                <HiCheckCircle size={18} />
+                Results
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => navigate("/vote")}
-            className="vote-btn-glow shrink-0 flex items-center gap-1 bg-white/25 border border-white/40 text-white text-xs font-bold px-3 py-1.5 rounded-full active:bg-white/40 transition"
-          >
-            <HiCheckCircle className="text-sm" />
-            Vote
-          </button>
-        </div>
+        </Link>
 
         {/* ── MOBILE PROFILE HERO ── */}
         <div className="md:hidden mx-3 mt-3 bg-white rounded-2xl shadow-sm overflow-hidden">

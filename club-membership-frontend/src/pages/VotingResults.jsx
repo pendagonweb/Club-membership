@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
@@ -10,6 +10,8 @@ import {
   HiOutlineFire,
   HiMiniStar,
   HiOutlineCheckBadge,
+  HiOutlineClock,
+  HiOutlineLockClosed,
 } from "react-icons/hi2";
 import { RiEqualizerLine } from "react-icons/ri";
 import { TbScale } from "react-icons/tb";
@@ -17,6 +19,37 @@ import { TbScale } from "react-icons/tb";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+// ---- Reveal schedule ----------------------------------------------------
+// Results become visible at RESULT_TIME. The countdown UI itself only
+// starts ticking COUNTDOWN_LEAD_MS before that (30 minutes). Before that
+// window, visitors just see a "come back later" message with no clock.
+const RESULT_TIME = new Date("2026-07-16T00:00:00+05:30"); // midnight IST, globally fixed
+const COUNTDOWN_LEAD_MS = 30 * 60 * 1000; // 30 minutes
+const COUNTDOWN_START_TIME = new Date(
+  RESULT_TIME.getTime() - COUNTDOWN_LEAD_MS,
+);
+
+function getPhase(now) {
+  if (now.getTime() >= RESULT_TIME.getTime()) return "results";
+  if (now.getTime() >= COUNTDOWN_START_TIME.getTime()) return "countdown";
+  return "waiting";
+}
+
+function formatScheduled(date) {
+  return date.toLocaleString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function pad(n) {
+  return String(n).padStart(2, "0");
+}
 
 const PALETTE = [
   { fill: "#6366f1", light: "#eef2ff", text: "#4338ca" },
@@ -184,15 +217,352 @@ function ResultRow({
   );
 }
 
+// Shared style block so all three phases (waiting / countdown / results)
+// look like one consistent page.
+function SharedStyles() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+      .vr-root * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+      .vr-display { font-family: 'Syne', sans-serif; }
+
+      @keyframes rowIn {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes trophyPop {
+        0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+        60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      }
+      @keyframes pulseRing {
+        0%   { transform: scale(1); opacity: 0.5; }
+        100% { transform: scale(1.7); opacity: 0; }
+      }
+      @keyframes tieSway {
+        0%, 100% { transform: rotate(-5deg); }
+        50%       { transform: rotate(5deg); }
+      }
+      @keyframes shimmer {
+        0%   { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+      }
+      @keyframes softPulse {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.55; }
+      }
+      .trophy-anim { animation: trophyPop 0.7s cubic-bezier(0.34,1.56,0.64,1) both; }
+      .tie-anim { animation: tieSway 1.8s ease-in-out infinite; display: inline-block; }
+      .winner-section { animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both; }
+      .pulse-ring {
+        position: absolute; inset: -8px; border-radius: 50%;
+        border: 2px solid currentColor;
+        animation: pulseRing 2s ease-out infinite;
+      }
+      .skeleton {
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 400px 100%;
+        animation: shimmer 1.2s ease-in-out infinite;
+        border-radius: 14px;
+      }
+      .spin-active { animation: spin 0.6s linear; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .soft-pulse { animation: softPulse 2.4s ease-in-out infinite; }
+
+      @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes modalPopIn {
+        from { opacity: 0; transform: scale(0.9) translateY(10px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+      }
+    `}</style>
+  );
+}
+
+// ---- Phase: waiting (more than 30 min before reveal) --------------------
+function WaitingScreen() {
+  return (
+    <>
+      <SharedStyles />
+      <div
+        className="vr-root min-h-screen py-8 px-4 flex items-center justify-center"
+        style={{ background: "#f8fafc" }}
+      >
+        <div
+          className="max-w-md w-full rounded-2xl p-8 text-center"
+          style={{
+            background: "#fff",
+            border: "1px solid #f1f5f9",
+            animation: "fadeUp 0.5s ease both",
+          }}
+        >
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            style={{ background: "#eef2ff" }}
+          >
+            <HiOutlineLockClosed size={30} color="#6366f1" />
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+            Voting in progress
+          </span>
+          <h1 className="vr-display text-2xl text-gray-900 mt-1 mb-3">
+            Results are under wraps
+          </h1>
+          <p className="text-sm text-gray-500 leading-relaxed mb-5">
+            Vote counting hasn't finished yet, so results aren't ready to show.
+            Check back once counting wraps up.
+          </p>
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
+            style={{
+              background: "#f8fafc",
+              color: "#475569",
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <HiOutlineClock size={16} />
+            Results on {formatScheduled(RESULT_TIME)}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---- Phase: countdown (last 30 minutes before reveal) --------------------
+function CountdownScreen({ msRemaining }) {
+  const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return (
+    <>
+      <SharedStyles />
+      <div
+        className="vr-root min-h-screen py-8 px-4 flex items-center justify-center"
+        style={{ background: "#f8fafc" }}
+      >
+        <div
+          className="max-w-md w-full rounded-2xl p-8 text-center"
+          style={{
+            background: "#fff",
+            border: "1px solid #f1f5f9",
+            animation: "fadeUp 0.5s ease both",
+          }}
+        >
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5 soft-pulse"
+            style={{ background: "#eef2ff" }}
+          >
+            <HiOutlineChartPie size={30} color="#6366f1" />
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+            Almost there
+          </span>
+          <h1 className="vr-display text-2xl text-gray-900 mt-1 mb-5">
+            Results unlock in
+          </h1>
+
+          <div className="flex items-center justify-center gap-3 mb-5">
+            <div
+              className="rounded-xl px-5 py-4"
+              style={{ background: "#0f172a", minWidth: 84 }}
+            >
+              <p
+                className="vr-display text-4xl text-white"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {pad(minutes)}
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-gray-400 mt-1">
+                Minutes
+              </p>
+            </div>
+            <span className="vr-display text-3xl text-gray-300">:</span>
+            <div
+              className="rounded-xl px-5 py-4"
+              style={{ background: "#0f172a", minWidth: 84 }}
+            >
+              <p
+                className="vr-display text-4xl text-white"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {pad(seconds)}
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-gray-400 mt-1">
+                Seconds
+              </p>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-500">
+            Counting is wrapping up — results reveal automatically at{" "}
+            <span className="font-semibold text-gray-700">
+              {formatScheduled(RESULT_TIME)}
+            </span>
+            .
+          </p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---- Winner announcement modal -------------------------------------------
+// Shown the moment results load, so the outcome is announced up front
+// instead of being buried further down the page as a "current leader".
+function WinnerModal({
+  open,
+  onClose,
+  isTie,
+  winner,
+  tiedPanels,
+  totalVotes,
+  palette,
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(15,23,42,0.55)",
+        backdropFilter: "blur(2px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 50,
+        padding: 16,
+        animation: "modalFadeIn 0.25s ease both",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="rounded-2xl p-7 text-center relative overflow-hidden"
+        style={{
+          background: "#fff",
+          maxWidth: 380,
+          width: "100%",
+          animation: "modalPopIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
+        }}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-gray-400"
+          style={{ background: "#f8fafc", border: "1px solid #f1f5f9" }}
+        >
+          ✕
+        </button>
+
+        {isTie ? (
+          <>
+            <div className="tie-anim mb-3">
+              <TbScale size={44} color="#64748b" />
+            </div>
+            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-1">
+              Results are in
+            </p>
+            <h2 className="vr-display text-2xl text-slate-700 mb-4">
+              It's a Tie!
+            </h2>
+            <div className="flex flex-wrap justify-center gap-2 mb-2">
+              {tiedPanels.map((p, i) => (
+                <div
+                  key={p._id}
+                  className="px-3 py-1.5 rounded-xl text-sm font-semibold"
+                  style={{
+                    background: "#f1f5f9",
+                    color: "#475569",
+                    border: "1px solid #e2e8f0",
+                  }}
+                >
+                  {p.name} · {p.voteCount} votes
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="relative inline-block mb-3">
+              <div className="pulse-ring" style={{ color: palette.fill }} />
+              <div
+                className="trophy-anim w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+                style={{ background: palette.fill }}
+              >
+                <HiOutlineTrophy size={30} color="#fff" />
+              </div>
+            </div>
+            <p
+              className="text-xs font-bold tracking-widest uppercase mb-1"
+              style={{ color: palette.text }}
+            >
+              Results are in
+            </p>
+            <h2 className="vr-display text-3xl text-gray-900 mb-3">
+              {winner.name} Wins!
+            </h2>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <div
+                className="px-3 py-1 rounded-lg text-sm font-bold"
+                style={{ background: palette.fill, color: "#fff" }}
+              >
+                {winner.voteCount} votes
+              </div>
+              <div
+                className="px-3 py-1 rounded-lg text-sm font-bold"
+                style={{ background: palette.fill + "18", color: palette.text }}
+              >
+                {totalVotes > 0
+                  ? Math.round((winner.voteCount / totalVotes) * 100)
+                  : 0}
+                % share
+              </div>
+            </div>
+          </>
+        )}
+
+        <button
+          onClick={onClose}
+          className="mt-5 w-full py-2.5 rounded-xl text-sm font-semibold"
+          style={{ background: "#0f172a", color: "#fff" }}
+        >
+          View full results
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function VotingResults() {
+  const [now, setNow] = useState(new Date());
+  const phase = getPhase(now);
+
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [animating, setAnimating] = useState(false);
   const [showWinner, setShowWinner] = useState(false);
   const [spinning, setSpinning] = useState(false);
+  const [showWinnerModal, setShowWinnerModal] = useState(false);
 
+  const hasFetchedRef = useRef(false);
   const token = localStorage.getItem("token");
+
+  // Tick every second so the phase (waiting -> countdown -> results)
+  // and the countdown digits stay accurate without a page refresh.
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const fetchResults = async () => {
     setLoading(true);
@@ -215,9 +585,28 @@ export default function VotingResults() {
     }
   };
 
+  // Only pull results once we've actually crossed the reveal time.
   useEffect(() => {
-    fetchResults();
-  }, []);
+    if (phase === "results" && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchResults();
+    }
+  }, [phase]);
+
+  // Announce the winner right away when results land, instead of only
+  // surfacing it further down the page.
+  useEffect(() => {
+    if (phase === "results" && results && (results.totalVotes || 0) > 0) {
+      setShowWinnerModal(true);
+    }
+  }, [phase, results]);
+
+  if (phase === "waiting") return <WaitingScreen />;
+  if (phase === "countdown") {
+    return (
+      <CountdownScreen msRemaining={RESULT_TIME.getTime() - now.getTime()} />
+    );
+  }
 
   const sorted = results?.panels
     ? [...results.panels].sort((a, b) => b.voteCount - a.voteCount)
@@ -272,53 +661,19 @@ export default function VotingResults() {
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
-        .vr-root * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
-        .vr-display { font-family: 'Syne', sans-serif; }
+      <SharedStyles />
 
-        @keyframes rowIn {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes trophyPop {
-          0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
-          60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-        @keyframes pulseRing {
-          0%   { transform: scale(1); opacity: 0.5; }
-          100% { transform: scale(1.7); opacity: 0; }
-        }
-        @keyframes tieSway {
-          0%, 100% { transform: rotate(-5deg); }
-          50%       { transform: rotate(5deg); }
-        }
-        @keyframes shimmer {
-          0%   { background-position: -400px 0; }
-          100% { background-position: 400px 0; }
-        }
-        .trophy-anim { animation: trophyPop 0.7s cubic-bezier(0.34,1.56,0.64,1) both; }
-        .tie-anim { animation: tieSway 1.8s ease-in-out infinite; display: inline-block; }
-        .winner-section { animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both; }
-        .pulse-ring {
-          position: absolute; inset: -8px; border-radius: 50%;
-          border: 2px solid currentColor;
-          animation: pulseRing 2s ease-out infinite;
-        }
-        .skeleton {
-          background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-          background-size: 400px 100%;
-          animation: shimmer 1.2s ease-in-out infinite;
-          border-radius: 14px;
-        }
-        .spin-active { animation: spin 0.6s linear; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
+      {totalVotes > 0 && (
+        <WinnerModal
+          open={showWinnerModal}
+          onClose={() => setShowWinnerModal(false)}
+          isTie={isTie}
+          winner={sorted[0]}
+          tiedPanels={tiedPanels}
+          totalVotes={totalVotes}
+          palette={PALETTE[0]}
+        />
+      )}
 
       <div
         className="vr-root min-h-screen py-8 px-4"
@@ -370,6 +725,37 @@ export default function VotingResults() {
               </button>
             </div>
           </div>
+
+          {/* Winner strip — stays visible at the top after the modal closes */}
+          {!loading && totalVotes > 0 && (
+            <div
+              className="rounded-xl px-4 py-3 flex items-center gap-3 cursor-pointer"
+              onClick={() => setShowWinnerModal(true)}
+              style={{
+                background: isTie ? "#f8fafc" : PALETTE[0].light,
+                border: `1px solid ${isTie ? "#e2e8f0" : PALETTE[0].fill + "40"}`,
+                animation: "fadeUp 0.4s ease both",
+              }}
+            >
+              {isTie ? (
+                <TbScale size={18} color="#64748b" />
+              ) : (
+                <HiOutlineTrophy size={18} color={PALETTE[0].fill} />
+              )}
+              <span
+                className="text-sm font-bold flex-1"
+                style={{ color: isTie ? "#475569" : PALETTE[0].text }}
+              >
+                {isTie ? "It's a tie!" : `${sorted[0]?.name} wins!`}
+              </span>
+              <span
+                className="text-xs font-medium"
+                style={{ color: "#94a3b8" }}
+              >
+                View details
+              </span>
+            </div>
+          )}
 
           {/* Error */}
           {error && (
@@ -644,7 +1030,7 @@ export default function VotingResults() {
                                 className="text-xs font-bold tracking-widest uppercase mb-1"
                                 style={{ color: pal.text }}
                               >
-                                Current leader
+                                Winner
                               </p>
                               <h2
                                 className="vr-display text-3xl mb-4"

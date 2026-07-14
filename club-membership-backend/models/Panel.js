@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const panelSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     name: {
       type: String,
       required: true,
@@ -36,7 +37,7 @@ const panelSchema = new mongoose.Schema(
       default: true, // toggle to disable voting for this panel
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Panel", panelSchema);

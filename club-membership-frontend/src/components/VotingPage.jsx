@@ -4,25 +4,43 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
+// Voting closes at 1:30 AM IST on 17 July 2026 (exact cutoff).
+// Using an explicit +05:30 offset so this is correct regardless of the
+// visitor's/browser's local timezone.
+const VOTING_DEADLINE = new Date("2026-07-17T01:30:00+05:30");
+
 export default function VotingPage() {
   const [panels, setPanels] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [voteStatus, setVoteStatus] = useState(null); // { hasVoted, votedPanel }
+  const [voteStatus, setVoteStatus] = useState(null); 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [voted, setVoted] = useState(false); // success animation trigger
-
+  const [voted, setVoted] = useState(false); 
   const [notLoggedIn, setNotLoggedIn] = useState(false);
+  const [isNri, setIsNri] = useState(null); 
+  const [votingClosed, setVotingClosed] = useState(
+    () => Date.now() > VOTING_DEADLINE.getTime(),
+  );
+
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
-  /* ─── Load panels + vote status ─── */
+  /* ─── Keep the deadline check live while the page is open ─── */
   useEffect(() => {
-    if (!token) {
+    const timer = setInterval(() => {
+      setVotingClosed(Date.now() > VOTING_DEADLINE.getTime());
+    }, 30 * 1000); // re-check every 30s
+    return () => clearInterval(timer);
+  }, []);
+
+  /* ─── Load panels + vote status + current user ─── */
+  useEffect(() => {
+    if (!token || !userId) {
       setNotLoggedIn(true);
       setLoading(false);
       return;
@@ -30,15 +48,17 @@ export default function VotingPage() {
 
     const init = async () => {
       try {
-        const [panelsRes, statusRes] = await Promise.all([
+        const [panelsRes, statusRes, meRes] = await Promise.all([
           axios.get(`${API}/api/panels`),
           axios.get(`${API}/api/votes/status`, authHeader),
+          axios.get(`${API}/api/user/${userId}`, authHeader),
         ]);
         const activePanels = (panelsRes.data.panels || []).filter(
           (p) => p.isActive,
         );
         setPanels(activePanels);
         setVoteStatus(statusRes.data);
+        setIsNri(meRes.data?.user?.nri === "Yes");
       } catch {
         setError("Failed to load voting data. Please try again.");
       } finally {
@@ -51,6 +71,11 @@ export default function VotingPage() {
   /* ─── Cast vote ─── */
   const handleVote = async () => {
     if (!selected) return;
+    if (votingClosed) {
+      setError("Voting has closed. Votes are no longer being accepted.");
+      setShowConfirm(false);
+      return;
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -114,6 +139,61 @@ export default function VotingPage() {
           >
             Go to Login →
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── Not an NRI member — voting restricted to international committee ─── */
+  if (isNri === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
+          .restrict-card { font-family: 'DM Sans', sans-serif; }
+          .restrict-title { font-family: 'Playfair Display', serif; }
+          @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+          .fade-up { animation: fadeUp 0.5s ease forwards; }
+          .fade-up-2 { animation: fadeUp 0.5s 0.1s ease both; }
+        `}</style>
+        <div className="restrict-card text-center max-w-sm w-full">
+          <div className="fade-up w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-5">
+            <span className="text-3xl">🌍</span>
+          </div>
+          <h1 className="restrict-title fade-up-2 text-3xl font-bold text-slate-800 mb-3">
+            Voting Restricted
+          </h1>
+          <p className="fade-up-2 text-slate-500 text-sm">
+            Voting is only for the international committee members.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── Voting window has closed ─── */
+  if (votingClosed && !voteStatus?.hasVoted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
+          .closed-card { font-family: 'DM Sans', sans-serif; }
+          .closed-title { font-family: 'Playfair Display', serif; }
+          @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+          .fade-up { animation: fadeUp 0.5s ease forwards; }
+          .fade-up-2 { animation: fadeUp 0.5s 0.1s ease both; }
+        `}</style>
+        <div className="closed-card text-center max-w-sm w-full">
+          <div className="fade-up w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center mx-auto mb-5">
+            <span className="text-3xl">⏰</span>
+          </div>
+          <h1 className="closed-title fade-up-2 text-3xl font-bold text-slate-800 mb-3">
+            Voting Closed
+          </h1>
+          <p className="fade-up-2 text-slate-500 text-sm">
+            Voting closed on 17 July, 1:30 AM IST. Votes can no longer be
+            registered.
+          </p>
         </div>
       </div>
     );
@@ -248,8 +328,11 @@ export default function VotingPage() {
             Cast Your Vote
           </h1>
           <p className="text-slate-500 text-sm max-w-sm mx-auto">
-            Select the panel you wish to support. You can only vote once —
+            Select the panel you wish to support. You can only vote once
             choose carefully.
+          </p>
+          <p className="text-xs text-amber-600 font-medium mt-2">
+            Voting closes 17 July, 1:30 AM IST.
           </p>
         </div>
 
@@ -347,7 +430,7 @@ export default function VotingPage() {
         {panels.length > 0 && (
           <div className="flex justify-center">
             <button
-              disabled={!selected || submitting}
+              disabled={!selected || submitting || votingClosed}
               onClick={() => setShowConfirm(true)}
               className="w-full max-w-sm py-3.5 rounded-2xl font-semibold text-sm transition-all
                 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200
