@@ -6,7 +6,7 @@ const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 const emptyForm = {
   name: "",
   description: "",
-  members: [{ name: "", role: "" }],
+  members: [], // { userId, name, nickname, photo, role }
 };
 
 /* ── Animated count-up hook ── */
@@ -25,6 +25,29 @@ function useCountUp(target, duration = 1200, active = false) {
     requestAnimationFrame(step);
   }, [target, duration, active]);
   return val;
+}
+
+/* ── Small avatar helper: photo if we have one, else initial ── */
+function MemberAvatar({ photo, name, size = 24, textSize = "text-xs" }) {
+  const dim = { width: size, height: size };
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={name || ""}
+        style={dim}
+        className="rounded-full object-cover border border-gray-200 flex-shrink-0"
+      />
+    );
+  }
+  return (
+    <div
+      style={dim}
+      className={`rounded-full bg-blue-100 text-blue-600 ${textSize} font-bold flex items-center justify-center uppercase flex-shrink-0`}
+    >
+      {name?.[0] || "?"}
+    </div>
+  );
 }
 
 /* ── Single bar row ── */
@@ -275,6 +298,7 @@ function ResultsModal({ onClose, token }) {
           background: var(--gold); color: #1a1a1a;
           font-size: 10px; font-weight: 700;
           display: flex; align-items: center; justify-content: center;
+          overflow: hidden;
         }
         .chip-role { color: #b45309; font-weight: 400; }
         .winner-votes { font-size: 12px; color: #b45309; }
@@ -363,7 +387,15 @@ function ResultsModal({ onClose, token }) {
                       {winner.members.map((m, i) => (
                         <span key={i} className="winner-chip">
                           <span className="winner-chip-avatar">
-                            {m.name?.[0]?.toUpperCase()}
+                            {m.photo ? (
+                              <img
+                                src={m.photo}
+                                alt={m.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              m.name?.[0]?.toUpperCase()
+                            )}
                           </span>
                           <span>{m.name}</span>
                           {m.role && (
@@ -406,6 +438,12 @@ export default function PanelList() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // ── Approved members available to pick from ──
+  const [approvedUsers, setApprovedUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [memberQuery, setMemberQuery] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
+
   const token = localStorage.getItem("adminToken");
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
@@ -418,6 +456,24 @@ export default function PanelList() {
       setError("Failed to load panels.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchApprovedUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const { data } = await axios.get(
+        `${API}/api/admin/all-users`,
+        authHeader,
+      );
+      const users = (data.users || []).filter(
+        (u) => u.membershipStatus === "approved",
+      );
+      setApprovedUsers(users);
+    } catch {
+      flash("Failed to load member list.", "error");
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -437,50 +493,110 @@ export default function PanelList() {
   const openCreate = () => {
     setEditPanel(null);
     setForm(emptyForm);
+    setMemberQuery("");
+    setShowPicker(false);
     setShowForm(true);
+    fetchApprovedUsers();
   };
+
   const openEdit = (panel) => {
     setEditPanel(panel);
     setForm({
       name: panel.name,
       description: panel.description || "",
       members: panel.members?.length
-        ? panel.members.map((m) => ({ name: m.name, role: m.role || "" }))
-        : [{ name: "", role: "" }],
+        ? panel.members.map((m) => ({
+            userId: m.userId || null,
+            name: m.name,
+            photo: m.photo || null,
+            role: m.role || "",
+          }))
+        : [],
     });
+    setMemberQuery("");
+    setShowPicker(false);
     setShowForm(true);
+    fetchApprovedUsers();
   };
+
   const closeForm = () => {
     setShowForm(false);
     setEditPanel(null);
     setForm(emptyForm);
+    setMemberQuery("");
+    setShowPicker(false);
   };
 
-  const handleMemberChange = (index, field, value) => {
+  /* ── Member picker helpers ── */
+  const isMemberAdded = (userId) =>
+    form.members.some((m) => m.userId === userId);
+
+  const addMemberFromUser = (user) => {
+    if (isMemberAdded(user._id)) return;
+    setForm((prev) => ({
+      ...prev,
+      members: [
+        ...prev.members,
+        {
+          userId: user._id,
+          name: user.nickname || user.name,
+          photo: user.photo || null,
+          role: "",
+        },
+      ],
+    }));
+  };
+
+  const handleRoleChange = (index, value) => {
     const updated = [...form.members];
-    updated[index][field] = value;
+    updated[index] = { ...updated[index], role: value };
     setForm({ ...form, members: updated });
   };
-  const addMember = () =>
-    setForm({ ...form, members: [...form.members, { name: "", role: "" }] });
+
   const removeMember = (index) => {
-    if (form.members.length === 1) return;
-    setForm({ ...form, members: form.members.filter((_, i) => i !== index) });
+    setForm({
+      ...form,
+      members: form.members.filter((_, i) => i !== index),
+    });
   };
+
+  const q = memberQuery.trim().toLowerCase();
+  const filteredUsers = approvedUsers.filter((u) => {
+    if (isMemberAdded(u._id)) return false;
+    if (!q) return true;
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      u.nickname?.toLowerCase().includes(q) ||
+      String(u.membershipId || "")
+        .toLowerCase()
+        .includes(q)
+    );
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const payload = {
+        name: form.name,
+        description: form.description,
+        members: form.members.map((m) => ({
+          userId: m.userId,
+          name: m.name,
+          photo: m.photo,
+          role: m.role,
+        })),
+      };
+
       if (editPanel) {
         await axios.patch(
           `${API}/api/panels/${editPanel._id}`,
-          form,
+          payload,
           authHeader,
         );
         flash("Panel updated successfully.");
       } else {
-        await axios.post(`${API}/api/panels`, form, authHeader);
+        await axios.post(`${API}/api/panels`, payload, authHeader);
         flash("Panel created successfully.");
       }
       closeForm();
@@ -602,9 +718,11 @@ export default function PanelList() {
                           key={i}
                           className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5"
                         >
-                          <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center uppercase">
-                            {m.name?.[0] || "?"}
-                          </div>
+                          <MemberAvatar
+                            photo={m.photo}
+                            name={m.name}
+                            size={24}
+                          />
                           <div>
                             <p className="text-xs font-medium text-gray-700 leading-tight">
                               {m.name}
@@ -703,6 +821,7 @@ export default function PanelList() {
                 />
               </div>
 
+              {/* ── Members ── */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-gray-700">
@@ -710,44 +829,105 @@ export default function PanelList() {
                   </label>
                   <button
                     type="button"
-                    onClick={addMember}
+                    onClick={() => setShowPicker((p) => !p)}
                     className="text-xs text-blue-600 hover:underline font-medium"
                   >
-                    + Add Member
+                    {showPicker ? "Close" : "+ Add Member"}
                   </button>
                 </div>
-                <div className="space-y-2">
-                  {form.members.map((member, index) => (
-                    <div key={index} className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        value={member.name}
-                        onChange={(e) =>
-                          handleMemberChange(index, "name", e.target.value)
-                        }
-                        placeholder="Full name"
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <input
-                        type="text"
-                        value={member.role}
-                        onChange={(e) =>
-                          handleMemberChange(index, "role", e.target.value)
-                        }
-                        placeholder="Role (optional)"
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeMember(index)}
-                        disabled={form.members.length === 1}
-                        className="text-red-400 hover:text-red-600 disabled:opacity-30 text-lg leading-none px-1"
+
+                {/* Selected members list */}
+                {form.members.length === 0 ? (
+                  <p className="text-xs text-gray-400 mb-2">
+                    No members added yet. Use "+ Add Member" to pick from
+                    approved members.
+                  </p>
+                ) : (
+                  <div className="space-y-2 mb-3">
+                    {form.members.map((member, index) => (
+                      <div
+                        key={member.userId || index}
+                        className="flex gap-2 items-center border border-gray-200 rounded-lg px-3 py-2"
                       >
-                        ×
-                      </button>
+                        <MemberAvatar
+                          photo={member.photo}
+                          name={member.name}
+                          size={32}
+                          textSize="text-sm"
+                        />
+                        <span className="flex-1 text-sm font-medium text-gray-700 truncate">
+                          {member.name}
+                        </span>
+                        <input
+                          type="text"
+                          value={member.role}
+                          onChange={(e) =>
+                            handleRoleChange(index, e.target.value)
+                          }
+                          placeholder="Role (optional)"
+                          className="w-36 border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeMember(index)}
+                          className="text-red-400 hover:text-red-600 text-lg leading-none px-1"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Picker */}
+                {showPicker && (
+                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <input
+                      type="text"
+                      value={memberQuery}
+                      onChange={(e) => setMemberQuery(e.target.value)}
+                      placeholder="Search by name, nickname, or membership ID…"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                    <div className="max-h-52 overflow-y-auto space-y-1">
+                      {usersLoading ? (
+                        <p className="text-xs text-gray-400 text-center py-4">
+                          Loading members…
+                        </p>
+                      ) : filteredUsers.length === 0 ? (
+                        <p className="text-xs text-gray-400 text-center py-4">
+                          No matching approved members.
+                        </p>
+                      ) : (
+                        filteredUsers.map((u) => (
+                          <button
+                            type="button"
+                            key={u._id}
+                            onClick={() => addMemberFromUser(u)}
+                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white text-left transition"
+                          >
+                            <MemberAvatar
+                              photo={u.photo}
+                              name={u.nickname || u.name}
+                              size={30}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-gray-700 truncate">
+                                {u.nickname || u.name}
+                              </p>
+                              <p className="text-xs text-gray-400 truncate">
+                                {u.name} · {u.membershipId}
+                              </p>
+                            </div>
+                            <span className="text-xs text-blue-500 font-medium">
+                              Add
+                            </span>
+                          </button>
+                        ))
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">

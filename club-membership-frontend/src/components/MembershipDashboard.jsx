@@ -18,8 +18,10 @@ import {
   HiX,
   HiEye,
   HiEyeOff,
+  HiShare,
 } from "react-icons/hi";
 import KingInterLogo from "../assets/KingInternationalLogo.webp";
+import PollingTemplate from "../assets/PollingTemplate.webp";
 import MembershipCard from "../pages/MemberCard";
 
 /* ======================
@@ -130,6 +132,178 @@ function CropModal({ imageSrc, onCropDone, onCancel }) {
     </div>
   );
 }
+/* ── Live NRI turnout widget with PNG share ── */
+function LiveTurnout({ token, backendUrl }) {
+  const [stats, setStats] = useState(null);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    const fetchStats = async () => {
+      try {
+        const { data } = await axios.get(`${backendUrl}/api/votes/nri-status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!cancelled) setStats(data);
+      } catch {
+        // silently ignore — this is a best-effort live widget
+      }
+    };
+    fetchStats();
+    const id = setInterval(fetchStats, 8000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [token, backendUrl]);
+
+  const generateShareImage = async () => {
+    if (!stats) return;
+    setGenerating(true);
+    try {
+      const template = await loadImage(PollingTemplate);
+
+      // Match canvas to the template's natural aspect ratio, scaled up for sharpness
+      const scale = 1080 / template.naturalWidth;
+      const width = 1080;
+      const height = Math.round(template.naturalHeight * scale);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+
+      // Draw the template as the full background/canvas
+      ctx.drawImage(template, 0, 0, width, height);
+
+      const isComplete = stats.percentage >= 100;
+
+      // ── Big percentage ──
+      // ── Big percentage ──
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#111111";
+      const pctFontSize = Math.round(height * 0.14);
+      ctx.font = `bold ${pctFontSize}px Me`;
+      const pctText = `${stats.percentage}%`;
+      const pctX = width * 0.22;
+      const pctY = height * 0.695;
+      ctx.fillText(pctText, pctX, pctY);
+
+      // Measure how wide the percentage text actually is
+      const pctWidth = ctx.measureText(pctText).width;
+
+      // ── Status badge (dot + label) — positioned right after the percentage ──
+      const gap = width * 0.04; // ← tweak this to control spacing
+      const badgeX = pctX + pctWidth + gap;
+      const badgeY = height * 0.638;
+      const dotR = height * 0.007;
+
+      ctx.beginPath();
+      ctx.arc(badgeX, badgeY - dotR, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = isComplete ? "#16a34a" : "#f97316";
+      ctx.fill();
+
+      ctx.font = `600 ${Math.round(height * 0.024)}px Me`;
+      ctx.fillStyle = "#334155";
+      ctx.fillText(
+        isComplete ? "Polling Complete" : "Polling Progress",
+        badgeX + dotR * 3,
+        badgeY,
+      );
+
+      // ── "OF MEMBERS" / "HAVE VOTED" ──
+      ctx.font = `bold ${Math.round(height * 0.028)}px Me`;
+      ctx.fillStyle = "#1e293b";
+      ctx.fillText("OF MEMBERS", badgeX, height * 0.672);
+      ctx.fillText("HAVE VOTED", badgeX, height * 0.703);
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setGenerating(false);
+          return;
+        }
+        const file = new File([blob], "nri-turnout.png", { type: "image/png" });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "NRI Voter Turnout",
+              text: isComplete
+                ? "Polling is complete for NRI members!"
+                : `${stats.percentage}% NRI turnout so far!`,
+            });
+          } catch {
+            // user cancelled share — no-op
+          }
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "nri-turnout.png";
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+        setGenerating(false);
+      }, "image/png");
+    } catch {
+      setGenerating(false);
+    }
+  };
+
+  if (!stats) return null;
+
+  return (
+    <div className="mx-3 mt-3 md:mx-0 md:mt-0 bg-white border-2 border-indigo-100 rounded-2xl p-5 shadow-sm text-left">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          Live turnout
+        </p>
+        <p className="text-lg font-black text-indigo-600">
+          {stats.percentage}%
+        </p>
+      </div>
+
+      <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden mb-4">
+        <div
+          className="h-full rounded-full bg-indigo-500 transition-all duration-700"
+          style={{ width: `${stats.percentage}%` }}
+        />
+      </div>
+      <button
+        onClick={generateShareImage}
+        disabled={generating}
+        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-indigo-200 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 transition disabled:opacity-60"
+      >
+        <HiShare className="text-base" />
+        {generating ? "Preparing image…" : "Share Turnout"}
+      </button>
+    </div>
+  );
+}
+
+/* ── Canvas helpers ── */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
 
 /* ======================
    MAIN DASHBOARD
@@ -167,6 +341,7 @@ export default function MemberDashboard() {
   const [activeTab, setActiveTab] = useState("home");
   const { VITE_BACKEND_URL } = import.meta.env;
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -342,6 +517,8 @@ export default function MemberDashboard() {
     animation: speakerBounce 1s ease-in-out infinite;
   }
 `}</style>
+        <LiveTurnout token={token} backendUrl={VITE_BACKEND_URL} />
+
         <Link to="/vote">
           <div className="mx-3 mt-3 md:mx-0 md:mt-0 banner-glow bg-gradient-to-r from-[#9f47dd] to-[#24c5bc] rounded-2xl flex items-center justify-between gap-2 px-2 py-3 overflow-hidden">
             <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">

@@ -4,22 +4,103 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
-// Voting closes at 1:30 AM IST on 17 July 2026 (exact cutoff).
-// Using an explicit +05:30 offset so this is correct regardless of the
-// visitor's/browser's local timezone.
 const VOTING_DEADLINE = new Date("2026-07-17T01:30:00+05:30");
+
+/* ── Small avatar helper: photo if we have one, else initial ── */
+function MemberAvatar({ photo, name, size = 20, selected = false }) {
+  const dim = { width: size, height: size };
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={name || ""}
+        style={dim}
+        className="rounded-full object-cover border border-white/60 flex-shrink-0"
+      />
+    );
+  }
+  return (
+    <div
+      style={dim}
+      className={`rounded-full text-xs font-bold flex items-center justify-center uppercase flex-shrink-0 ${
+        selected
+          ? "bg-indigo-100 text-indigo-600"
+          : "bg-slate-200 text-slate-500"
+      }`}
+    >
+      {name?.[0] || "?"}
+    </div>
+  );
+}
+
+/* ── Live NRI turnout widget shown on the "already voted" screen ── */
+function LiveTurnout({ token }) {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchStats = async () => {
+      try {
+        const { data } = await axios.get(`${API}/api/votes/nri-status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!cancelled) setStats(data);
+      } catch {
+        // silently ignore — this is a best-effort live widget
+      }
+    };
+    fetchStats();
+    const id = setInterval(fetchStats, 8000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [token]);
+
+  if (!stats) return null;
+
+  return (
+    <div className="fade-up-3 mt-5 bg-white border-2 border-indigo-100 rounded-2xl p-5 shadow-sm text-left">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          Live turnout
+        </p>
+        <p className="text-lg font-black text-indigo-600">
+          {stats.percentage}%
+        </p>
+      </div>
+      <p className="text-sm text-slate-500 mb-3">
+        {stats.votedCount} of {stats.totalNri} NRI members have voted
+      </p>
+      <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden mb-4">
+        <div
+          className="h-full rounded-full bg-indigo-500 transition-all duration-700"
+          style={{ width: `${stats.percentage}%` }}
+        />
+      </div>
+      <button
+        onClick={() => navigate("/vote-updates")}
+        className="w-full py-2.5 rounded-xl border-2 border-indigo-200 text-indigo-600 text-sm font-semibold hover:bg-indigo-50 transition"
+      >
+        View Full Updates →
+      </button>
+    </div>
+  );
+}
 
 export default function VotingPage() {
   const [panels, setPanels] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [voteStatus, setVoteStatus] = useState(null); 
+  const [voteStatus, setVoteStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [voted, setVoted] = useState(false); 
+  const [voted, setVoted] = useState(false);
   const [notLoggedIn, setNotLoggedIn] = useState(false);
-  const [isNri, setIsNri] = useState(null); 
+  const [isNri, setIsNri] = useState(null);
   const [votingClosed, setVotingClosed] = useState(
     () => Date.now() > VOTING_DEADLINE.getTime(),
   );
@@ -30,15 +111,13 @@ export default function VotingPage() {
   const userId = localStorage.getItem("userId");
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
-  /* ─── Keep the deadline check live while the page is open ─── */
   useEffect(() => {
     const timer = setInterval(() => {
       setVotingClosed(Date.now() > VOTING_DEADLINE.getTime());
-    }, 30 * 1000); // re-check every 30s
+    }, 30 * 1000);
     return () => clearInterval(timer);
   }, []);
 
-  /* ─── Load panels + vote status + current user ─── */
   useEffect(() => {
     if (!token || !userId) {
       setNotLoggedIn(true);
@@ -68,7 +147,6 @@ export default function VotingPage() {
     init();
   }, []);
 
-  /* ─── Cast vote ─── */
   const handleVote = async () => {
     if (!selected) return;
     if (votingClosed) {
@@ -96,7 +174,6 @@ export default function VotingPage() {
     }
   };
 
-  /* ─── States ─── */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -110,7 +187,6 @@ export default function VotingPage() {
     );
   }
 
-  /* ─── Not logged in ─── */
   if (notLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
@@ -144,7 +220,6 @@ export default function VotingPage() {
     );
   }
 
-  /* ─── Not an NRI member — voting restricted to international committee ─── */
   if (isNri === false) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
@@ -171,7 +246,6 @@ export default function VotingPage() {
     );
   }
 
-  /* ─── Voting window has closed ─── */
   if (votingClosed && !voteStatus?.hasVoted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
@@ -203,7 +277,7 @@ export default function VotingPage() {
   if (voteStatus?.hasVoted) {
     const votedPanel = voteStatus.votedPanel;
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4 py-10">
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
           .voted-card { font-family: 'DM Sans', sans-serif; }
@@ -216,7 +290,6 @@ export default function VotingPage() {
           .fade-up-3 { animation: fadeUp 0.6s 0.3s ease both; }
         `}</style>
         <div className="voted-card text-center max-w-md w-full">
-          {/* Checkmark */}
           <div className="pop flex items-center justify-center w-20 h-20 rounded-full bg-green-100 border-4 border-green-400 mx-auto mb-6">
             <svg
               className="w-10 h-10 text-green-500"
@@ -240,7 +313,6 @@ export default function VotingPage() {
             Your vote has been securely submitted. Thank you for participating.
           </p>
 
-          {/* Voted panel card */}
           {votedPanel && (
             <div className="fade-up-3 bg-white border-2 border-indigo-200 rounded-2xl p-5 shadow-md text-left">
               <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-2">
@@ -261,9 +333,7 @@ export default function VotingPage() {
                       key={i}
                       className="flex items-center gap-1.5 bg-indigo-50 rounded-full px-3 py-1"
                     >
-                      <div className="w-5 h-5 rounded-full bg-indigo-200 text-indigo-700 text-xs font-bold flex items-center justify-center uppercase">
-                        {m.name?.[0]}
-                      </div>
+                      <MemberAvatar photo={m.photo} name={m.name} size={20} />
                       <span className="text-xs text-indigo-700 font-medium">
                         {m.name}
                       </span>
@@ -278,6 +348,9 @@ export default function VotingPage() {
               )}
             </div>
           )}
+
+          {/* Live NRI turnout + link to full breakdown */}
+          <LiveTurnout token={token} />
         </div>
       </div>
     );
@@ -313,13 +386,11 @@ export default function VotingPage() {
         .radio-dot { width: 8px; height: 8px; border-radius: 50%; background: white; }
         @keyframes scaleIn { from{transform:scale(0)} to{transform:scale(1)} }
         .radio-dot { animation: scaleIn 0.15s ease; }
-        /* Confirm modal */
         @keyframes modalIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
         .modal-box { animation: modalIn 0.2s ease; }
       `}</style>
 
       <div className="vote-root max-w-2xl mx-auto px-4 py-10">
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-widest">
             <span>🗳️</span> Official Ballot
@@ -328,22 +399,19 @@ export default function VotingPage() {
             Cast Your Vote
           </h1>
           <p className="text-slate-500 text-sm max-w-sm mx-auto">
-            Select the panel you wish to support. You can only vote once
-            choose carefully.
+            നിങ്ങള്‍ക്ക് ഇഷ്ടപ്പെട്ട പാനല്‍ സെലക്ട് ചെയ്ത് വോട്ട് രേഖപ്പെടുത്തുക.
           </p>
           <p className="text-xs text-amber-600 font-medium mt-2">
             Voting closes 17 July, 1:30 AM IST.
           </p>
         </div>
 
-        {/* Error */}
         {error && (
           <div className="mb-6 px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl text-center">
             {error}
           </div>
         )}
 
-        {/* No panels */}
         {panels.length === 0 && (
           <div className="text-center py-20 text-slate-400">
             <p className="text-5xl mb-4">🗳️</p>
@@ -356,7 +424,6 @@ export default function VotingPage() {
           </div>
         )}
 
-        {/* Panel cards */}
         <div className="space-y-4 mb-8">
           {panels.map((panel) => {
             const isSelected = selected === panel._id;
@@ -369,14 +436,12 @@ export default function VotingPage() {
                 onClick={() => setSelected(panel._id)}
               >
                 <div className="flex items-start gap-4">
-                  {/* Radio */}
                   <div
                     className={`radio-ring mt-0.5 ${isSelected ? "checked" : ""}`}
                   >
                     {isSelected && <div className="radio-dot" />}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="vote-title text-lg font-bold text-slate-800">
@@ -390,7 +455,6 @@ export default function VotingPage() {
                       </p>
                     )}
 
-                    {/* Members */}
                     {panel.members?.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {panel.members.map((m, i) => (
@@ -398,15 +462,12 @@ export default function VotingPage() {
                             key={i}
                             className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-full px-3 py-1"
                           >
-                            <div
-                              className={`w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center uppercase ${
-                                isSelected
-                                  ? "bg-indigo-100 text-indigo-600"
-                                  : "bg-slate-200 text-slate-500"
-                              }`}
-                            >
-                              {m.name?.[0]}
-                            </div>
+                            <MemberAvatar
+                              photo={m.photo}
+                              name={m.name}
+                              size={20}
+                              selected={isSelected}
+                            />
                             <span className="text-xs font-medium text-slate-700">
                               {m.name}
                             </span>
@@ -426,7 +487,6 @@ export default function VotingPage() {
           })}
         </div>
 
-        {/* Submit button */}
         {panels.length > 0 && (
           <div className="flex justify-center">
             <button
@@ -442,7 +502,6 @@ export default function VotingPage() {
         )}
       </div>
 
-      {/* Confirmation modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="modal-box bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
@@ -457,7 +516,7 @@ export default function VotingPage() {
               {panels.find((p) => p._id === selected)?.name}
             </p>
             <p className="text-xs text-slate-400 mb-6">
-              This action cannot be undone. You can only vote once.
+              ഒരു തവണ വോട്ട് രേഖപ്പെടുത്തിയാൽ മാറ്റം വരുത്താൻ സാധിക്കില്ല. ആലോചിച്ച് മാത്രം പാനൽ സെലക്‌ട് ചെയ്യുക.
             </p>
             <div className="flex gap-3">
               <button

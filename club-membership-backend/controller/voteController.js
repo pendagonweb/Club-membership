@@ -1,5 +1,6 @@
 import Vote from "../models/Vote.js";
 import Panel from "../models/Panel.js";
+import User from "../models/User.js";
 
 // POST /api/votes/cast
 export const castVote = async (req, res) => {
@@ -66,10 +67,47 @@ export const getVoteStatus = async (req, res) => {
 export const getResults = async (req, res) => {
   try {
     const panels = await Panel.find()
-      .select("name voteCount logo")
+      .select("name voteCount logo members")
       .sort({ voteCount: -1 });
     const totalVotes = await Vote.countDocuments();
     res.json({ panels, totalVotes });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+export const getNriVotingStatus = async (req, res) => {
+  try {
+    const nriUsers = await User.find({
+      nri: "Yes",
+      membershipStatus: "approved",
+    }).select("name nickname photo membershipId");
+
+    const nriIds = nriUsers.map((u) => u._id);
+
+    const votes = await Vote.find({ user: { $in: nriIds } }).select("user");
+    const votedIds = new Set(votes.map((v) => v.user.toString()));
+
+    const users = nriUsers
+      .map((u) => ({
+        _id: u._id,
+        name: u.name,
+        nickname: u.nickname,
+        photo: u.photo,
+        membershipId: u.membershipId,
+        hasVoted: votedIds.has(u._id.toString()),
+      }))
+      // voted members first, feels more "alive"
+      .sort((a, b) => Number(b.hasVoted) - Number(a.hasVoted));
+
+    const totalNri = nriUsers.length;
+    const votedCount = votedIds.size;
+
+    res.json({
+      totalNri,
+      votedCount,
+      percentage: totalNri > 0 ? Math.round((votedCount / totalNri) * 100) : 0,
+      users,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

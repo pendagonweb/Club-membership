@@ -24,7 +24,7 @@ const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 // Results become visible at RESULT_TIME. The countdown UI itself only
 // starts ticking COUNTDOWN_LEAD_MS before that (30 minutes). Before that
 // window, visitors just see a "come back later" message with no clock.
-const RESULT_TIME = new Date("2026-07-16T00:00:00+05:30"); // midnight IST, globally fixed
+const RESULT_TIME = new Date("2026-07-17T01:45:00+05:30"); // midnight IST, globally fixed
 const COUNTDOWN_LEAD_MS = 30 * 60 * 1000; // 30 minutes
 const COUNTDOWN_START_TIME = new Date(
   RESULT_TIME.getTime() - COUNTDOWN_LEAD_MS,
@@ -61,6 +61,33 @@ const PALETTE = [
   { fill: "#f97316", light: "#fff7ed", text: "#9a3412" },
   { fill: "#84cc16", light: "#f7fee7", text: "#3f6212" },
 ];
+
+/* ── Small avatar helper: photo if we have one, else initial ── */
+function MemberAvatar({ photo, name, size = 20, background, textColor }) {
+  const dim = { width: size, height: size };
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt={name || ""}
+        style={dim}
+        className="rounded-full object-cover border border-white/60 flex-shrink-0"
+      />
+    );
+  }
+  return (
+    <div
+      style={{
+        ...dim,
+        background: background || "#e2e8f0",
+        color: textColor || "#64748b",
+      }}
+      className="rounded-full font-bold flex items-center justify-center uppercase flex-shrink-0"
+    >
+      {name?.[0]?.toUpperCase() || "?"}
+    </div>
+  );
+}
 
 function useCountUp(target, duration = 1000, active = false) {
   const [val, setVal] = useState(0);
@@ -510,6 +537,33 @@ function WinnerModal({
             <h2 className="vr-display text-3xl text-gray-900 mb-3">
               {winner.name} Wins!
             </h2>
+
+            {winner.members?.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 mb-3">
+                {winner.members.map((m, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{
+                      background: palette.fill + "18",
+                      color: palette.text,
+                      border: `1px solid ${palette.fill}30`,
+                    }}
+                  >
+                    <MemberAvatar
+                      photo={m.photo}
+                      name={m.name}
+                      size={20}
+                      background={palette.fill}
+                      textColor="#fff"
+                    />
+                    <span>{m.name}</span>
+                    {m.role && <span style={{ opacity: 0.7 }}>· {m.role}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex items-center justify-center gap-2 mb-1">
               <div
                 className="px-3 py-1 rounded-lg text-sm font-bold"
@@ -1051,12 +1105,13 @@ export default function VotingResults() {
                                         border: `1px solid ${pal.fill}30`,
                                       }}
                                     >
-                                      <div
-                                        className="w-5 h-5 rounded-lg flex items-center justify-center text-white font-bold text-xs"
-                                        style={{ background: pal.fill }}
-                                      >
-                                        {m.name?.[0]?.toUpperCase()}
-                                      </div>
+                                      <MemberAvatar
+                                        photo={m.photo}
+                                        name={m.name}
+                                        size={20}
+                                        background={pal.fill}
+                                        textColor="#fff"
+                                      />
                                       <span>{m.name}</span>
                                       {m.role && (
                                         <span style={{ opacity: 0.6 }}>

@@ -12,7 +12,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Header from "./components/Header";
 import JuniorRegister from "./pages/JuniorRegister";
-import JuniorList from "./components/JuniorList"; 
+import JuniorList from "./components/JuniorList";
 import PanelList from "./components/PanelList";
 import VotingPage from "./components/VotingPage";
 import VotingResults from "./pages/VotingResults";
@@ -29,6 +29,7 @@ import Reports from "./pages/Report";
 import BottomNav from "./components/BottomNav";
 import ActivityDetailPage from "./pages/ActivityDetailPage";
 import SingleNewsPage from "./pages/SingleNewsPage";
+import NriVoteUpdates from "./pages/NriVoteUpdates";
 
 function PublicLayout({ children }) {
   return (
@@ -106,7 +107,7 @@ function App() {
           path="/news/:id"
           element={
             <PublicLayout>
-              <SingleNewsPage/>
+              <SingleNewsPage />
             </PublicLayout>
           }
         />
@@ -142,7 +143,7 @@ function App() {
             </PublicLayout>
           }
         />
-        
+
         <Route
           path="/results"
           element={
@@ -195,7 +196,15 @@ function App() {
           path="/gallery"
           element={
             <PublicLayout>
-              <Gallery/>
+              <Gallery />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/vote-updates"
+          element={
+            <PublicLayout>
+              <NriVoteUpdates />
             </PublicLayout>
           }
         />
