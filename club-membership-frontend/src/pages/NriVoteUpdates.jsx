@@ -63,7 +63,7 @@ export default function NriVoteUpdates() {
       return;
     }
     fetchStatus();
-    const id = setInterval(() => fetchStatus(true), 8000);
+    const id = setInterval(() => fetchStatus(true), 20000);
     return () => clearInterval(id);
   }, []);
 

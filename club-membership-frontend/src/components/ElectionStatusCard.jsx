@@ -107,7 +107,9 @@ export default function ElectionStatusCard({
     let cancelled = false;
     const fetchStats = async () => {
       try {
-        const { data } = await axios.get(`${BASE}/api/votes/nri-status`);
+        const { data } = await axios.get(`${BASE}/api/votes/nri-status`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        });
         if (!cancelled) setStats(data);
       } catch {
         // best-effort widget — fail silently

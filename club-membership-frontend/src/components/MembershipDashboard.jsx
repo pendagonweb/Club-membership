@@ -151,7 +151,7 @@ function LiveTurnout({ token, backendUrl }) {
       }
     };
     fetchStats();
-    const id = setInterval(fetchStats, 8000);
+    const id = setInterval(fetchStats, 20000);
     return () => {
       cancelled = true;
       clearInterval(id);

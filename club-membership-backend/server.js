@@ -24,7 +24,10 @@ const app = express();
 /* DB Connection */
 if (!mongoose.connection.readyState) {
   mongoose.set("bufferCommands", false);
-  await mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 5000, // fail fast instead of hanging on cold starts
+    maxPoolSize: 10,
+  });
   console.log("✅ MongoDB connected");
 }
 
@@ -40,6 +43,7 @@ app.use(
       "https://membership-front.vercel.app",
     ],
     credentials: true,
+    maxAge: 86400, // cache preflight OPTIONS response for 24h — big win for authed routes
   }),
 );
 
@@ -58,7 +62,7 @@ app.use("/api/panels", panelRoutes);
 app.use("/api/votes", voteRoutes);
 app.use("/api", activityRoutes);
 app.use("/api", galleryRoutes); // moved from activityRoutes.js to avoid circular import
-app.use("/api/logo", logoRouter);        // public GET
+app.use("/api/logo", logoRouter); // public GET
 app.use("/api/players", playerRoutes);
 
 app.get("/", (req, res) => {

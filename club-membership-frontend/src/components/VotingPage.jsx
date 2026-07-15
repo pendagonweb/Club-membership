@@ -51,7 +51,7 @@ function LiveTurnout({ token }) {
       }
     };
     fetchStats();
-    const id = setInterval(fetchStats, 8000);
+    const id = setInterval(fetchStats, 20000);
     return () => {
       cancelled = true;
       clearInterval(id);
@@ -191,9 +191,6 @@ export default function VotingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-          .auth-card { font-family: 'DM Sans', sans-serif; }
-          .auth-title { font-family: 'Playfair Display', serif; }
           @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
           .fade-up { animation: fadeUp 0.5s ease forwards; }
           .fade-up-2 { animation: fadeUp 0.5s 0.1s ease both; }
@@ -224,9 +221,6 @@ export default function VotingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-          .restrict-card { font-family: 'DM Sans', sans-serif; }
-          .restrict-title { font-family: 'Playfair Display', serif; }
           @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
           .fade-up { animation: fadeUp 0.5s ease forwards; }
           .fade-up-2 { animation: fadeUp 0.5s 0.1s ease both; }
@@ -250,9 +244,6 @@ export default function VotingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4">
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-          .closed-card { font-family: 'DM Sans', sans-serif; }
-          .closed-title { font-family: 'Playfair Display', serif; }
           @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
           .fade-up { animation: fadeUp 0.5s ease forwards; }
           .fade-up-2 { animation: fadeUp 0.5s 0.1s ease both; }
@@ -279,9 +270,6 @@ export default function VotingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex items-center justify-center px-4 py-10">
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-          .voted-card { font-family: 'DM Sans', sans-serif; }
-          .voted-title { font-family: 'Playfair Display', serif; }
           @keyframes pop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
           @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
           .pop { animation: pop 0.5s cubic-bezier(.36,.07,.19,.97) forwards; }
@@ -336,11 +324,11 @@ export default function VotingPage() {
                       className="flex items-center gap-1.5 bg-indigo-50 rounded-full px-3 py-1"
                     >
                       <MemberAvatar photo={m.photo} name={m.name} size={20} />
-                      <span className="text-xs text-indigo-700 font-medium">
+                      <span className="text-xs text-indigo-700 uppercase font-medium">
                         {m.name}
                       </span>
                       {m.role && (
-                        <span className="text-xs text-indigo-400">
+                        <span className="text-xs uppercase text-indigo-400">
                           · {m.role}
                         </span>
                       )}
@@ -359,9 +347,6 @@ export default function VotingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap');
-        .vote-root { font-family: 'DM Sans', sans-serif; }
-        .vote-title { font-family: 'Playfair Display', serif; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         .panel-card { animation: fadeUp 0.4s ease both; }
         .panel-card:nth-child(1) { animation-delay: 0.05s; }
@@ -468,11 +453,11 @@ export default function VotingPage() {
                               size={20}
                               selected={isSelected}
                             />
-                            <span className="text-xs font-medium text-slate-700">
+                            <span className="text-xs font-medium uppercase text-slate-700">
                               {m.name}
                             </span>
                             {m.role && (
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs uppercase text-slate-400">
                                 · {m.role}
                               </span>
                             )}

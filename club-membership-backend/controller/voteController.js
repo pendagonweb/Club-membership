@@ -32,6 +32,10 @@ export const castVote = async (req, res) => {
     await Vote.create({ user: userId, panel: panelId });
     await Panel.findByIdAndUpdate(panelId, { $inc: { voteCount: 1 } });
 
+    // Invalidate the NRI status cache immediately so a fresh vote shows up
+    // on the next poll instead of waiting out the TTL.
+    nriStatusCache.data = null;
+
     res.status(201).json({ message: "Vote cast successfully" });
   } catch (error) {
     // Duplicate key error (race condition safety net)
@@ -75,8 +79,26 @@ export const getResults = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+/* ─────────────────────────────────────────────
+   NRI VOTING STATUS — cached
+   This endpoint is polled every few seconds by up to 3 different
+   components (VotingPage, MembershipDashboard, NriVoteUpdates).
+   Without caching, every open tab triggers its own User.find + Vote.find
+   on a Hobby-plan function — this is the single biggest self-inflicted
+   load spike on election day. A short server-side TTL cache means
+   concurrent pollers share one DB round-trip.
+───────────────────────────────────────────── */
+const nriStatusCache = { data: null, ts: 0 };
+const NRI_CACHE_TTL_MS = 6000; // slightly under the 8s poll interval
+
 export const getNriVotingStatus = async (req, res) => {
   try {
+    const now = Date.now();
+    if (nriStatusCache.data && now - nriStatusCache.ts < NRI_CACHE_TTL_MS) {
+      return res.json(nriStatusCache.data);
+    }
+
     const nriUsers = await User.find({
       nri: "Yes",
       membershipStatus: "approved",
@@ -102,12 +124,17 @@ export const getNriVotingStatus = async (req, res) => {
     const totalNri = nriUsers.length;
     const votedCount = votedIds.size;
 
-    res.json({
+    const payload = {
       totalNri,
       votedCount,
       percentage: totalNri > 0 ? Math.round((votedCount / totalNri) * 100) : 0,
       users,
-    });
+    };
+
+    nriStatusCache.data = payload;
+    nriStatusCache.ts = now;
+
+    res.json(payload);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
