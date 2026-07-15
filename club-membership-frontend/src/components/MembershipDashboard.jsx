@@ -185,7 +185,7 @@ function LiveTurnout({ token, backendUrl }) {
       ctx.textBaseline = "alphabetic";
       ctx.fillStyle = "#111111";
       const pctFontSize = Math.round(height * 0.14);
-      ctx.font = `bold ${pctFontSize}px Me`;
+      ctx.font = `bold ${pctFontSize}px Metropolis, sans-serif`;
       const pctText = `${stats.percentage}%`;
       const pctX = width * 0.22;
       const pctY = height * 0.695;
@@ -197,7 +197,7 @@ function LiveTurnout({ token, backendUrl }) {
       // ── Status badge (dot + label) — positioned right after the percentage ──
       const gap = width * 0.04; // ← tweak this to control spacing
       const badgeX = pctX + pctWidth + gap;
-      const badgeY = height * 0.638;
+      const badgeY = height * 0.618;
       const dotR = height * 0.007;
 
       ctx.beginPath();
@@ -205,7 +205,7 @@ function LiveTurnout({ token, backendUrl }) {
       ctx.fillStyle = isComplete ? "#16a34a" : "#f97316";
       ctx.fill();
 
-      ctx.font = `600 ${Math.round(height * 0.024)}px Me`;
+      ctx.font = `600 ${Math.round(height * 0.024)}px Metropolis, sans-serif`;
       ctx.fillStyle = "#334155";
       ctx.fillText(
         isComplete ? "Polling Complete" : "Polling Progress",
@@ -214,10 +214,42 @@ function LiveTurnout({ token, backendUrl }) {
       );
 
       // ── "OF MEMBERS" / "HAVE VOTED" ──
-      ctx.font = `bold ${Math.round(height * 0.028)}px Me`;
+      // ── "OF MEMBERS" / "HAVE VOTED" ──
+      ctx.font = `bold ${Math.round(height * 0.028)}px Metropolis, sans-serif`;
       ctx.fillStyle = "#1e293b";
-      ctx.fillText("OF MEMBERS", badgeX, height * 0.672);
-      ctx.fillText("HAVE VOTED", badgeX, height * 0.703);
+      ctx.fillText("OF MEMBERS", badgeX, height * 0.663);
+      ctx.fillText("HAVE VOTED", badgeX, height * 0.694);
+
+      // ── Bottom info block ──
+      const formatDateTime = (date) =>
+        date.toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+      const lastUpdated = formatDateTime(new Date());
+
+      const infoLines = [
+        `Last Updated On: ${lastUpdated}`,
+        `Voting Closes On: 16 July 2026, 1:30 AM IST`,
+        `Results Will Be Declared On: 16 July 2026, 1:45 AM IST`,
+      ];
+
+      ctx.textAlign = "center";
+      ctx.font = `500 ${Math.round(height * 0.018)}px Metropolis, sans-serif`;
+      ctx.fillStyle = "#475569";
+
+      const infoStartY = height * 0.75; // ← tweak to sit above/below the disclaimer text
+      const lineSpacing = height * 0.020;
+
+      infoLines.forEach((line, i) => {
+        ctx.fillText(line, width / 2, infoStartY + i * lineSpacing);
+      });
+
       canvas.toBlob(async (blob) => {
         if (!blob) {
           setGenerating(false);
@@ -227,12 +259,20 @@ function LiveTurnout({ token, backendUrl }) {
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
+            const currentTime = new Date().toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+
             await navigator.share({
               files: [file],
-              title: "NRI Voter Turnout",
-              text: isComplete
-                ? "Polling is complete for NRI members!"
-                : `${stats.percentage}% NRI turnout so far!`,
+              title: "Kingstar International Council",
+              text: `Kingstar International Council
+
+Election Live Update ${currentTime}
+📊 Polling Percentage: ${stats.percentage}%
+
+🔹 KINGSTAR ARTS & SPORTS CLUB ERIYAPADY`,
             });
           } catch {
             // user cancelled share — no-op

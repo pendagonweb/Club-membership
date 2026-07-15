@@ -61,7 +61,7 @@ function LiveTurnout({ token }) {
   if (!stats) return null;
 
   return (
-    <div className="fade-up-3 mt-5 bg-white border-2 border-indigo-100 rounded-2xl p-5 shadow-sm text-left">
+    <div className="fade-up-3 mt-2 mb-10 bg-white border-2 border-indigo-100 rounded-2xl p-5 shadow-sm text-left">
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -290,6 +290,8 @@ export default function VotingPage() {
           .fade-up-3 { animation: fadeUp 0.6s 0.3s ease both; }
         `}</style>
         <div className="voted-card text-center max-w-md w-full">
+          {/* Live NRI turnout + link to full breakdown */}
+          <LiveTurnout token={token} />
           <div className="pop flex items-center justify-center w-20 h-20 rounded-full bg-green-100 border-4 border-green-400 mx-auto mb-6">
             <svg
               className="w-10 h-10 text-green-500"
@@ -348,9 +350,6 @@ export default function VotingPage() {
               )}
             </div>
           )}
-
-          {/* Live NRI turnout + link to full breakdown */}
-          <LiveTurnout token={token} />
         </div>
       </div>
     );
@@ -399,7 +398,8 @@ export default function VotingPage() {
             Cast Your Vote
           </h1>
           <p className="text-slate-500 text-sm max-w-sm mx-auto">
-            നിങ്ങള്‍ക്ക് ഇഷ്ടപ്പെട്ട പാനല്‍ സെലക്ട് ചെയ്ത് വോട്ട് രേഖപ്പെടുത്തുക.
+            നിങ്ങള്‍ക്ക് ഇഷ്ടപ്പെട്ട പാനല്‍ സെലക്ട് ചെയ്ത് വോട്ട്
+            രേഖപ്പെടുത്തുക.
           </p>
           <p className="text-xs text-amber-600 font-medium mt-2">
             Voting closes 17 July, 1:30 AM IST.
@@ -516,7 +516,8 @@ export default function VotingPage() {
               {panels.find((p) => p._id === selected)?.name}
             </p>
             <p className="text-xs text-slate-400 mb-6">
-              ഒരു തവണ വോട്ട് രേഖപ്പെടുത്തിയാൽ മാറ്റം വരുത്താൻ സാധിക്കില്ല. ആലോചിച്ച് മാത്രം പാനൽ സെലക്‌ട് ചെയ്യുക.
+              ഒരു തവണ വോട്ട് രേഖപ്പെടുത്തിയാൽ മാറ്റം വരുത്താൻ സാധിക്കില്ല.
+              ആലോചിച്ച് മാത്രം പാനൽ സെലക്‌ട് ചെയ്യുക.
             </p>
             <div className="flex gap-3">
               <button

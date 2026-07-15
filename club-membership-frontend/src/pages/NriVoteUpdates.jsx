@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { HiArrowLeft, HiOutlineSearch, HiCheckCircle, HiOutlineClock } from "react-icons/hi";
+import {
+  HiArrowLeft,
+  HiOutlineSearch,
+  HiCheckCircle,
+  HiOutlineClock,
+} from "react-icons/hi";
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
@@ -62,15 +67,22 @@ export default function NriVoteUpdates() {
     return () => clearInterval(id);
   }, []);
 
+  const allUsers = data?.users || [];
+  const allCount = allUsers.length;
+  const votedCount = allUsers.filter((u) => u.hasVoted).length;
+  const pendingCount = allCount - votedCount;
+
   const q = search.trim().toLowerCase();
-  const filteredUsers = (data?.users || []).filter((u) => {
+  const filteredUsers = allUsers.filter((u) => {
     if (filter === "voted" && !u.hasVoted) return false;
     if (filter === "pending" && u.hasVoted) return false;
     if (!q) return true;
     return (
       u.name?.toLowerCase().includes(q) ||
       u.nickname?.toLowerCase().includes(q) ||
-      String(u.membershipId || "").toLowerCase().includes(q)
+      String(u.membershipId || "")
+        .toLowerCase()
+        .includes(q)
     );
   });
 
@@ -155,20 +167,29 @@ export default function NriVoteUpdates() {
                 </div>
                 <div className="flex gap-1.5">
                   {[
-                    ["all", "All"],
-                    ["voted", "Voted"],
-                    ["pending", "Pending"],
-                  ].map(([val, label]) => (
+                    ["all", "All", allCount],
+                    ["voted", "Voted", votedCount],
+                    ["pending", "Pending", pendingCount],
+                  ].map(([val, label, count]) => (
                     <button
                       key={val}
                       onClick={() => setFilter(val)}
-                      className={`px-3 py-2 rounded-xl text-xs font-semibold border transition whitespace-nowrap ${
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition whitespace-nowrap ${
                         filter === val
                           ? "bg-indigo-600 border-indigo-600 text-white"
                           : "bg-white border-slate-200 text-slate-500 hover:border-indigo-300"
                       }`}
                     >
                       {label}
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] leading-none ${
+                          filter === val
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {count}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -186,7 +207,11 @@ export default function NriVoteUpdates() {
                       key={u._id}
                       className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3"
                     >
-                      <MemberAvatar photo={u.photo} name={u.nickname || u.name} size={40} />
+                      <MemberAvatar
+                        photo={u.photo}
+                        name={u.nickname || u.name}
+                        size={40}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-800 truncate">
                           {u.nickname || u.name}

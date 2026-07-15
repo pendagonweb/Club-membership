@@ -6,6 +6,7 @@ import ActivitiesSection from "../components/ActivitiesSection";
 import EventsSection from "../components/EventsSection";
 import GalleryPage from "../components/GalleryPage";
 import Hero from "../assets/Kings.jpg";
+import ElectionStatusCard from "../components/ElectionStatusCard";
 
 /* ── Reusable fade-up wrapper ── */
 const FadeUp = ({ children, delay = 0, className = "" }) => (
@@ -44,6 +45,7 @@ const regLogos = [
 
 export default function Home() {
   const heroRef = useRef(null);
+  const token = localStorage.getItem("token");
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -77,7 +79,7 @@ export default function Home() {
           style={{ y: heroY, opacity: heroOpacity }}
           className="relative z-10 max-w-3xl mx-auto"
         >
-          {/* Badge */}
+          <ElectionStatusCard token={token} />
           <motion.div
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}

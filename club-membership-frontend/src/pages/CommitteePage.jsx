@@ -15,6 +15,7 @@ import {
   RiShieldStarLine,
   RiShareLine,
 } from "react-icons/ri";
+import ElectionStatusCard from "../components/ElectionStatusCard";
 
 const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
@@ -343,6 +344,7 @@ const CommitteePage = () => {
   }, []);
 
   const q = search.toLowerCase();
+  const token = localStorage.getItem("token");
 
   const DESIGNATION_ORDER = [
     "President",
@@ -457,6 +459,7 @@ const CommitteePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
+            <ElectionStatusCard token={token} />
             <span className="inline-block text-xs font-semibold tracking-widest uppercase text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full mb-4">
               Our People
             </span>
