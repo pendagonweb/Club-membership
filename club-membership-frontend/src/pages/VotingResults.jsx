@@ -25,7 +25,7 @@ const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 // starts ticking COUNTDOWN_LEAD_MS before that (30 minutes). Before that
 // window, visitors just see a "come back later" message with no clock.
 const RESULT_TIME = new Date("2026-07-17T01:45:00+05:30"); // midnight IST, globally fixed
-const COUNTDOWN_LEAD_MS = 30 * 60 * 1000; // 30 minutes
+const COUNTDOWN_LEAD_MS = 15 * 60 * 1000; // 15 minutes
 const COUNTDOWN_START_TIME = new Date(
   RESULT_TIME.getTime() - COUNTDOWN_LEAD_MS,
 );

@@ -129,7 +129,7 @@ export default function Login() {
       {/* ACTION SECTION */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center px-4">
         {/* LEFT : BECOME A MEMBER */}
-        <div className="flex justify-center md:justify-start md:ml-30 w-full">
+        <div className="sm:flex justify-center md:justify-start hidden  md:ml-30 w-full">
           <button
             className="w-full sm:w-[300px] md:w-[350px]
               bg-gradient-to-r from-blue-600 to-blue-800

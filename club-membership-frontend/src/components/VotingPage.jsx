@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import VotingPanelhead from "./VotingPanelhead";
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
@@ -132,9 +133,9 @@ export default function VotingPage() {
           axios.get(`${API}/api/votes/status`, authHeader),
           axios.get(`${API}/api/user/${userId}`, authHeader),
         ]);
-        const activePanels = (panelsRes.data.panels || []).filter(
-          (p) => p.isActive,
-        );
+        const activePanels = (panelsRes.data.panels || [])
+          .filter((p) => p.isActive)
+          .reverse(); // show panels in reverse order on the ballot
         setPanels(activePanels);
         setVoteStatus(statusRes.data);
         setIsNri(meRes.data?.user?.nri === "Yes");
@@ -376,12 +377,13 @@ export default function VotingPage() {
 
       <div className="vote-root max-w-2xl mx-auto px-4 py-10">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-widest">
+          <VotingPanelhead token={token} />
+          {/* <div className="inline-flex items-center gap-2 bg-indigo-100 text-indigo-600 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 uppercase tracking-widest">
             <span>🗳️</span> Official Ballot
           </div>
           <h1 className="vote-title text-4xl font-bold text-slate-800 mb-3">
             Cast Your Vote
-          </h1>
+          </h1> */}
           <p className="text-slate-500 text-sm max-w-sm mx-auto">
             നിങ്ങള്‍ക്ക് ഇഷ്ടപ്പെട്ട പാനല്‍ സെലക്ട് ചെയ്ത് വോട്ട്
             രേഖപ്പെടുത്തുക.
