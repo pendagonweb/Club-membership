@@ -41,14 +41,3 @@ router.patch("/", adminAuth, validateImageType, updateLogo);
 router.delete("/", adminAuth, deleteLogo);
 
 export default router;
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Mount in your main app.js / server.js:
-
-   import logoRouter from "./routes/logo.routes.js";
-   app.use("/api/logo",        logoRouter);          // public GET
-   app.use("/admin/logo",      logoRouter);          // protected POST/PATCH/DELETE
-   
-   Or simply mount once and rely on the protect middleware per-method:
-   app.use("/api/logo", logoRouter);
-───────────────────────────────────────────────────────────────────────────── */

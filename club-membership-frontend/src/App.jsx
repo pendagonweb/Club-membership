@@ -7,9 +7,6 @@ import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
 
 // ── Lazy-loaded routes ──
-// Keeps html2canvas, jspdf, chart.js, swiper, react-easy-crop, etc. out of
-// the initial bundle. Home/Login stay eager since they're the most common
-// first paint.
 const AdminPage = lazy(() => import("./components/AdminPage"));
 const UserList = lazy(() => import("./components/UserList/UserList"));
 const AdminLayout = lazy(() => import("./components/AdminLayout"));
@@ -36,6 +33,7 @@ const Reports = lazy(() => import("./pages/Report"));
 const ActivityDetailPage = lazy(() => import("./pages/ActivityDetailPage"));
 const SingleNewsPage = lazy(() => import("./pages/SingleNewsPage"));
 const NriVoteUpdates = lazy(() => import("./pages/NriVoteUpdates"));
+const BloodBank = lazy(() => import("./pages/BloodBank"));
 
 function PageLoader() {
   return (
@@ -219,6 +217,14 @@ function App() {
             element={
               <PublicLayout>
                 <NriVoteUpdates />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/bloodbank"
+            element={
+              <PublicLayout>
+                <BloodBank />
               </PublicLayout>
             }
           />

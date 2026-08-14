@@ -4,7 +4,14 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
-const navLinks = ["Home", "Activities", "Committee", "Gallery", "About"];
+const navLinks = [
+  "Home",
+  "Activities",
+  "Committee",
+  "Blood Bank",
+  "Gallery",
+  "About",
+];
 const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 export default function Header() {
@@ -53,6 +60,9 @@ export default function Header() {
     fetchLogo();
   }, []);
 
+  const toPath = (item) =>
+    item === "Home" ? "/" : `/${item.toLowerCase().replace(/\s+/g, "")}`;
+
   return (
     <motion.header
       initial={{ y: -80, opacity: 0 }}
@@ -84,7 +94,7 @@ export default function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 text-gray-600 font-medium">
           {navLinks.map((item, i) => (
-            <NavLink key={i} item={item} />
+            <NavLink key={i} item={item} toPath={toPath} />
           ))}
         </nav>
 
@@ -161,7 +171,7 @@ export default function Header() {
                   transition={{ delay: i * 0.07, ease: "easeOut" }}
                 >
                   <Link
-                    to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                    to={toPath(item)}
                     className="flex items-center gap-2 px-3 py-3 rounded-xl text-gray-700 font-medium text-base hover:bg-blue-50 hover:text-blue-600 transition-colors"
                     onClick={() => setOpen(false)}
                   >
@@ -202,7 +212,7 @@ export default function Header() {
 }
 
 /* ── Desktop nav link with animated underline indicator ── */
-function NavLink({ item }) {
+function NavLink({ item, toPath }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -212,8 +222,8 @@ function NavLink({ item }) {
       className="relative"
     >
       <Link
-        to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-        className="relative px-3.5 py-2 text-sm rounded-lg hover:text-blue-600 transition-colors duration-150 block"
+        to={toPath(item)}
+        className="relative px-3.5 py-2 text-sm rounded-lg hover:text-blue-600 transition-colors duration-150 block whitespace-nowrap"
       >
         <AnimatePresence>
           {hovered && (
