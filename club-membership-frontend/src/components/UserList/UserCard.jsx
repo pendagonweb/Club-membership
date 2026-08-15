@@ -66,6 +66,11 @@ export default function UserCard({
                   JUNIOR
                 </span>
               )}
+              {user.bloodDonations?.length > 0 && (
+                <span className="text-[10px] font-bold text-white bg-red-600 px-1.5 py-0.5 rounded">
+                  🩸 {user.bloodDonations.length}
+                </span>
+              )}
             </div>
 
             {user.photo && (
@@ -171,6 +176,22 @@ export default function UserCard({
           </p>
           <p>
             <b>Junior:</b> {junior ? "Yes 🟣" : "No"}
+          </p>
+          <p>
+            <b>Blood Donations:</b>{" "}
+            {user.bloodDonations?.length
+              ? user.bloodDonations
+                  .slice()
+                  .sort((a, b) => new Date(b) - new Date(a))
+                  .map((d) =>
+                    new Date(d).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    }),
+                  )
+                  .join(", ")
+              : "—"}
           </p>
           <p>
             <b>Expiry Date:</b>{" "}

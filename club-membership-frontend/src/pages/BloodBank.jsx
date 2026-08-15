@@ -10,6 +10,8 @@ import {
   LayoutGrid,
   List,
   Phone,
+  Award,
+  Clock,
 } from "lucide-react";
 
 const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -225,7 +227,7 @@ export default function BloodBank() {
   const [search, setSearch] = useState("");
   const [nriFilter, setNriFilter] = useState("all");
   const [bgFilter, setBgFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("bloodgroup"); 
+  const [sortBy, setSortBy] = useState("bloodgroup");
   const [grouped, setGrouped] = useState(true);
 
   useEffect(() => {
@@ -308,6 +310,33 @@ export default function BloodBank() {
     });
     return counts;
   }, [allUsers]);
+  const topDonors = useMemo(() => {
+    return [...allUsers]
+      .filter((u) => (u.bloodDonations?.length || 0) > 0)
+      .sort(
+        (a, b) =>
+          (b.bloodDonations?.length || 0) - (a.bloodDonations?.length || 0),
+      )
+      .slice(0, 9);
+  }, [allUsers]);
+
+  const recentDonors = useMemo(() => {
+    return allUsers
+      .filter((u) => (u.bloodDonations?.length || 0) > 0)
+      .map((u) => ({
+        ...u,
+        lastDonation: [...u.bloodDonations].sort(
+          (a, b) => new Date(b) - new Date(a),
+        )[0],
+      }))
+      .sort((a, b) => new Date(b.lastDonation) - new Date(a.lastDonation))
+      .slice(0, 9);
+  }, [allUsers]);
+
+  const totalDonations = useMemo(
+    () => allUsers.reduce((sum, u) => sum + (u.bloodDonations?.length || 0), 0),
+    [allUsers],
+  );
 
   const nriCount = allUsers.filter((u) => u.nri === "Yes").length;
   const nonNriCount = allUsers.length - nriCount;
@@ -340,6 +369,9 @@ export default function BloodBank() {
               <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full">
                 {nonNriCount} Non-NRI
               </div>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full">
+                <Droplet size={13} /> {totalDonations} total donations
+              </div>
             </div>
           )}
         </div>
@@ -358,6 +390,102 @@ export default function BloodBank() {
 
         {!error && (
           <>
+            {/* ── Top Donors ── */}
+            {!loading && topDonors.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Award size={16} className="text-amber-500" />
+                  <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest">
+                    Top Blood Donors
+                  </h2>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {topDonors.map((u, i) => (
+                    <div
+                      key={u._id}
+                      className="relative flex items-center gap-3 bg-white border border-amber-100 rounded-2xl p-3.5"
+                    >
+                      <div className="relative">
+                        <Avatar
+                          photo={u.photo}
+                          name={u.name}
+                          size="w-12 h-12"
+                        />
+                        {i < 3 && (
+                          <span className="absolute -top-1.5 -right-1.5 text-base">
+                            {["🥇", "🥈", "🥉"][i]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-800 truncate">
+                          {u.nickname || u.name}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {u.place || u.membershipId}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-lg font-extrabold text-red-600 leading-none">
+                          {u.bloodDonations.length}
+                        </p>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wide">
+                          donations
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Recent Donors ── */}
+            {!loading && recentDonors.length > 0 && (
+              <div className="mb-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock size={16} className="text-blue-500" />
+                  <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest">
+                    Recent Donors
+                  </h2>
+                  <div className="flex-1 h-px bg-gray-100" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {recentDonors.map((u) => (
+                    <div
+                      key={u._id}
+                      className="flex items-center gap-3 bg-white border border-blue-100 rounded-2xl p-3.5"
+                    >
+                      <Avatar photo={u.photo} name={u.name} size="w-12 h-12" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-gray-800 truncate">
+                          {u.nickname || u.name}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {u.place || u.membershipId}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-bold text-blue-600 leading-none">
+                          {new Date(u.lastDonation).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
+                        </p>
+                        <p className="text-[9px] text-gray-400 uppercase tracking-wide mt-0.5">
+                          last donation
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* ── Controls ── */}
             <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-5 mb-8 space-y-4">
               {/* Search + sort + view toggle */}

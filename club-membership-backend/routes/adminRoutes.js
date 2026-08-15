@@ -165,7 +165,7 @@ router.get("/committee", async (req, res) => {
   try {
     const users = await User.find({ membershipStatus: "approved" })
       .select(
-        "name age membershipId expiryDate phone nickname designation photo bloodGroup place nri whatsapp",
+        "name age membershipId expiryDate phone nickname designation photo bloodGroup place nri whatsapp bloodDonations",
       )
       .sort({ name: 1 });
 
@@ -203,6 +203,7 @@ router.put("/user/:id", adminAuth, async (req, res) => {
       "aadhaar",
       "password",
       "paymentAmount",
+      "bloodDonations",
     ];
 
     const updates = {};

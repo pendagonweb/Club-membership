@@ -148,6 +148,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    bloodDonations: {
+      type: [Date],
+      default: [],
+    },
   },
   { timestamps: true },
 );

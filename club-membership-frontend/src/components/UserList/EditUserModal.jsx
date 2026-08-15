@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { COUNTRY_CODES } from "./helpers";
 
 export default function EditUserModal({
@@ -7,6 +8,29 @@ export default function EditUserModal({
   onSave,
   actionLoading,
 }) {
+  const [newDonationDate, setNewDonationDate] = useState("");
+  const addDonationDate = () => {
+    if (!newDonationDate) return;
+    const existing = editForm.bloodDonations || [];
+    const already = existing.some(
+      (d) => new Date(d).toISOString().slice(0, 10) === newDonationDate,
+    );
+    if (already) return;
+    setEditForm({
+      ...editForm,
+      bloodDonations: [...existing, newDonationDate].sort(
+        (a, b) => new Date(b) - new Date(a),
+      ),
+    });
+    setNewDonationDate("");
+  };
+
+  const removeDonationDate = (idx) => {
+    setEditForm({
+      ...editForm,
+      bloodDonations: editForm.bloodDonations.filter((_, i) => i !== idx),
+    });
+  };
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 px-4 py-6 overflow-y-auto">
       <div className="bg-white rounded-xl w-full max-w-md shadow-sm">
@@ -316,6 +340,59 @@ export default function EditUserModal({
                 </div>
               </div>
             </div>
+          </div>
+          {/* Blood Donation History */}
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-2.5">
+              Blood Donation History
+            </p>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="date"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400"
+                value={newDonationDate}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setNewDonationDate(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={addDonationDate}
+                disabled={!newDonationDate}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-40"
+              >
+                + Add
+              </button>
+            </div>
+
+            {editForm.bloodDonations?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {editForm.bloodDonations.map((date, idx) => (
+                  <span
+                    key={idx}
+                    className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium px-2.5 py-1 rounded-full"
+                  >
+                    🩸{" "}
+                    {new Date(date).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => removeDonationDate(idx)}
+                      className="text-red-400 hover:text-red-700 ml-0.5"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">No donation records yet.</p>
+            )}
+            <p className="text-xs text-gray-400 mt-2">
+              Total donations: {editForm.bloodDonations?.length || 0}
+            </p>
           </div>
 
           {/* Divider + Password */}

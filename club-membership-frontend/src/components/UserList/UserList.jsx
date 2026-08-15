@@ -99,6 +99,7 @@ export default function AdminUserList() {
       expiryDate: user.expiryDate
         ? new Date(user.expiryDate).toISOString().split("T")[0]
         : "2027-03-31",
+      bloodDonations: user.bloodDonations || [],
     });
   };
 
