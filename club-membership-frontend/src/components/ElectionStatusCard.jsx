@@ -112,7 +112,7 @@ export default function ElectionStatusCard({
         });
         if (!cancelled) setStats(data);
       } catch {
-        // best-effort widget — fail silently
+        // best-effort widget  fail silently
       }
     };
     fetchStats();

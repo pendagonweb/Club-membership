@@ -202,7 +202,7 @@ export default function ExportPdfModal({ users, onClose }) {
                 })}
               </div>
               <p className="text-xs text-gray-400 mt-2">
-                Tiles render 3 per row — Photo (if selected) sits on the left of
+                Tiles render 3 per row  Photo (if selected) sits on the left of
                 each tile with the fields above stacked on the right, in order.
               </p>
             </div>

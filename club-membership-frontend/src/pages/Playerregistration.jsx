@@ -20,7 +20,7 @@ function Field({ label, value }) {
       <span className="text-[10px] font-semibold tracking-widest uppercase text-slate-400">
         {label}
       </span>
-      <span className="text-sm font-medium text-slate-700">{value || "—"}</span>
+      <span className="text-sm font-medium text-slate-700">{value || ""}</span>
     </div>
   );
 }

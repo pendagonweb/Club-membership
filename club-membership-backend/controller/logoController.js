@@ -16,7 +16,7 @@ const destroyCloudinary = async (publicId) => {
 };
 
 /* ─────────────────────────────────────────────
-   PUBLIC — GET
+   PUBLIC  GET
 ───────────────────────────────────────────── */
 
 /**
@@ -40,14 +40,14 @@ export const getLogo = async (req, res) => {
 };
 
 /* ─────────────────────────────────────────────
-   ADMIN — CREATE
+   ADMIN  CREATE
 ───────────────────────────────────────────── */
 
 /**
  * POST /admin/logo
  * Uploads the logo for the first time.
  * Accepts a single file field named "logo" (png / jpg / webp).
- * Rejects if a logo already exists — use PATCH to replace it.
+ * Rejects if a logo already exists  use PATCH to replace it.
  */
 export const uploadLogo = async (req, res) => {
   const file = req.file;
@@ -93,13 +93,13 @@ export const uploadLogo = async (req, res) => {
 };
 
 /* ─────────────────────────────────────────────
-   ADMIN — UPDATE
+   ADMIN  UPDATE
 ───────────────────────────────────────────── */
 
 /**
  * PATCH /admin/logo
  * Replaces the existing logo image (and/or updates altText).
- * A new image file is optional — if omitted, only altText is updated.
+ * A new image file is optional  if omitted, only altText is updated.
  */
 export const updateLogo = async (req, res) => {
   const file = req.file;
@@ -144,7 +144,7 @@ export const updateLogo = async (req, res) => {
 };
 
 /* ─────────────────────────────────────────────
-   ADMIN — DELETE
+   ADMIN  DELETE
 ───────────────────────────────────────────── */
 
 /**

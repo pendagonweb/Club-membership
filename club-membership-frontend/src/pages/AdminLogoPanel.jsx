@@ -177,7 +177,7 @@ const AdminLogoPanel = () => {
         if (err.response?.status !== 404) {
           setFetchError(err.response?.data?.message || err.message);
         }
-        // 404 = no logo yet — that's fine, show upload form
+        // 404 = no logo yet  that's fine, show upload form
       } finally {
         setLoading(false);
       }

@@ -105,7 +105,7 @@ export default function EditUserModal({
                       })
                     }
                   >
-                    <option value="">— Select —</option>
+                    <option value=""> Select </option>
                     <option value="member">Member</option>
                     <option value="President">President</option>
                     <option value="Gen. Secretary">Gen. Secretary</option>

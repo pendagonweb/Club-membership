@@ -83,7 +83,7 @@ export default function VotingPanelhead({
         });
         if (!cancelled) setStats(data);
       } catch {
-        // best-effort widget — fail silently
+        // best-effort widget  fail silently
       }
     };
     fetchStats();

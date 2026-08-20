@@ -82,8 +82,8 @@ const toBase64 = (url) =>
   });
 
 const fieldValue = (u, key) => {
-  let val = u[key] ?? "—";
-  if (key === "dob" && val && val !== "—") {
+  let val = u[key] ?? "";
+  if (key === "dob" && val && val !== "") {
     val = new Date(val).toLocaleDateString();
   }
   if (key === "aadhaar") {
@@ -91,7 +91,7 @@ const fieldValue = (u, key) => {
   }
   if (key === "expiryDate") {
     const dateStr =
-      val && val !== "—"
+      val && val !== ""
         ? new Date(val).toLocaleDateString("en-IN", {
             day: "2-digit",
             month: "short",
@@ -104,10 +104,10 @@ const fieldValue = (u, key) => {
           });
     val = `Expiry: ${dateStr}`;
   }
-  if (key === "paymentAmount" && val && val !== "—") {
+  if (key === "paymentAmount" && val && val !== "") {
     val = `Rs. ${val}`;
   }
-  if (val === "" || val === null || val === undefined) val = "—";
+  if (val === "" || val === null || val === undefined) val = "";
   return String(val);
 };
 
@@ -193,7 +193,7 @@ export const generateMembersPdf = async ({ users, selected, filters }) => {
     doc.setLineWidth(0.2);
     doc.roundedRect(x, y, TILE_W, TILE_H, 1.2, 1.2, "S");
 
-    // ── NRI badge — top-right corner ──────────────────────────────────
+    // ── NRI badge  top-right corner ──────────────────────────────────
     if (u.nri === "Yes") {
       const badgeW = 9;
       const badgeH = 3.6;
@@ -214,7 +214,7 @@ export const generateMembersPdf = async ({ users, selected, filters }) => {
       doc.setFont(undefined, "normal");
     }
 
-    // ── Committee badge — below NRI (or top-right if no NRI) ──────────
+    // ── Committee badge  below NRI (or top-right if no NRI) ──────────
     if (isCommitteeMember(u.designation)) {
       const badgeW = 15;
       const badgeH = 3.6;
@@ -235,7 +235,7 @@ export const generateMembersPdf = async ({ users, selected, filters }) => {
       doc.setFont(undefined, "normal");
     }
 
-    // ── Junior badge — stacks below whichever badges are present ─────
+    // ── Junior badge  stacks below whichever badges are present ─────
     if (isJunior(u.dob)) {
       const badgeW = 11;
       const badgeH = 3.6;

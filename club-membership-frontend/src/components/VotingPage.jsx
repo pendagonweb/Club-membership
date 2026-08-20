@@ -48,7 +48,7 @@ function LiveTurnout({ token }) {
         });
         if (!cancelled) setStats(data);
       } catch {
-        // silently ignore — this is a best-effort live widget
+        // silently ignore  this is a best-effort live widget
       }
     };
     fetchStats();

@@ -7,7 +7,7 @@ const deleteOldImage = async (publicId) => {
     try {
       await cloudinary.uploader.destroy(publicId);
     } catch {
-      // non-fatal — log and continue
+      // non-fatal  log and continue
       console.warn("Cloudinary delete failed for:", publicId);
     }
   }

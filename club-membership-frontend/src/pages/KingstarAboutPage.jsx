@@ -204,7 +204,7 @@ export default function KingstarAboutPage() {
     {
       icon: MdVolunteerActivism,
       title: "Social Welfare & Charity",
-      desc: "Medical aid, education support, marriage and housing assistance — standing with those in need.",
+      desc: "Medical aid, education support, marriage and housing assistance  standing with those in need.",
       accent: "bg-emerald-500",
       delay: 2,
     },
@@ -262,13 +262,13 @@ export default function KingstarAboutPage() {
     {
       year: "2018",
       title: "King Kanoth Wedding",
-      desc: "During the 20th Anniversary, the club supported couples with weddings, gold, and land — a defining moment of service.",
+      desc: "During the 20th Anniversary, the club supported couples with weddings, gold, and land  a defining moment of service.",
       side: "right",
     },
     {
       year: "2024+",
       title: "A Living Legacy",
-      desc: "With 26+ years of unbroken service, Kingstar continues to grow — inspiring generations and uplifting lives.",
+      desc: "With 26+ years of unbroken service, Kingstar continues to grow  inspiring generations and uplifting lives.",
       side: "left",
     },
   ];
@@ -383,7 +383,7 @@ export default function KingstarAboutPage() {
             className="mx-auto mb-10 max-w-xl text-base leading-relaxed text-slate-500 md:text-lg"
           >
             A community-based organization dedicated to sports, arts, culture,
-            charity, and social welfare — uniting people for over two decades.
+            charity, and social welfare  uniting people for over two decades.
           </motion.p>
 
           <motion.div
@@ -451,7 +451,7 @@ export default function KingstarAboutPage() {
                   Kingstar Arts & Sports Club
                 </span>{" "}
                 has grown from a local initiative into a celebrated institution
-                — a platform that brings people together through sport, art, and
+                 a platform that brings people together through sport, art, and
                 heartfelt community service.
               </motion.p>
               <motion.p
@@ -460,7 +460,7 @@ export default function KingstarAboutPage() {
                 className="mb-8 text-base leading-relaxed text-slate-500"
               >
                 Over 26+ years, we've built not just programs, but lasting bonds
-                — a network of individuals committed to uplifting one another
+                 a network of individuals committed to uplifting one another
                 and building a better society.
               </motion.p>
               <motion.div
@@ -595,7 +595,7 @@ export default function KingstarAboutPage() {
                 className="mx-auto max-w-2xl text-base leading-relaxed text-blue-100"
               >
                 The <span className="font-bold text-white">KPL</span> is our
-                flagship sporting extravaganza — an annual celebration of
+                flagship sporting extravaganza  an annual celebration of
                 sportsmanship, teamwork, and community pride. Drawing
                 participants and fans from across the region, the KPL has become
                 a cultural cornerstone.
@@ -650,7 +650,7 @@ export default function KingstarAboutPage() {
               >
                 Beyond the sports field and stage, Kingstar is known for its
                 heartfelt commitment to those in need. Our welfare programs span
-                medical care, education, marriage support, and housing —
+                medical care, education, marriage support, and housing 
                 touching lives at their most crucial moments.
               </motion.p>
             </Section>
@@ -704,7 +704,7 @@ export default function KingstarAboutPage() {
                   >
                     A historic village-wide initiative that remains one of
                     Kingstar's proudest chapters. The club supported multiple
-                    couples with complete wedding arrangements — including{" "}
+                    couples with complete wedding arrangements  including{" "}
                     <span className="font-semibold text-rose-500">
                       gold for brides
                     </span>{" "}
@@ -909,7 +909,7 @@ export default function KingstarAboutPage() {
                   Central Committee
                 </span>{" "}
                 serves as the guiding force behind all of Kingstar's operations
-                — providing strategic leadership, coordinating diverse
+                 providing strategic leadership, coordinating diverse
                 initiatives, and ensuring the club's vision stays rooted in
                 service and excellence.
               </motion.p>
@@ -963,7 +963,7 @@ export default function KingstarAboutPage() {
                 custom={2}
                 className="mb-8 text-base text-blue-100"
               >
-                Join thousands already making a difference — in sports, arts,
+                Join thousands already making a difference  in sports, arts,
                 and community service.
               </motion.p>
               <motion.div

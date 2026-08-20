@@ -385,7 +385,7 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-7 py-6 flex flex-col gap-5">
-          {/* Label selector — two rows */}
+          {/* Label selector  two rows */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2.5">
               Category
@@ -450,7 +450,7 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
               {description.length}/600
             </p>
           </div>
-          {/* Date — report only */}
+          {/* Date  report only */}
           {label === "report" && (
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">
@@ -499,7 +499,7 @@ function GalleryForm({ existing, onSaved, onCancel, toast }) {
                 </span>
               </p>
               <p className="text-xs text-stone-300 mt-1">
-                JPG · PNG · WebP · GIF — 10 MB max
+                JPG · PNG · WebP · GIF  10 MB max
               </p>
               <input
                 ref={fileRef}

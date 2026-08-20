@@ -154,7 +154,7 @@ function Skeleton({ count = 8 }) {
 }
 
 /* ────────────────────────────────────
-   SECTION 1 — GALLERY
+   SECTION 1  GALLERY
 ──────────────────────────────────── */
 function GallerySection({ items, loading, onOpen }) {
   return (
@@ -214,7 +214,7 @@ function GallerySection({ items, loading, onOpen }) {
 }
 
 /* ────────────────────────────────────
-   SECTION 2 — POSTERS
+   SECTION 2  POSTERS
 ──────────────────────────────────── */
 function PostersSection({ items, loading, onOpen }) {
   const allPosters = items.flatMap((item) =>
@@ -305,7 +305,7 @@ function PostersSection({ items, loading, onOpen }) {
 }
 
 /* ────────────────────────────────────
-   SECTION 3 — NEWS CUTTING
+   SECTION 3  NEWS CUTTING
    Opens lightbox on click (no navigation)
 ──────────────────────────────────── */
 function NewsCuttingSection({ items, loading, onOpen }) {
@@ -387,7 +387,7 @@ function NewsCuttingSection({ items, loading, onOpen }) {
 }
 
 /* ────────────────────────────────────
-   SECTION 4 — NEWS
+   SECTION 4  NEWS
    Cards now navigate to /news/:id
 ──────────────────────────────────── */
 function NewsSection({ items, loading }) {

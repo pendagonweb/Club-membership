@@ -81,11 +81,11 @@ export const getResults = async (req, res) => {
 };
 
 /* ─────────────────────────────────────────────
-   NRI VOTING STATUS — cached
+   NRI VOTING STATUS  cached
    This endpoint is polled every few seconds by up to 3 different
    components (VotingPage, MembershipDashboard, NriVoteUpdates).
    Without caching, every open tab triggers its own User.find + Vote.find
-   on a Hobby-plan function — this is the single biggest self-inflicted
+   on a Hobby-plan function  this is the single biggest self-inflicted
    load spike on election day. A short server-side TTL cache means
    concurrent pollers share one DB round-trip.
 ───────────────────────────────────────────── */

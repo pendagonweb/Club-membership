@@ -18,7 +18,7 @@ const uploadRegisterFiles = (req, res, next) => {
         });
       }
       if (err.message === "Unexpected end of form") {
-        return next(); // no file sent yet — caught later in validation
+        return next(); // no file sent yet  caught later in validation
       }
       return res.status(400).json({ success: false, message: err.message });
     }

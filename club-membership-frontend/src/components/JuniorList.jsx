@@ -157,7 +157,7 @@ function JuniorCard({ junior, deleteJunior, onEdit }) {
   const [expanded, setExpanded] = useState(false);
 
   const formatDob = (dob) => {
-    if (!dob) return "—";
+    if (!dob) return "";
     return new Date(dob).toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "long",
@@ -217,7 +217,7 @@ function JuniorCard({ junior, deleteJunior, onEdit }) {
             <b>Occupation:</b> {junior.occupation}
           </p>
           <p>
-            <b>Place:</b> {junior.place || "—"}
+            <b>Place:</b> {junior.place || ""}
           </p>
 
           <div className="flex gap-2 flex-wrap pt-2">

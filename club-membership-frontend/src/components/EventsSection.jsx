@@ -183,14 +183,14 @@ const EventsSection = () => {
                       </div>
                     )}
 
-                    {/* Tag pill — top left */}
+                    {/* Tag pill  top left */}
                     {ev.tag && (
                       <span className="absolute top-3 left-3 text-xs font-semibold bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
                         {ev.tag}
                       </span>
                     )}
 
-                    {/* Date badge — top right */}
+                    {/* Date badge  top right */}
                     {ev.date && (
                       <div className="absolute top-3 right-3 bg-white border border-gray-100 rounded-xl px-2.5 py-1.5 text-center min-w-[44px]">
                         <p className="text-lg font-bold text-gray-800 leading-none">
@@ -226,7 +226,7 @@ const EventsSection = () => {
                     </div>
                   </div>
 
-                  {/* Share button — bottom-right corner */}
+                  {/* Share button  bottom-right corner */}
                   <div className="absolute bottom-3 right-3">
                     <ShareButton title={ev.title} />
                   </div>

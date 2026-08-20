@@ -150,7 +150,7 @@ function ReportCard({ item, index, onOpenLightbox }) {
         }`}
       />
 
-      {/* Card — occupies 44% of row, pushed to correct side */}
+      {/* Card  occupies 44% of row, pushed to correct side */}
       <div
         ref={cardRef}
         className={`w-[44%] transition-all duration-700 ease-out ${slideClass} ${

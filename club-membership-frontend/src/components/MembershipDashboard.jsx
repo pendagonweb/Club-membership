@@ -95,7 +95,7 @@ function CropModal({ imageSrc, onCropDone, onCancel }) {
         </button>
       </div>
 
-      {/* Cropper — takes all remaining space */}
+      {/* Cropper  takes all remaining space */}
       <div className="relative flex-1 bg-black">
         <Cropper
           image={imageSrc}
@@ -147,7 +147,7 @@ function LiveTurnout({ token, backendUrl }) {
         });
         if (!cancelled) setStats(data);
       } catch {
-        // silently ignore — this is a best-effort live widget
+        // silently ignore  this is a best-effort live widget
       }
     };
     fetchStats();
@@ -194,7 +194,7 @@ function LiveTurnout({ token, backendUrl }) {
       // Measure how wide the percentage text actually is
       const pctWidth = ctx.measureText(pctText).width;
 
-      // ── Status badge (dot + label) — positioned right after the percentage ──
+      // ── Status badge (dot + label)  positioned right after the percentage ──
       const gap = width * 0.04; // ← tweak this to control spacing
       const badgeX = pctX + pctWidth + gap;
       const badgeY = height * 0.618;
@@ -275,7 +275,7 @@ Election Live Update ${currentTime}
 🔹 KINGSTAR ARTS & SPORTS CLUB ERIYAPADY`,
             });
           } catch {
-            // user cancelled share — no-op
+            // user cancelled share  no-op
           }
         } else {
           const url = URL.createObjectURL(blob);
@@ -1071,7 +1071,7 @@ function EditProfileModal({ member, onClose, onSuccess, backendUrl }) {
                 onChange={handleChange}
                 maxLength={12}
               />
-              {/* Password field with eye toggle — desktop */}
+              {/* Password field with eye toggle  desktop */}
               <PasswordField
                 label="Password"
                 name="password"
@@ -1305,7 +1305,7 @@ function MobileEditBody({
         onChange={handleChange}
         maxLength={12}
       />
-      {/* Password with eye toggle — mobile */}
+      {/* Password with eye toggle  mobile */}
       <PasswordField
         label="Password"
         name="password"

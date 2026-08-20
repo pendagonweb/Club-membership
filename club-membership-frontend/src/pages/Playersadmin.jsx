@@ -491,10 +491,10 @@ export default function PlayersAdmin() {
                     {player.membershipId}
                   </span>
                   <span className="text-sm text-slate-600">
-                    {player.age ? `${player.age} yrs` : "—"}
+                    {player.age ? `${player.age} yrs` : ""}
                   </span>
                   <span className="text-sm text-slate-600">
-                    {player.phone || "—"}
+                    {player.phone || ""}
                   </span>
                   <PositionBadge position={player.position} />
                 </div>
@@ -533,7 +533,7 @@ export default function PlayersAdmin() {
                         Age
                       </p>
                       <p className="sm:text-xs text-[10px] text-slate-600">
-                        {player.age ? `${player.age} yrs` : "—"}
+                        {player.age ? `${player.age} yrs` : ""}
                       </p>
                     </div>
                     <div>
@@ -541,7 +541,7 @@ export default function PlayersAdmin() {
                         Phone
                       </p>
                       <p className="sm:text-xs text-[10px] text-slate-600">
-                        {player.phone || "—"}
+                        {player.phone || ""}
                       </p>
                     </div>
                   </div>

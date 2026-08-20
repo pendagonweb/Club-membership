@@ -144,19 +144,19 @@ const MemberCard = ({ user, index, isLeader }) => {
           )}
         </div>
         {/* Action buttons row: share (left) + whatsapp (right) */}
-        {/* Action buttons row: share (left) + whatsapp (right) — only for logged-in users */}
+        {/* Action buttons row: share (left) + whatsapp (right)  only for logged-in users */}
         {loggedIn && (
           <div className="absolute -top-3 left-3 right-3 flex justify-between">
-            {/* Share button — sends member details to WhatsApp */}
+            {/* Share button  sends member details to WhatsApp */}
             <button
               onClick={() => {
                 const text =
                   ` *Member Details*\n\n` +
-                  `• *Full Name:* ${user.name || "—"}\n` +
-                  `• *Display / Nick Name:* ${user.nickname || "—"}\n` +
-                  `• *Membership ID:* ${user.membershipId || "—"}\n` +
-                  `• *Phone Number:* ${user.phone || "—"}\n` +
-                  `• *Blood Group:* ${user.bloodGroup || "—"}\n` +
+                  `• *Full Name:* ${user.name || ""}\n` +
+                  `• *Display / Nick Name:* ${user.nickname || ""}\n` +
+                  `• *Membership ID:* ${user.membershipId || ""}\n` +
+                  `• *Phone Number:* ${user.phone || ""}\n` +
+                  `• *Blood Group:* ${user.bloodGroup || ""}\n` +
                   `• *Committee Members:*\n` +
                   `https://kingstareriyapady.club/committee`;
                 const encoded = encodeURIComponent(text);
@@ -413,7 +413,7 @@ const CommitteePage = () => {
     ),
   );
 
-  // Advisory board — split by NRI same as committee
+  // Advisory board  split by NRI same as committee
   const generalAdvisory = sortByDesignation(
     leaders.filter((u) => isAdvisory(u) && u.nri !== "Yes" && matchesSearch(u)),
   );
@@ -421,7 +421,7 @@ const CommitteePage = () => {
     leaders.filter((u) => isAdvisory(u) && u.nri === "Yes" && matchesSearch(u)),
   );
 
-  // Exec members — prepended to the members list
+  // Exec members  prepended to the members list
   const execMembers = sortByDesignation(
     leaders.filter((u) => isExec(u) && matchesSearch(u)),
   );
@@ -531,7 +531,7 @@ const CommitteePage = () => {
 
             {/* Two-panel split */}
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
-              {/* Left — General Committee */}
+              {/* Left  General Committee */}
               <div className="flex-1 min-w-0 hover:shadow-lg transition-shadow duration-300 rounded-2xl p-4 lg:p-6 bg-white border border-gray-100">
                 {loading ? (
                   <>
@@ -594,7 +594,7 @@ const CommitteePage = () => {
               {/* Vertical divider (desktop only) */}
               <div className="hidden lg:block w-px bg-gray-100 self-stretch" />
 
-              {/* Right — International Committee */}
+              {/* Right  International Committee */}
               <div className="flex-1 min-w-0 hover:shadow-lg transition-shadow duration-300 rounded-2xl p-4 lg:p-6 bg-white border border-gray-100">
                 {loading ? (
                   <>

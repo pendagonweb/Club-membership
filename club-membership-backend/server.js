@@ -43,7 +43,7 @@ app.use(
       "https://membership-front.vercel.app",
     ],
     credentials: true,
-    maxAge: 86400, // cache preflight OPTIONS response for 24h — big win for authed routes
+    maxAge: 86400, // cache preflight OPTIONS response for 24h  big win for authed routes
   }),
 );
 

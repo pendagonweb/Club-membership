@@ -12,6 +12,7 @@ import {
   Phone,
   Award,
   Clock,
+  Cake,
 } from "lucide-react";
 
 const BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
@@ -86,6 +87,21 @@ const BLOOD_GROUP_COLORS = {
   },
 };
 
+/*  Age range buckets for filtering  */
+const AGE_RANGES = [
+  { key: "18-25", label: "18–25", min: 18, max: 25 },
+  { key: "26-35", label: "26–35", min: 26, max: 35 },
+  { key: "36-45", label: "36–45", min: 36, max: 45 },
+  { key: "45+", label: "45+", min: 46, max: Infinity },
+];
+
+const getAgeRangeKey = (age) => {
+  const n = Number(age);
+  if (!Number.isFinite(n)) return null;
+  const range = AGE_RANGES.find((r) => n >= r.min && n <= r.max);
+  return range ? range.key : null;
+};
+
 const getBGColor = (bg) => BLOOD_GROUP_COLORS[bg] || BLOOD_GROUP_COLORS.Nil;
 
 const normalizeBG = (bg) => {
@@ -153,6 +169,11 @@ function MemberCard({ user }) {
               <Globe size={9} /> NRI
             </span>
           )}
+          {/* {Number.isFinite(Number(user.age)) && (
+            <span className="flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-600 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded-full">
+              <Cake size={9} /> {user.age}
+            </span>
+          )} */}
         </div>
         <p className="text-xs text-gray-400 truncate">
           {user.name}
@@ -220,13 +241,14 @@ function Pill({ active, onClick, children }) {
    MAIN PAGE
 ════════════════════════════════════ */
 export default function BloodBank() {
-  const [allUsers, setAllUsers] = useState([]);
+  const [rawUsers, setRawUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [search, setSearch] = useState("");
   const [nriFilter, setNriFilter] = useState("all");
   const [bgFilter, setBgFilter] = useState("all");
+  const [ageFilter, setAgeFilter] = useState("all");
   const [sortBy, setSortBy] = useState("bloodgroup");
   const [grouped, setGrouped] = useState(true);
 
@@ -236,7 +258,7 @@ export default function BloodBank() {
         const res = await axios.get(`${BASE}/api/admin/committee`);
         if (!res.data.success) throw new Error(res.data.message);
         const { leaders = [], members = [] } = res.data.data;
-        setAllUsers([...leaders, ...members]);
+        setRawUsers([...leaders, ...members]);
       } catch (err) {
         setError(err.response?.data?.message || err.message);
       } finally {
@@ -245,6 +267,16 @@ export default function BloodBank() {
     };
     fetchData();
   }, []);
+
+  // Remove anyone confirmed to be under 18 from the blood bank entirely.
+  // Members with no age on record are kept (we can't confirm they're minors).
+  const allUsers = useMemo(() => {
+    return rawUsers.filter((u) => {
+      const n = Number(u.age);
+      if (Number.isFinite(n) && n < 18) return false;
+      return true;
+    });
+  }, [rawUsers]);
 
   const q = search.trim().toLowerCase();
 
@@ -256,6 +288,9 @@ export default function BloodBank() {
       const bg = normalizeBG(u.bloodGroup);
       if (bgFilter !== "all" && bg !== bgFilter) return false;
 
+      if (ageFilter !== "all" && getAgeRangeKey(u.age) !== ageFilter)
+        return false;
+
       if (!q) return true;
       return (
         u.name?.toLowerCase().includes(q) ||
@@ -266,7 +301,7 @@ export default function BloodBank() {
           .includes(q)
       );
     });
-  }, [allUsers, nriFilter, bgFilter, q]);
+  }, [allUsers, nriFilter, bgFilter, ageFilter, q]);
 
   const sortedFlat = useMemo(() => {
     const arr = [...filtered];
@@ -310,6 +345,18 @@ export default function BloodBank() {
     });
     return counts;
   }, [allUsers]);
+
+  // Age range counts (for filter pill badges), based on all users
+  const ageCounts = useMemo(() => {
+    const counts = {};
+    AGE_RANGES.forEach((r) => (counts[r.key] = 0));
+    allUsers.forEach((u) => {
+      const key = getAgeRangeKey(u.age);
+      if (key) counts[key] += 1;
+    });
+    return counts;
+  }, [allUsers]);
+
   const topDonors = useMemo(() => {
     return [...allUsers]
       .filter((u) => (u.bloodDonations?.length || 0) > 0)
@@ -354,7 +401,7 @@ export default function BloodBank() {
           </h1>
           <p className="text-gray-500 text-base max-w-xl">
             A directory of members and committee members grouped by blood group
-            — reach out directly in case of an emergency.
+             reach out directly in case of an emergency.
           </p>
 
           {/* Stats */}
@@ -423,7 +470,7 @@ export default function BloodBank() {
                           {u.nickname || u.name}
                         </p>
                         <p className="text-xs text-gray-400 truncate">
-                          {u.place || u.membershipId}
+                          { u.membershipId }
                         </p>
                       </div>
                       <div className="text-right shrink-0">
@@ -439,7 +486,6 @@ export default function BloodBank() {
                 </div>
               </div>
             )}
-
             {/* ── Recent Donors ── */}
             {!loading && recentDonors.length > 0 && (
               <div className="mb-10">
@@ -462,7 +508,7 @@ export default function BloodBank() {
                           {u.nickname || u.name}
                         </p>
                         <p className="text-xs text-gray-400 truncate">
-                          {u.place || u.membershipId}
+                          { u.membershipId}
                         </p>
                       </div>
                       <div className="text-right shrink-0">
@@ -569,6 +615,30 @@ export default function BloodBank() {
                   >
                     Non-NRI ({nonNriCount})
                   </Pill>
+                </div>
+              </div>
+
+              {/* Age filter */}
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2">
+                  Filter by age
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Pill
+                    active={ageFilter === "all"}
+                    onClick={() => setAgeFilter("all")}
+                  >
+                    All ages
+                  </Pill>
+                  {AGE_RANGES.map((r) => (
+                    <Pill
+                      key={r.key}
+                      active={ageFilter === r.key}
+                      onClick={() => setAgeFilter(r.key)}
+                    >
+                      {r.label} ({ageCounts[r.key] || 0})
+                    </Pill>
+                  ))}
                 </div>
               </div>
 

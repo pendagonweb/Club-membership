@@ -98,7 +98,7 @@ export default function AdminPage() {
   }, [token]);
 
   const formatDate = (date) => {
-    if (!date) return "—";
+    if (!date) return "";
     return new Date(date).toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
@@ -195,28 +195,28 @@ export default function AdminPage() {
                 {expandedUser === user._id && (
                   <div className="mt-3 text-sm space-y-2">
                     <p>
-                      <b>Father:</b> {user.fatherName || "—"}
+                      <b>Father:</b> {user.fatherName || ""}
                     </p>
                     <p>
-                      <b>Nickname:</b> {user.nickname || "—"}
+                      <b>Nickname:</b> {user.nickname || ""}
                     </p>
                     <p>
-                      <b>Email:</b> {user.email || "—"}
+                      <b>Email:</b> {user.email || ""}
                     </p>
                     <p>
-                      <b>WhatsApp:</b> {user.whatsapp || "—"}
+                      <b>WhatsApp:</b> {user.whatsapp || ""}
                     </p>
                     <p>
-                      <b>Aadhaar:</b> {user.aadhaar || "—"}
+                      <b>Aadhaar:</b> {user.aadhaar || ""}
                     </p>
                     <p>
                       <b>DOB:</b> {formatDate(user.dob)}
                     </p>
                     <p>
-                      <b>Blood Group:</b> {user.bloodGroup || "—"}
+                      <b>Blood Group:</b> {user.bloodGroup || ""}
                     </p>
                     <p>
-                      <b>Address:</b> {user.address || "—"}
+                      <b>Address:</b> {user.address || ""}
                     </p>
                     <p>
                       <b>Valid Upto:</b> {STATIC_VALID_UPTO}

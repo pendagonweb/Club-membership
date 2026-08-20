@@ -259,13 +259,13 @@ function ActivityModal({ activity, onClose, onSaved }) {
       fd.append("isActive", form.isActive);
 
       if (imageFile) {
-        // New image selected — send it
+        // New image selected  send it
         fd.append("image", imageFile);
       } else if (clearImage) {
-        // User removed the image — signal backend to clear it
+        // User removed the image  signal backend to clear it
         fd.append("clearImage", "true");
       }
-      // Otherwise (no change) — don't append "image" at all; backend keeps existing
+      // Otherwise (no change)  don't append "image" at all; backend keeps existing
 
       const { data } = isEdit
         ? await axios.put(`${API}/${activity._id}`, fd, authHeaders(true))

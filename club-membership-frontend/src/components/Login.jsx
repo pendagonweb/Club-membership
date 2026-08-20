@@ -151,7 +151,7 @@ export default function Login() {
           onSubmit={handleSubmit}
           className="space-y-3 sm:space-y-2 w-full max-w-md mx-auto md:mx-0"
         >
-          {/* INPUTS — Membership ID first, Password second */}
+          {/* INPUTS  Membership ID first, Password second */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* MEMBERSHIP ID */}
             <input

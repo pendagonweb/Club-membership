@@ -429,7 +429,7 @@ function CountdownScreen({ msRemaining }) {
           </div>
 
           <p className="text-sm text-gray-500">
-            Counting is wrapping up — results reveal automatically at{" "}
+            Counting is wrapping up  results reveal automatically at{" "}
             <span className="font-semibold text-gray-700">
               {formatScheduled(RESULT_TIME)}
             </span>
@@ -780,7 +780,7 @@ export default function VotingResults() {
             </div>
           </div>
 
-          {/* Winner strip — stays visible at the top after the modal closes */}
+          {/* Winner strip  stays visible at the top after the modal closes */}
           {!loading && totalVotes > 0 && (
             <div
               className="rounded-xl px-4 py-3 flex items-center gap-3 cursor-pointer"
@@ -1027,7 +1027,7 @@ export default function VotingResults() {
                             })}
                           </div>
                           <p className="text-xs text-slate-400">
-                            Both panels are equal — every vote counts!
+                            Both panels are equal  every vote counts!
                           </p>
                         </div>
                       ) : (

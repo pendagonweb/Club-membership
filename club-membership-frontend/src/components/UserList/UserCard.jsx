@@ -138,35 +138,35 @@ export default function UserCard({
             <b>Phone:</b> {user.phone}
           </p>
           <p>
-            <b>Email:</b> {user.email || "—"}
+            <b>Email:</b> {user.email || ""}
           </p>
           <p>
-            <b>Father:</b> {user.fatherName || "—"}
+            <b>Father:</b> {user.fatherName || ""}
           </p>
           <p>
-            <b>Nickname:</b> {user.nickname || "—"}
+            <b>Nickname:</b> {user.nickname || ""}
           </p>
           <p>
-            <b>Whatsapp:</b> {user.whatsapp || "—"}
+            <b>Whatsapp:</b> {user.whatsapp || ""}
           </p>
           <p>
-            <b>Aadhaar:</b> {user.aadhaar || "—"}
+            <b>Aadhaar:</b> {user.aadhaar || ""}
           </p>
           <p>
-            <b>Payment Amount:</b> ₹{user.paymentAmount || "—"}
+            <b>Payment Amount:</b> ₹{user.paymentAmount || ""}
           </p>
           <p>
             <b>DOB:</b>{" "}
-            {user.dob ? new Date(user.dob).toLocaleDateString() : "—"}
+            {user.dob ? new Date(user.dob).toLocaleDateString() : ""}
           </p>
           <p>
-            <b>Blood Group:</b> {user.bloodGroup || "—"}
+            <b>Blood Group:</b> {user.bloodGroup || ""}
           </p>
           <p>
-            <b>Address:</b> {user.address || "—"}
+            <b>Address:</b> {user.address || ""}
           </p>
           <p>
-            <b>Place:</b> {user.place || "—"}
+            <b>Place:</b> {user.place || ""}
           </p>
           <p>
             <b>NRI:</b> {user.nri === "Yes" ? "Yes ✅" : "No"}
@@ -191,7 +191,7 @@ export default function UserCard({
                     }),
                   )
                   .join(", ")
-              : "—"}
+              : ""}
           </p>
           <p>
             <b>Expiry Date:</b>{" "}

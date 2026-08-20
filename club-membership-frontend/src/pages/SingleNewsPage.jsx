@@ -157,7 +157,7 @@ function Lightbox({ images, startIndex, onClose }) {
 /* ════════════════════════════════════
    SINGLE NEWS PAGE
    Props:
-     type — "news" | "newscutting"
+     type  "news" | "newscutting"
 ════════════════════════════════════ */
 export default function SingleNewsPage({ type = "news" }) {
   const { id } = useParams();
@@ -271,7 +271,7 @@ export default function SingleNewsPage({ type = "news" }) {
           </div>
         )}
 
-        {/* Back button — top left over hero */}
+        {/* Back button  top left over hero */}
         <button
           onClick={() => navigate(-1)}
           className="absolute top-4 left-4 z-20 flex items-center gap-1.5 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 text-white text-sm font-medium backdrop-blur-sm transition"

@@ -312,7 +312,7 @@ export default function Home() {
 
               <p className="text-gray-600 text-base sm:text-lg leading-relaxed italic mb-8">
                 Being part of Kingstar has been an amazing experience. The
-                events and community are truly inspiring — it's more than an
+                events and community are truly inspiring  it's more than an
                 organisation, it's a family.
               </p>
 

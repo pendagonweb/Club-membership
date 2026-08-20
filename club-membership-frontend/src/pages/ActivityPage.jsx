@@ -224,7 +224,7 @@ const ActivityCard = ({ act, index, onSelect }) => (
         )}
       </div>
 
-      {/* Body — fixed height so all cards align */}
+      {/* Body  fixed height so all cards align */}
       <div className="p-5 pb-10 flex flex-col flex-1">
         <div className="flex justify-between items-start gap-2 mb-2">
           <h3 className="font-bold text-base leading-snug line-clamp-2">
@@ -236,7 +236,7 @@ const ActivityCard = ({ act, index, onSelect }) => (
             </span>
           )}
         </div>
-        {/* Truncated to 3 lines — click card to see full */}
+        {/* Truncated to 3 lines  click card to see full */}
         <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">
           {act.description}
         </p>
@@ -245,7 +245,7 @@ const ActivityCard = ({ act, index, onSelect }) => (
         </p>
       </div>
 
-      {/* Share button — bottom-right corner */}
+      {/* Share button  bottom-right corner */}
       <div className="absolute bottom-3 right-3">
         <ShareButton title={act.title} />
       </div>
@@ -388,7 +388,7 @@ const ActivityPage = () => {
               Our Activities
             </h1>
             <p className="text-gray-500 text-base max-w-xl">
-              A record of everything we've done — events, workshops, campaigns,
+              A record of everything we've done  events, workshops, campaigns,
               and more.
             </p>
           </motion.div>

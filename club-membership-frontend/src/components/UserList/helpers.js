@@ -26,7 +26,7 @@ export const isCommitteeMember = (designation) => {
 // Displays a 12-digit Aadhaar number as "XXXX XXXX XXXX" if possible,
 // otherwise returns the raw value.
 export const formatAadhaar = (value) => {
-  if (!value) return "—";
+  if (!value) return "";
   const digits = String(value).replace(/\D/g, "");
   if (digits.length === 12) {
     return digits.replace(/(\d{4})(\d{4})(\d{4})/, "$1 $2 $3");

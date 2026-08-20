@@ -139,7 +139,7 @@ export default function AdminUserList() {
 🎉 Your membership has been approved!
 
 🆔 Membership ID: *${user.membershipId}*
-🔐 Password: *${user.password || "—"}*
+🔐 Password: *${user.password || ""}*
 ✳️ Registered Mob No.: ${user.phone}
 
 Membership Validity: ${user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : STATIC_VALID_UPTO}
@@ -149,10 +149,10 @@ https://kingstareriyapady.club/login
 
 Member Details:
 • Full Name: ${user.name}
-• Display / Nick Name: ${user.nickname || "—"}
-• Father's Name: ${user.fatherName || "—"}
-• Place: ${user.address || "—"}
-• Blood Group: ${user.bloodGroup || "—"}
+• Display / Nick Name: ${user.nickname || ""}
+• Father's Name: ${user.fatherName || ""}
+• Place: ${user.address || ""}
+• Blood Group: ${user.bloodGroup || ""}
 
 Thank you for becoming a member of Kingstar Arts & Sports Club.
 
