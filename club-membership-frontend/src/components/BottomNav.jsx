@@ -1,14 +1,8 @@
 // src/components/BottomNav.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  HiHome,
-  HiUser,
-  HiUserGroup,
-  HiBookOpen,
-  HiLogout,
-  HiLogin,
-} from "react-icons/hi";
+import { HiHome, HiUser, HiBookOpen, HiLogout, HiLogin } from "react-icons/hi";
+import { Droplet } from "lucide-react";
 
 function TabBtn({ icon, label, active, danger, onClick }) {
   return (
@@ -84,10 +78,10 @@ export default function BottomNav() {
           onClick={() => navigate("/dashboard")}
         />
         <TabBtn
-          icon={<HiUserGroup className="text-xl" />}
-          label="Members"
-          active={currentPath === "/committee"}
-          onClick={() => navigate("/committee")}
+          icon={<Droplet className="text-xl" />}
+          label="Blood Bank"
+          active={currentPath === "/bloodbank"}
+          onClick={() => navigate("/bloodbank")}
         />
         <TabBtn
           icon={<HiBookOpen className="text-xl" />}

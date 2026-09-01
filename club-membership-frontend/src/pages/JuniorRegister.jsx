@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/pages/JuniorRegister.jsx
+import { useState, useRef } from "react";
 import axios from "axios";
 
 export default function JuniorRegister() {
@@ -11,6 +12,12 @@ export default function JuniorRegister() {
     place: "",
     membershipId: "",
   });
+
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -40,6 +47,24 @@ export default function JuniorRegister() {
   };
 
   /* ======================
+     PHOTO HANDLING (camera + gallery)
+  ====================== */
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    // allow re-selecting the same file again later
+    e.target.value = "";
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    if (errors.photo) setErrors((prev) => ({ ...prev, photo: "" }));
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    setPhotoPreview(null);
+  };
+
+  /* ======================
      VALIDATION
   ====================== */
   const validateForm = () => {
@@ -59,6 +84,15 @@ export default function JuniorRegister() {
 
     if (formData.place && formData.place.trim().length < 2)
       newErrors.place = "Place must be valid";
+
+    if (!formData.membershipId || !formData.membershipId.trim()) {
+      newErrors.membershipId = "Membership ID is required";
+    } else {
+      const digitCount = (formData.membershipId.match(/\d/g) || []).length;
+      if (digitCount < 3) {
+        newErrors.membershipId = "Membership ID must contain at least 3 digits";
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -80,10 +114,9 @@ export default function JuniorRegister() {
         if (value) data.append(key, value);
       });
 
-      await axios.post(
-        `${VITE_BACKEND_URL}/api/juniors/juniorregister`,
-        formData,
-      );
+      if (photo) data.append("photo", photo);
+
+      await axios.post(`${VITE_BACKEND_URL}/api/juniors/juniorregister`, data);
 
       setSuccess(true);
 
@@ -97,6 +130,7 @@ export default function JuniorRegister() {
         place: "",
         membershipId: "",
       });
+      removePhoto();
     } catch (err) {
       alert(err.response?.data?.message || "Registration failed");
     } finally {
@@ -116,6 +150,69 @@ export default function JuniorRegister() {
         <h2 className="text-2xl font-semibold text-center">
           Junior Registration
         </h2>
+
+        {/* PHOTO UPLOAD */}
+        <div className="flex flex-col items-center gap-2">
+          {photoPreview ? (
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src={photoPreview}
+                alt="preview"
+                className="w-24 h-24 rounded-full object-cover border-2 border-indigo-300"
+              />
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="text-xs text-red-500 underline"
+              >
+                Remove photo
+              </button>
+            </div>
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-indigo-50 border-2 border-dashed border-indigo-300 flex items-center justify-center text-3xl">
+              📷
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current.click()}
+              className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+            >
+              📸 Take Photo
+            </button>
+            <button
+              type="button"
+              onClick={() => galleryInputRef.current.click()}
+              className="px-3 py-1.5 text-xs bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+            >
+              🖼️ Choose from Gallery
+            </button>
+          </div>
+
+          {/* Camera capture input */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+          {/* Gallery picker input */}
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+
+          {errors.photo && (
+            <p className="text-red-500 text-sm">{errors.photo}</p>
+          )}
+        </div>
 
         {/* NAME */}
         <input
@@ -186,14 +283,19 @@ export default function JuniorRegister() {
           className={inputClass("place")}
         />
         {errors.place && <p className="text-red-500 text-sm">{errors.place}</p>}
+
+        {/* MEMBERSHIP ID */}
         <input
           type="text"
           name="membershipId"
-          placeholder="Membership ID"
+          placeholder="Membership ID (must include at least 3 digits)"
           value={formData.membershipId}
           onChange={handleChange}
           className={inputClass("membershipId")}
         />
+        {errors.membershipId && (
+          <p className="text-red-500 text-sm">{errors.membershipId}</p>
+        )}
 
         {/* BUTTON */}
         <button

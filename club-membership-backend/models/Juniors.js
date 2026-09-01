@@ -1,3 +1,4 @@
+// club-membership-backend/models/Juniors.js
 import mongoose from "mongoose";
 
 const juniorSchema = new mongoose.Schema({
@@ -38,6 +39,18 @@ const juniorSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
+  },
+
+  /* ======================
+     CLOUDINARY PHOTO
+  ====================== */
+  photo: {
+    type: String, // secure_url
+    default: null,
+  },
+  photoId: {
+    type: String, // public_id
+    default: null,
   },
 });
 

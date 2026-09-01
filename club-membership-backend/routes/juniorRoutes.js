@@ -1,12 +1,35 @@
+// club-membership-backend/routes/juniorRoutes.js
 import express from "express";
 import Juniors from "../models/Juniors.js";
+import upload from "../middleware/cloudinaryUpload.js";
 
 const router = express.Router();
 
 /* ======================
+   OPTIONAL PHOTO UPLOAD MIDDLEWARE
+   Used on both register and edit  photo is optional on both.
+====================== */
+const uploadJuniorPhoto = (req, res, next) => {
+  upload.single("photo")(req, res, (err) => {
+    if (err) {
+      if (err.message === "Unexpected end of form") return next();
+      return res.status(400).json({ success: false, message: err.message });
+    }
+    next();
+  });
+};
+
+/* ======================
+   MEMBERSHIP ID VALIDATION HELPER
+   Requires at least 3 digits somewhere in the ID.
+====================== */
+const hasAtLeastThreeDigits = (value) =>
+  (String(value).match(/\d/g) || []).length >= 3;
+
+/* ======================
    CREATE JUNIOR
 ====================== */
-router.post("/juniorregister", async (req, res) => {
+router.post("/juniorregister", uploadJuniorPhoto, async (req, res) => {
   try {
     const { name, fatherName, dob, occupation, mobile, place, membershipId } =
       req.body;
@@ -34,12 +57,39 @@ router.post("/juniorregister", async (req, res) => {
         .json({ success: false, message: "Invalid mobile number" });
     }
 
-    /* CHECK DUPLICATE */
+    /* MEMBERSHIP ID VALIDATION */
+    if (!membershipId || !membershipId.trim()) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Membership ID is required" });
+    }
+
+    const trimmedMembershipId = membershipId.trim();
+
+    if (!hasAtLeastThreeDigits(trimmedMembershipId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Membership ID must contain at least 3 digits",
+      });
+    }
+
+    /* CHECK DUPLICATE MOBILE */
     const existing = await Juniors.findOne({ mobile });
     if (existing) {
       return res.status(409).json({
         success: false,
         message: "Junior already registered with this mobile",
+      });
+    }
+
+    /* CHECK DUPLICATE MEMBERSHIP ID */
+    const existingId = await Juniors.findOne({
+      membershipId: trimmedMembershipId,
+    });
+    if (existingId) {
+      return res.status(409).json({
+        success: false,
+        message: "This Membership ID is already registered",
       });
     }
 
@@ -51,7 +101,9 @@ router.post("/juniorregister", async (req, res) => {
       occupation: occupation.trim(),
       mobile,
       place: place || "",
-      membershipId: membershipId.trim(),
+      membershipId: trimmedMembershipId,
+      photo: req.file?.path || null,
+      photoId: req.file?.filename || null,
     });
 
     res.status(201).json({
@@ -60,6 +112,12 @@ router.post("/juniorregister", async (req, res) => {
       junior,
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Duplicate membership ID or mobile number",
+      });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -98,7 +156,7 @@ router.get("/:id", async (req, res) => {
 /* ======================
    EDIT JUNIOR
 ====================== */
-router.put("/:id", async (req, res) => {
+router.put("/:id", uploadJuniorPhoto, async (req, res) => {
   try {
     const { name, fatherName, dob, occupation, mobile, place, membershipId } =
       req.body;
@@ -126,6 +184,36 @@ router.put("/:id", async (req, res) => {
         .json({ success: false, message: "Invalid mobile number" });
     }
 
+    let trimmedMembershipId;
+    if (membershipId !== undefined) {
+      trimmedMembershipId = membershipId.trim();
+
+      if (!trimmedMembershipId) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Membership ID is required" });
+      }
+
+      if (!hasAtLeastThreeDigits(trimmedMembershipId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Membership ID must contain at least 3 digits",
+        });
+      }
+
+      /* CHECK DUPLICATE MEMBERSHIP ID (exclude current record) */
+      const existingId = await Juniors.findOne({
+        membershipId: trimmedMembershipId,
+        _id: { $ne: req.params.id },
+      });
+      if (existingId) {
+        return res.status(409).json({
+          success: false,
+          message: "This Membership ID is already in use by another junior",
+        });
+      }
+    }
+
     /* CHECK DUPLICATE MOBILE (exclude current record) */
     if (mobile) {
       const existing = await Juniors.findOne({
@@ -148,7 +236,13 @@ router.put("/:id", async (req, res) => {
     if (occupation !== undefined) updates.occupation = occupation.trim();
     if (mobile !== undefined) updates.mobile = mobile;
     if (place !== undefined) updates.place = place;
-    if (membershipId !== undefined) updates.membershipId = membershipId.trim();
+    if (trimmedMembershipId !== undefined)
+      updates.membershipId = trimmedMembershipId;
+
+    if (req.file) {
+      updates.photo = req.file.path;
+      updates.photoId = req.file.filename;
+    }
 
     /* UPDATE */
     const junior = await Juniors.findByIdAndUpdate(
@@ -169,6 +263,12 @@ router.put("/:id", async (req, res) => {
       junior,
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Duplicate membership ID or mobile number",
+      });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });

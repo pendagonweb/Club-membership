@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+// src/components/JuniorList.jsx
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { FaAngleUp, FaAngleDown } from "react-icons/fa";
 
@@ -178,11 +179,19 @@ function JuniorCard({ junior, deleteJunior, onEdit }) {
       <div className="flex items-center justify-between gap-3">
         {/* Avatar + basic info */}
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
-            <span className="text-lg font-bold text-indigo-600">
-              {initials}
-            </span>
-          </div>
+          {junior.photo ? (
+            <img
+              src={junior.photo}
+              alt={junior.name}
+              className="w-14 h-14 rounded-full object-cover border border-indigo-200 flex-shrink-0"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg font-bold text-indigo-600">
+                {initials}
+              </span>
+            </div>
+          )}
           <div className="flex flex-col">
             <p className="font-semibold text-lg leading-tight">{junior.name}</p>
             <p className="text-xs text-gray-500">S/o {junior.fatherName}</p>
@@ -264,21 +273,51 @@ function EditModal({ junior, backendUrl, onClose, onSaved }) {
     place: junior.place || "",
     membershipId: junior.membershipId || "",
   });
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(junior.photo || null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    const digitCount = (form.membershipId.match(/\d/g) || []).length;
+    if (!form.membershipId.trim()) {
+      setError("Membership ID is required");
+      return;
+    }
+    if (digitCount < 3) {
+      setError("Membership ID must contain at least 3 digits");
+      return;
+    }
+
     setSaving(true);
     try {
+      const data = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        data.append(key, value ?? "");
+      });
+      if (photo) data.append("photo", photo);
+
       const res = await axios.put(
         `${backendUrl}/api/juniors/${junior._id}`,
-        form,
+        data,
       );
       if (res.data.success) onSaved(res.data.junior);
     } catch (err) {
@@ -330,6 +369,52 @@ function EditModal({ junior, backendUrl, onClose, onSaved }) {
               {error}
             </p>
           )}
+
+          {/* PHOTO UPLOAD */}
+          <div className="flex flex-col items-center gap-2 pb-2">
+            {photoPreview ? (
+              <img
+                src={photoPreview}
+                alt="preview"
+                className="w-20 h-20 rounded-full object-cover border-2 border-indigo-300"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-indigo-50 border-2 border-dashed border-indigo-300 flex items-center justify-center text-2xl">
+                📷
+              </div>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current.click()}
+                className="px-2.5 py-1 text-[11px] bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+              >
+                📸 Take Photo
+              </button>
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current.click()}
+                className="px-2.5 py-1 text-[11px] bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+              >
+                🖼️ Gallery
+              </button>
+            </div>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+          </div>
 
           {fields.map(({ label, name, type }) => (
             <div key={name} className="flex flex-col gap-1">

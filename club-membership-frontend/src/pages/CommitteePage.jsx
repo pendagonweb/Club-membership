@@ -134,7 +134,7 @@ const MemberCard = ({ user, index, isLeader }) => {
             </h3>
           )}
           <p className="text-xs text-center text-gray-400  italic line-clamp-1">
-            {user.name}
+            {user.membershipId}
           </p>
 
           {isLeader && (
@@ -185,6 +185,59 @@ const MemberCard = ({ user, index, isLeader }) => {
             ) : (
               <div className="w-6 h-6" />
             )}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+/* ── Kid (Junior List) Card ──────────────────────────────────────────────────
+   Same visual language as MemberCard, but adapted to the Junior model:
+   no nickname/whatsapp/nri/designation/expiry  just photo, name, membershipId,
+   and a WhatsApp button (juniors store a plain "mobile" field). ── */
+const KidCard = ({ kid, index }) => {
+  const waLink = whatsappLink(kid.mobile);
+  const loggedIn = isUserLogged();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{
+        duration: 0.5,
+        delay: (index % 6) * 0.08,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-amber-100 hover:shadow-xl transition-all duration-300 flex flex-col"
+    >
+      {/* Photo */}
+      <div className="relative w-full overflow-hidden aspect-square bg-gray-100">
+        <Avatar photo={kid.photo} name={kid.name} />
+      </div>
+
+      {/* Body */}
+      <div className="relative">
+        <div className="flex flex-col items-center pt-4 pb-2">
+          <h3 className="font-bold text-center text-gray-900 text-xs leading-snug line-clamp-1">
+            {kid.name}
+          </h3>
+          <p className="text-xs text-center text-gray-400 italic line-clamp-1">
+            {kid.membershipId}
+          </p>
+        </div>
+
+        {loggedIn && waLink && (
+          <div className="absolute -top-3 right-3 flex justify-end">
+            <a
+              href={waLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-6 h-6 items-center justify-center rounded-full bg-green-50 hover:bg-green-500 text-green-600 hover:text-white text-xs font-semibold border border-green-100 hover:border-green-500 transition-all duration-200"
+            >
+              <RiWhatsappLine size={16} />
+            </a>
           </div>
         )}
       </div>
@@ -327,6 +380,11 @@ const CommitteePage = () => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
 
+  // ── Kids (Junior list) state ──
+  const [kids, setKids] = useState([]);
+  const [kidsLoading, setKidsLoading] = useState(true);
+  const [kidsError, setKidsError] = useState(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -341,6 +399,21 @@ const CommitteePage = () => {
       }
     };
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchKids = async () => {
+      try {
+        const res = await axios.get(`${BASE}/api/juniors`);
+        if (!res.data.success) throw new Error(res.data.message);
+        setKids(res.data.juniors || []);
+      } catch (err) {
+        setKidsError(err.response?.data?.message || err.message);
+      } finally {
+        setKidsLoading(false);
+      }
+    };
+    fetchKids();
   }, []);
 
   const q = search.toLowerCase();
@@ -441,13 +514,27 @@ const CommitteePage = () => {
   // Regular (non-junior) members list: exec first, then everyone else
   const allMembers = [...execMembers, ...regularMembers];
 
+  // ── Kids filtering (from the Junior List collection, not age-based) ──
+  const filteredKids = kids.filter(
+    (k) =>
+      !q ||
+      k.name?.toLowerCase().includes(q) ||
+      k.fatherName?.toLowerCase().includes(q) ||
+      k.place?.toLowerCase().includes(q) ||
+      k.occupation?.toLowerCase().includes(q) ||
+      String(k.membershipId || "")
+        .toLowerCase()
+        .includes(q),
+  );
+
   const totalFiltered =
     generalLeaders.length +
     intlLeaders.length +
     generalAdvisory.length +
     intlAdvisory.length +
     execMembers.length +
-    filteredMembers.length;
+    filteredMembers.length +
+    filteredKids.length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -713,6 +800,44 @@ const CommitteePage = () => {
               ))}
             </div>
           </section>
+        )}
+
+        {/* ── Kids section (from Junior List registrations) ── */}
+        {kidsLoading ? (
+          <section>
+            <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-7" />
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-5">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          </section>
+        ) : (
+          !kidsError && (
+            <section>
+              <SectionLabel icon={RiTeamLine} label="Kids" accent="amber" />
+
+              {filteredKids.length === 0 ? (
+                <div className="text-center py-20 text-gray-400">
+                  <RiTeamLine
+                    size={40}
+                    className="mx-auto mb-3 text-gray-200"
+                  />
+                  <p className="text-sm">
+                    {search
+                      ? "No kids match your search."
+                      : "No kids registered yet."}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-5">
+                  {filteredKids.map((kid, i) => (
+                    <KidCard key={kid._id} kid={kid} index={i} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )
         )}
 
         {/* Loading skeleton for members section */}
