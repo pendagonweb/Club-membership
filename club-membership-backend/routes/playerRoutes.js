@@ -5,16 +5,28 @@ import {
   registerPlayer,
   getAllPlayers,
 } from "../controller/playerController.js";
-import adminAuth from "../middleware/adminauth.js";
+import {
+  listTournaments,
+  createTournament,
+  activateTournament,
+  closeTournament,
+  deleteTournament,
+} from "../controller/tournamentController.js";
 
 const router = express.Router();
 
-// Public: lookup membership
+// Public: lookup membership + register player (unchanged behaviour/shape)
 router.get("/lookup/:membershipId", fetchMemberByMembershipId);
-// Public: register player
 router.post("/register", registerPlayer);
 
-// Admin only: view all registrations
+// Admin: view all registrations (optionally ?tournamentId=...)
 router.get("/all", getAllPlayers);
+
+// Tournament management  used by the (password-gated) admin Player List page
+router.get("/tournaments", listTournaments);
+router.post("/tournaments", createTournament);
+router.patch("/tournaments/:id/activate", activateTournament);
+router.patch("/tournaments/:id/close", closeTournament);
+router.delete("/tournaments/:id", deleteTournament);
 
 export default router;

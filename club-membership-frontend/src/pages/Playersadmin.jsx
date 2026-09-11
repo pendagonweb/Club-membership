@@ -155,8 +155,19 @@ export default function PlayersAdmin() {
   const [sortBy, setSortBy] = useState("newest");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  // ── Tournament state ──
+  const [tournaments, setTournaments] = useState([]);
+  const [activeTab, setActiveTab] = useState("all"); // "all" | tournament._id
+  const [showTournamentManager, setShowTournamentManager] = useState(false);
+  const [newTournamentName, setNewTournamentName] = useState("");
+  const [creatingTournament, setCreatingTournament] = useState(false);
+  const [tournamentActionError, setTournamentActionError] = useState("");
+
   useEffect(() => {
-    if (unlocked) fetchPlayers();
+    if (unlocked) {
+      fetchPlayers();
+      fetchTournaments();
+    }
   }, [unlocked]);
 
   const fetchPlayers = async () => {
@@ -169,6 +180,80 @@ export default function PlayersAdmin() {
       setError("Failed to load players. Check your connection.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTournaments = async () => {
+    try {
+      const { data } = await axios.get(`${API}/api/players/tournaments`);
+      if (data.success) setTournaments(data.tournaments);
+    } catch {
+      // non-fatal  tabs just won't show
+    }
+  };
+
+  const activeTournament = tournaments.find((t) => t.isActive);
+
+  const handleCreateTournament = async () => {
+    if (!newTournamentName.trim()) return;
+    setCreatingTournament(true);
+    setTournamentActionError("");
+    try {
+      await axios.post(`${API}/api/players/tournaments`, {
+        name: newTournamentName.trim(),
+        activate: true, // new tournament opens immediately and closes any other
+      });
+      setNewTournamentName("");
+      await fetchTournaments();
+    } catch (err) {
+      setTournamentActionError(
+        err.response?.data?.message || "Could not create tournament.",
+      );
+    } finally {
+      setCreatingTournament(false);
+    }
+  };
+
+  const handleActivateTournament = async (id) => {
+    setTournamentActionError("");
+    try {
+      await axios.patch(`${API}/api/players/tournaments/${id}/activate`);
+      fetchTournaments();
+    } catch (err) {
+      setTournamentActionError(
+        err.response?.data?.message || "Could not activate tournament.",
+      );
+    }
+  };
+
+  const handleCloseTournament = async (id) => {
+    setTournamentActionError("");
+    try {
+      await axios.patch(`${API}/api/players/tournaments/${id}/close`);
+      fetchTournaments();
+    } catch (err) {
+      setTournamentActionError(
+        err.response?.data?.message || "Could not close tournament.",
+      );
+    }
+  };
+
+  const handleDeleteTournament = async (id) => {
+    if (
+      !window.confirm(
+        "Delete this tournament? Only possible if it has zero registered players.",
+      )
+    )
+      return;
+    setTournamentActionError("");
+    try {
+      await axios.delete(`${API}/api/players/tournaments/${id}`);
+      if (activeTab === id) setActiveTab("all");
+      fetchTournaments();
+    } catch (err) {
+      setTournamentActionError(
+        err.response?.data?.message || "Could not delete tournament.",
+      );
     }
   };
 
@@ -189,7 +274,10 @@ export default function PlayersAdmin() {
   const filtered = players
     .filter((p) => {
       const q = search.toLowerCase();
+      const matchesTournament =
+        activeTab === "all" || p.tournament?._id === activeTab;
       return (
+        matchesTournament &&
         (filterPos === "All" || p.position === filterPos) &&
         (!q ||
           p.name?.toLowerCase().includes(q) ||
@@ -260,6 +348,103 @@ export default function PlayersAdmin() {
         </div>
       )}
 
+      {/* ── Tournament manager modal ── */}
+      {showTournamentManager && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-blue-950/20 backdrop-blur-sm">
+          <div className="modal-in bg-white border border-blue-100 rounded-2xl shadow-xl px-6 py-6 w-full max-w-sm max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-slate-900">Tournaments</h3>
+              <button
+                onClick={() => setShowTournamentManager(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Create new */}
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={newTournamentName}
+                onChange={(e) => setNewTournamentName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateTournament()}
+                placeholder="e.g. KINGSTAR Fan World Cup 2027"
+                className="flex-1 h-10 border border-blue-100 rounded-xl px-3 text-sm bg-white focus:outline-none focus:border-blue-400"
+              />
+              <button
+                onClick={handleCreateTournament}
+                disabled={creatingTournament || !newTournamentName.trim()}
+                className="h-10 px-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white text-xs font-bold whitespace-nowrap"
+              >
+                {creatingTournament ? "Creating…" : "+ Create & Open"}
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-400 mb-3">
+              Creating a new tournament automatically closes registration for
+              any currently-open one — existing player data for past tournaments
+              is kept untouched.
+            </p>
+
+            {tournamentActionError && (
+              <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-3">
+                {tournamentActionError}
+              </p>
+            )}
+
+            {/* List */}
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {tournaments.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-6">
+                  No tournaments yet.
+                </p>
+              )}
+              {tournaments.map((t) => (
+                <div
+                  key={t._id}
+                  className="flex items-center justify-between gap-2 border border-blue-50 rounded-xl px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-800 truncate">
+                      {t.name}
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      {t.playerCount} player{t.playerCount !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {t.isActive ? (
+                      <button
+                        onClick={() => handleCloseTournament(t._id)}
+                        className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 whitespace-nowrap"
+                      >
+                        🟢 Open · Close
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleActivateTournament(t._id)}
+                        className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 whitespace-nowrap"
+                      >
+                        Activate
+                      </button>
+                    )}
+                    {t.playerCount === 0 && (
+                      <button
+                        onClick={() => handleDeleteTournament(t._id)}
+                        title="Delete (only possible with 0 players)"
+                        className="text-[11px] font-bold px-2 py-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 whitespace-nowrap"
+                      >
+                        🗑
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Top bar ── */}
       <div className="bg-white border-b border-blue-50 sticky top-0 z-20 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
@@ -278,7 +463,10 @@ export default function PlayersAdmin() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={fetchPlayers}
+              onClick={() => {
+                fetchPlayers();
+                fetchTournaments();
+              }}
               className="h-8 px-3 rounded-lg border border-blue-100 text-xs font-medium text-blue-500 hover:bg-blue-50 transition-colors flex items-center gap-1.5"
             >
               ↻ Refresh
@@ -294,6 +482,71 @@ export default function PlayersAdmin() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        {/* ── Tournament tabs ── */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`h-9 px-4 rounded-xl text-xs font-bold border transition-all whitespace-nowrap
+              ${
+                activeTab === "all"
+                  ? "bg-slate-900 border-slate-900 text-white"
+                  : "bg-white border-blue-100 text-slate-500 hover:border-slate-300"
+              }`}
+          >
+            All ({players.length})
+          </button>
+
+          {tournaments.map((t) => {
+            const count = players.filter(
+              (p) => p.tournament?._id === t._id,
+            ).length;
+            return (
+              <button
+                key={t._id}
+                onClick={() => setActiveTab(t._id)}
+                className={`h-9 px-4 rounded-xl text-xs font-bold border transition-all whitespace-nowrap flex items-center gap-1.5
+                  ${
+                    activeTab === t._id
+                      ? "bg-blue-500 border-blue-500 text-white"
+                      : "bg-white border-blue-100 text-slate-500 hover:border-blue-300"
+                  }`}
+              >
+                {t.isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                )}
+                {t.name} ({count})
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => setShowTournamentManager(true)}
+            className="h-9 px-4 rounded-xl text-xs font-semibold border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 whitespace-nowrap"
+          >
+            ⚙ Manage Tournaments
+          </button>
+        </div>
+
+        {/* ── Currently-open banner ── */}
+        <div
+          className={`mb-6 px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+            activeTournament
+              ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+              : "bg-amber-50 border border-amber-200 text-amber-700"
+          }`}
+        >
+          {activeTournament ? (
+            <>
+              🟢 Open for registration: <b>{activeTournament.name}</b>
+            </>
+          ) : (
+            <>
+              ⚠ No tournament is currently open — new registrations will be
+              blocked.
+            </>
+          )}
+        </div>
+
         {/* ── Stats row ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
           <StatCard
@@ -390,6 +643,15 @@ export default function PlayersAdmin() {
               {filtered.length}
             </span>{" "}
             of {players.length} players
+            {activeTab !== "all" && (
+              <>
+                {" "}
+                in{" "}
+                <span className="font-semibold text-slate-700">
+                  {tournaments.find((t) => t._id === activeTab)?.name}
+                </span>
+              </>
+            )}
           </p>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-semibold tracking-widest uppercase text-slate-400">
@@ -445,7 +707,7 @@ export default function PlayersAdmin() {
             <p className="text-xs text-slate-400 mt-1">
               {players.length === 0
                 ? "No one has registered yet."
-                : "Try adjusting your search or filter."}
+                : "Try adjusting your search, filter, or tournament tab."}
             </p>
           </div>
         )}
@@ -454,17 +716,23 @@ export default function PlayersAdmin() {
         {!loading && !error && filtered.length > 0 && (
           <div className="space-y-2 fade-in">
             {/* Table header (desktop) */}
-            <div className="hidden sm:grid grid-cols-[2rem_1fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-2">
-              {["#", "Name", "Membership ID", "Age", "Phone", "Position"].map(
-                (h) => (
-                  <span
-                    key={h}
-                    className="text-[10px] font-semibold tracking-widest uppercase text-blue-400"
-                  >
-                    {h}
-                  </span>
-                ),
-              )}
+            <div className="hidden sm:grid grid-cols-[2rem_1fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-5 py-2">
+              {[
+                "#",
+                "Name",
+                "Membership ID",
+                "Age",
+                "Phone",
+                "Position",
+                "Tournament",
+              ].map((h) => (
+                <span
+                  key={h}
+                  className="text-[10px] font-semibold tracking-widest uppercase text-blue-400"
+                >
+                  {h}
+                </span>
+              ))}
             </div>
 
             {filtered.map((player, idx) => (
@@ -473,7 +741,7 @@ export default function PlayersAdmin() {
                 className="bg-white border border-blue-50 rounded-2xl hover:border-blue-200 hover:shadow-sm transition-all"
               >
                 {/* Desktop row */}
-                <div className="hidden sm:grid grid-cols-[2rem_1fr_1fr_1fr_1fr_1fr] gap-4 items-center px-5 py-4">
+                <div className="hidden sm:grid grid-cols-[2rem_1fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center px-5 py-4">
                   <span className="text-xs font-bold text-blue-200">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
@@ -497,6 +765,16 @@ export default function PlayersAdmin() {
                     {player.phone || ""}
                   </span>
                   <PositionBadge position={player.position} />
+                  <span
+                    className={`text-[11px] font-semibold truncate ${
+                      player.tournament?.isActive
+                        ? "text-emerald-600"
+                        : "text-slate-400"
+                    }`}
+                    title={player.tournament?.name || player.tournamentName}
+                  >
+                    {player.tournament?.name || player.tournamentName || "—"}
+                  </span>
                 </div>
 
                 {/* Mobile card */}
@@ -519,7 +797,7 @@ export default function PlayersAdmin() {
                     </div>
                     <PositionBadge position={player.position} />
                   </div>
-                  <div className="grid grid-cols-3 gap-3 pl-8">
+                  <div className="grid grid-cols-3 gap-3 pl-8 mb-2">
                     <div>
                       <p className="text-[9px] font-semibold tracking-widest uppercase text-blue-400 mb-0.5">
                         ID
@@ -544,6 +822,20 @@ export default function PlayersAdmin() {
                         {player.phone || ""}
                       </p>
                     </div>
+                  </div>
+                  <div className="pl-8">
+                    <p className="text-[9px] font-semibold tracking-widest uppercase text-blue-400 mb-0.5">
+                      Tournament
+                    </p>
+                    <p
+                      className={`text-[11px] font-semibold ${
+                        player.tournament?.isActive
+                          ? "text-emerald-600"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      {player.tournament?.name || player.tournamentName || "—"}
+                    </p>
                   </div>
                 </div>
               </div>
