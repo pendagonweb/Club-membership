@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import posterImage from "../assets/fifa.png"; 
 
 const API = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
@@ -53,6 +52,17 @@ function Toast({ message, type, onClose }) {
   );
 }
 
+/* ─── Split a tournament name into a bold first word + lighter remainder,
+       to preserve the original two-line stylized heading look ─── */
+function splitTournamentName(name) {
+  if (!name) return { first: "", rest: "" };
+  const parts = name.trim().split(" ");
+  return {
+    first: parts[0],
+    rest: parts.slice(1).join(" "),
+  };
+}
+
 /* ════════════════════════════════════
    PLAYER REGISTRATION PAGE
 ════════════════════════════════════ */
@@ -60,6 +70,7 @@ export default function PlayerRegistration() {
   const [membershipId, setMembershipId] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [member, setMember] = useState(null);
+  const [membershipExpired, setMembershipExpired] = useState(false);
   const [lookupError, setLookupError] = useState("");
 
   const [position, setPosition] = useState("");
@@ -67,6 +78,27 @@ export default function PlayerRegistration() {
 
   const [toast, setToast] = useState(null);
   const [registered, setRegistered] = useState(false);
+
+  // ── Active tournament (drives hero + heading text) ──
+  const [activeTournament, setActiveTournament] = useState(null);
+  const [tournamentLoading, setTournamentLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchActiveTournament = async () => {
+      try {
+        const { data } = await axios.get(`${API}/api/players/tournaments`);
+        if (data.success) {
+          const active = (data.tournaments || []).find((t) => t.isActive);
+          setActiveTournament(active || null);
+        }
+      } catch {
+        // non-fatal  page still works, just shows a fallback title
+      } finally {
+        setTournamentLoading(false);
+      }
+    };
+    fetchActiveTournament();
+  }, []);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -79,12 +111,16 @@ export default function PlayerRegistration() {
     setLookupLoading(true);
     setLookupError("");
     setMember(null);
+    setMembershipExpired(false);
     setPosition("");
     try {
       const { data } = await axios.get(
         `${API}/api/players/lookup/${encodeURIComponent(id)}`,
       );
-      if (data.success) setMember(data.member);
+      if (data.success) {
+        setMember(data.member);
+        setMembershipExpired(!!data.membershipExpired);
+      }
     } catch (err) {
       setLookupError(
         err.response?.data?.message || "Lookup failed. Please try again.",
@@ -97,6 +133,13 @@ export default function PlayerRegistration() {
   const handleRegister = async () => {
     if (!member || !position) {
       showToast("Please select a playing position.", "error");
+      return;
+    }
+    if (membershipExpired) {
+      showToast(
+        "Your membership has expired. Please renew before registering.",
+        "error",
+      );
       return;
     }
     setSubmitLoading(true);
@@ -122,10 +165,15 @@ export default function PlayerRegistration() {
   const handleReset = () => {
     setMembershipId("");
     setMember(null);
+    setMembershipExpired(false);
     setPosition("");
     setLookupError("");
     setRegistered(false);
   };
+
+  const tournamentName = activeTournament?.name || "";
+  const { first: headingFirst, rest: headingRest } =
+    splitTournamentName(tournamentName);
 
   return (
     <>
@@ -160,14 +208,34 @@ export default function PlayerRegistration() {
         }
       `}</style>
 
-      {/* ── Full-Width Poster ── */}
-      <div className="w-full">
-        <img
-          src={posterImage}
-          alt="KINGSTAR Fan World Cup 2026 Tournament Poster"
-          className="w-full block object-cover"
-          style={{ maxHeight: "480px", objectPosition: "center top" }}
-        />
+      {/* ── Hero: light gradient background, centered active tournament name ── */}
+      <div className="w-full bg-gradient-to-br from-blue-200 via-white to-sky-200 border-b border-blue-200/60 py-16 sm:py-20 px-4 flex items-center justify-center text-center">
+        {" "}
+        <div>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase text-blue-500 bg-white/70 border border-blue-100 rounded-full px-3 py-1 mb-5 shadow-sm">
+            ⚽ Player Registration
+          </span>
+
+          {tournamentLoading ? (
+            <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
+              <span className="spinner-blue" /> Loading tournament…
+            </div>
+          ) : tournamentName ? (
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
+              {tournamentName}
+            </h1>
+          ) : (
+            <>
+              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                Registration Closed
+              </h1>
+              <p className="text-slate-400 text-sm mt-3 max-w-md mx-auto">
+                No tournament is currently open for registration. Please check
+                back later.
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="min-h-screen bg-white flex flex-col items-center px-4 py-12 pb-20">
@@ -178,9 +246,15 @@ export default function PlayerRegistration() {
               ⚽ Tournament 2026
             </span>
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 leading-tight">
-              KINGSTAR
-              <br />
-              <span className="text-slate-400 font-light">Fan World Cup</span>
+              {headingFirst || "KINGSTAR"}
+              {headingRest && (
+                <>
+                  <br />
+                  <span className="text-slate-400 font-light">
+                    {headingRest}
+                  </span>
+                </>
+              )}
             </h1>
             <p className="text-slate-400 text-sm mt-3 leading-relaxed">
               Enter your Membership ID to retrieve your details and register.
@@ -268,8 +342,22 @@ export default function PlayerRegistration() {
                   value={member.age ? `${member.age} yrs` : null}
                 />
                 <Field label="Phone" value={member.phone} />
-                <Field label="Status" value="✓ Approved" />
+                <Field
+                  label="Status"
+                  value={membershipExpired ? "⚠ Expired" : "✓ Approved"}
+                />
               </div>
+
+              {/* Expired membership warning */}
+              {membershipExpired && (
+                <div className="mx-5 mt-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm flex items-start gap-2">
+                  <span className="mt-0.5">⚠</span>
+                  <span>
+                    Your membership has expired. Please renew your membership
+                    before registering for the tournament.
+                  </span>
+                </div>
+              )}
 
               {/* Position selector */}
               <div className="px-5 py-4">
@@ -281,7 +369,8 @@ export default function PlayerRegistration() {
                     <button
                       key={pos}
                       onClick={() => setPosition(pos)}
-                      className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-all
+                      disabled={membershipExpired}
+                      className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-all disabled:opacity-40 disabled:cursor-not-allowed
                         ${
                           position === pos
                             ? "bg-blue-500 border-blue-500 text-white"
@@ -295,17 +384,26 @@ export default function PlayerRegistration() {
 
                 <button
                   onClick={handleRegister}
-                  disabled={!position || submitLoading}
+                  disabled={!position || submitLoading || membershipExpired}
                   className="w-full h-11 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   {submitLoading ? (
                     <>
                       <span className="spinner" /> Registering…
                     </>
+                  ) : membershipExpired ? (
+                    "Membership Expired"
                   ) : (
                     "⚽ Register for Tournament"
                   )}
                 </button>
+
+                {membershipExpired && (
+                  <p className="mt-2.5 text-xs text-red-500 flex items-center justify-center gap-1.5 text-center">
+                    <span>⚠</span> Your membership has expired — please renew it
+                    before registering for the tournament.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -341,6 +439,7 @@ export default function PlayerRegistration() {
           {/* Not a member CTA */}
           <div className="mt-6 pt-6 border-t border-slate-100 text-center">
             <p className="text-sm text-slate-400 mb-3">Not a member yet?</p>
+
             <a
               href="/register"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all"

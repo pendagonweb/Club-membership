@@ -100,7 +100,7 @@ function LockScreen({ onUnlock }) {
               Admin Access
             </h1>
             <p className="text-blue-400 text-sm mt-1 font-medium">
-              KINGSTAR Fan World Cup 2026
+              KINGSTAR Player Registry
             </p>
           </div>
 
@@ -454,7 +454,7 @@ export default function PlayersAdmin() {
             </div>
             <div>
               <h1 className="text-sm font-bold text-slate-900 leading-tight">
-                KINGSTAR Fan World Cup
+                KINGSTAR Player Registry
               </h1>
               <p className="text-[10px] text-blue-400 font-semibold tracking-wider uppercase">
                 Admin · Player Registry
