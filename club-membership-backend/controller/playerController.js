@@ -1,16 +1,10 @@
-// controllers/playerController.js
 import PlayerRegistration from "../models/PlayerRegistration.js";
 import Tournament from "../models/Tournament.js";
 import User from "../models/User.js";
+import Junior from "../models/Juniors.js";
 
 const getActiveTournament = () => Tournament.findOne({ isActive: true });
 
-/* ======================
-   MEMBERSHIP EXPIRY CHECK
-   Mirrors the "effective expiry" logic used on the member dashboard:
-   whichever is earlier between the static club-wide expiry and the
-   member's own expiryDate (if one is set and earlier).
-====================== */
 const STATIC_VALID_UPTO = new Date("2027-03-31");
 
 const isMembershipExpired = (user) => {
@@ -18,13 +12,32 @@ const isMembershipExpired = (user) => {
     user.expiryDate && new Date(user.expiryDate) < STATIC_VALID_UPTO
       ? new Date(user.expiryDate)
       : new Date(STATIC_VALID_UPTO);
-  effectiveExpiry.setHours(23, 59, 59, 999); // the expiry day itself still counts as valid
+  effectiveExpiry.setHours(23, 59, 59, 999);
   return effectiveExpiry.getTime() < Date.now();
 };
 
+// Juniors only store dob, not age  derive it, and don't blow up if dob is missing.
+const calcAgeFromDob = (dob) => {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  if (isNaN(birth)) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const hadBirthday =
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
+  if (!hadBirthday) age--;
+  return age;
+};
+
+// Junior membershipIds aren't forced to uppercase at registration time, so match case-insensitively.
+const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /* Fetch member details by membershipId, scoped to whichever tournament is currently open.
-   NOTE: this still returns member details even if the membership has expired  it just
-   flags it via `membershipExpired` so the frontend can show why registration is blocked. */
+   Tries the approved-User registry first; if nothing matches there, falls back to the
+   Junior registry. Juniors have no membershipStatus/expiryDate, so `membershipExpired`
+   is always false for them  there is nothing to expire. */
 export const fetchMemberByMembershipId = async (req, res) => {
   try {
     const activeTournament = await getActiveTournament();
@@ -37,44 +50,82 @@ export const fetchMemberByMembershipId = async (req, res) => {
     }
 
     const { membershipId } = req.params;
+    const idUpper = membershipId.trim().toUpperCase();
 
+    /* 1) Regular approved member */
     const user = await User.findOne({
-      membershipId: membershipId.trim().toUpperCase(),
+      membershipId: idUpper,
       membershipStatus: "approved",
     }).select("name age phone nickname bloodGroup membershipId expiryDate _id");
 
-    if (!user) {
+    if (user) {
+      const existing = await PlayerRegistration.findOne({
+        userId: user._id,
+        tournament: activeTournament._id,
+      });
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: `This member is already registered for ${activeTournament.name}.`,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        memberType: "member",
+        member: {
+          _id: user._id,
+          name: user.name,
+          age: user.age,
+          phone: user.phone,
+          nickname: user.nickname,
+          bloodGroup: user.bloodGroup,
+          membershipId: user.membershipId,
+        },
+        membershipExpired: isMembershipExpired(user),
+        tournament: { _id: activeTournament._id, name: activeTournament.name },
+      });
+    }
+
+    /* 2) Fall back to Junior registry  no expiry concept applies here */
+    const junior = await Junior.findOne({
+      membershipId: {
+        $regex: `^${escapeRegExp(membershipId.trim())}$`,
+        $options: "i",
+      },
+    });
+
+    if (!junior) {
       return res.status(404).json({
         success: false,
-        message: "No approved member found with this Membership ID.",
+        message: "No approved member or junior found with this Membership ID.",
       });
     }
 
-    const existing = await PlayerRegistration.findOne({
-      userId: user._id,
+    const existingJunior = await PlayerRegistration.findOne({
+      juniorId: junior._id,
       tournament: activeTournament._id,
     });
-    if (existing) {
+    if (existingJunior) {
       return res.status(409).json({
         success: false,
-        message: `This member is already registered for ${activeTournament.name}.`,
+        message: `This junior member is already registered for ${activeTournament.name}.`,
       });
     }
 
-    const expired = isMembershipExpired(user);
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
+      memberType: "junior",
       member: {
-        _id: user._id,
-        name: user.name,
-        age: user.age,
-        phone: user.phone,
-        nickname: user.nickname,
-        bloodGroup: user.bloodGroup,
-        membershipId: user.membershipId,
+        _id: junior._id,
+        name: junior.name,
+        age: calcAgeFromDob(junior.dob),
+        phone: junior.mobile,
+        nickname: null,
+        bloodGroup: null,
+        membershipId: junior.membershipId,
       },
-      membershipExpired: expired,
+      membershipExpired: false, // juniors never expire  nothing to check
       tournament: { _id: activeTournament._id, name: activeTournament.name },
     });
   } catch (error) {
@@ -83,8 +134,8 @@ export const fetchMemberByMembershipId = async (req, res) => {
 };
 
 /* Register player into whichever tournament is currently open.
-   Membership must be currently valid  expired members are blocked here,
-   even though the lookup above still shows their details. */
+   Regular members must have a currently-valid membership; juniors skip that check
+   entirely since Junior has no expiry field. */
 export const registerPlayer = async (req, res) => {
   try {
     const activeTournament = await getActiveTournament();
@@ -97,52 +148,98 @@ export const registerPlayer = async (req, res) => {
     }
 
     const { membershipId, position } = req.body;
+    const idUpper = String(membershipId || "")
+      .trim()
+      .toUpperCase();
 
+    /* 1) Regular approved member  expiry check applies */
     const user = await User.findOne({
-      membershipId: membershipId.trim().toUpperCase(),
+      membershipId: idUpper,
       membershipStatus: "approved",
     });
 
-    if (!user) {
+    if (user) {
+      if (isMembershipExpired(user)) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Your membership has expired. Please renew your membership before registering for the tournament.",
+        });
+      }
+
+      const existing = await PlayerRegistration.findOne({
+        userId: user._id,
+        tournament: activeTournament._id,
+      });
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: `This member is already registered for ${activeTournament.name}.`,
+        });
+      }
+
+      const player = await PlayerRegistration.create({
+        membershipId: user.membershipId,
+        memberType: "member",
+        userId: user._id,
+        tournament: activeTournament._id,
+        tournamentName: activeTournament.name,
+        name: user.name,
+        age: user.age,
+        phone: user.phone,
+        nickname: user.nickname,
+        bloodGroup: user.bloodGroup,
+        position,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: `Player registered successfully for ${activeTournament.name}!`,
+        player,
+      });
+    }
+
+    /* 2) Junior fallback  no expiry check, since Junior has no such field */
+    const junior = await Junior.findOne({
+      membershipId: {
+        $regex: `^${escapeRegExp(String(membershipId || "").trim())}$`,
+        $options: "i",
+      },
+    });
+
+    if (!junior) {
       return res.status(404).json({
         success: false,
-        message: "No approved member found with this Membership ID.",
+        message: "No approved member or junior found with this Membership ID.",
       });
     }
 
-    if (isMembershipExpired(user)) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Your membership has expired. Please renew your membership before registering for the tournament.",
-      });
-    }
-
-    const existing = await PlayerRegistration.findOne({
-      userId: user._id,
+    const existingJunior = await PlayerRegistration.findOne({
+      juniorId: junior._id,
       tournament: activeTournament._id,
     });
-    if (existing) {
+    if (existingJunior) {
       return res.status(409).json({
         success: false,
-        message: `This member is already registered for ${activeTournament.name}.`,
+        message: `This junior member is already registered for ${activeTournament.name}.`,
       });
     }
 
     const player = await PlayerRegistration.create({
-      membershipId: user.membershipId,
-      userId: user._id,
+      membershipId: junior.membershipId,
+      memberType: "junior",
+      juniorId: junior._id,
       tournament: activeTournament._id,
       tournamentName: activeTournament.name,
-      name: user.name,
-      age: user.age,
-      phone: user.phone,
-      nickname: user.nickname,
-      bloodGroup: user.bloodGroup,
+      name: junior.name,
+      age: calcAgeFromDob(junior.dob),
+      phone: junior.mobile,
+      nickname: null,
+      bloodGroup: null,
       position,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: `Player registered successfully for ${activeTournament.name}!`,
       player,

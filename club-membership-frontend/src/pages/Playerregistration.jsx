@@ -82,6 +82,35 @@ export default function PlayerRegistration() {
   // ── Active tournament (drives hero + heading text) ──
   const [activeTournament, setActiveTournament] = useState(null);
   const [tournamentLoading, setTournamentLoading] = useState(true);
+  // add alongside the other lookup state
+  const [memberType, setMemberType] = useState(null);
+
+  const handleLookup = async () => {
+    const id = membershipId.trim().toUpperCase();
+    if (!id) return;
+    setLookupLoading(true);
+    setLookupError("");
+    setMember(null);
+    setMembershipExpired(false);
+    setMemberType(null);
+    setPosition("");
+    try {
+      const { data } = await axios.get(
+        `${API}/api/players/lookup/${encodeURIComponent(id)}`,
+      );
+      if (data.success) {
+        setMember(data.member);
+        setMembershipExpired(!!data.membershipExpired);
+        setMemberType(data.memberType || "member");
+      }
+    } catch (err) {
+      setLookupError(
+        err.response?.data?.message || "Lookup failed. Please try again.",
+      );
+    } finally {
+      setLookupLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchActiveTournament = async () => {
@@ -103,31 +132,6 @@ export default function PlayerRegistration() {
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
-  };
-
-  const handleLookup = async () => {
-    const id = membershipId.trim().toUpperCase();
-    if (!id) return;
-    setLookupLoading(true);
-    setLookupError("");
-    setMember(null);
-    setMembershipExpired(false);
-    setPosition("");
-    try {
-      const { data } = await axios.get(
-        `${API}/api/players/lookup/${encodeURIComponent(id)}`,
-      );
-      if (data.success) {
-        setMember(data.member);
-        setMembershipExpired(!!data.membershipExpired);
-      }
-    } catch (err) {
-      setLookupError(
-        err.response?.data?.message || "Lookup failed. Please try again.",
-      );
-    } finally {
-      setLookupLoading(false);
-    }
   };
 
   const handleRegister = async () => {
@@ -316,7 +320,9 @@ export default function PlayerRegistration() {
               <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-semibold tracking-widest uppercase text-slate-400 mb-0.5">
-                    Verified Member
+                    {memberType === "junior"
+                      ? "Verified Junior Member"
+                      : "Verified Member"}
                   </p>
                   <h2 className="text-lg font-bold text-slate-900 leading-tight">
                     {member.name}

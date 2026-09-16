@@ -10,7 +10,7 @@ import BottomNav from "./components/BottomNav";
 const AdminPage = lazy(() => import("./components/AdminPage"));
 const UserList = lazy(() => import("./components/UserList/UserList"));
 const AdminLayout = lazy(() => import("./components/AdminLayout"));
-const MemberRegister = lazy(() => import("./components/MemberRegister"));
+const Register = lazy(() => import("./pages/Register"));
 const UploadPayment = lazy(() => import("./components/UpdatePayment"));
 const AdminLogin = lazy(() => import("./components/AdminLogin"));
 const MemberDashboard = lazy(() => import("./components/MembershipDashboard"));
@@ -88,7 +88,7 @@ function App() {
             path="/register"
             element={
               <PublicLayout>
-                <MemberRegister />
+                <Register />
               </PublicLayout>
             }
           />

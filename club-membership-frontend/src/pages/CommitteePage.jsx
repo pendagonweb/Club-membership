@@ -443,6 +443,14 @@ const CommitteePage = () => {
   const sortByDesignation = (arr) =>
     [...arr].sort((a, b) => designationRank(a) - designationRank(b));
 
+  const sortByMembershipId = (arr) =>
+    [...arr].sort((a, b) =>
+      String(a.membershipId || "").localeCompare(
+        String(b.membershipId || ""),
+        undefined,
+        { numeric: true },
+      ),
+    );
   const ADVISORY_DESIGNATIONS = [
     "chairman",
     "vice chairman",
@@ -507,24 +515,32 @@ const CommitteePage = () => {
       u.place?.toLowerCase().includes(q),
   );
 
-  // Keep regular (non-junior) members first, junior members (age < 20) pushed to the end
-  const regularMembers = filteredMembers.filter((u) => !isJunior(u));
-  const juniorMembers = filteredMembers.filter((u) => isJunior(u));
+  // Keep regular (non-junior) members first, junior members (age < 20) pushed to the end.
+  // Both sorted ascending by membershipId.
+  const regularMembers = sortByMembershipId(
+    filteredMembers.filter((u) => !isJunior(u)),
+  );
+  const juniorMembers = sortByMembershipId(
+    filteredMembers.filter((u) => isJunior(u)),
+  );
 
-  // Regular (non-junior) members list: exec first, then everyone else
+  // Regular (non-junior) members list: exec first (unchanged order), then everyone else sorted by ID
   const allMembers = [...execMembers, ...regularMembers];
 
   // ── Kids filtering (from the Junior List collection, not age-based) ──
-  const filteredKids = kids.filter(
-    (k) =>
-      !q ||
-      k.name?.toLowerCase().includes(q) ||
-      k.fatherName?.toLowerCase().includes(q) ||
-      k.place?.toLowerCase().includes(q) ||
-      k.occupation?.toLowerCase().includes(q) ||
-      String(k.membershipId || "")
-        .toLowerCase()
-        .includes(q),
+  // ── Kids filtering (from the Junior List collection, not age-based) ──
+  const filteredKids = sortByMembershipId(
+    kids.filter(
+      (k) =>
+        !q ||
+        k.name?.toLowerCase().includes(q) ||
+        k.fatherName?.toLowerCase().includes(q) ||
+        k.place?.toLowerCase().includes(q) ||
+        k.occupation?.toLowerCase().includes(q) ||
+        String(k.membershipId || "")
+          .toLowerCase()
+          .includes(q),
+    ),
   );
 
   const totalFiltered =
