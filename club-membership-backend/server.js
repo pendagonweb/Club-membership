@@ -3,6 +3,10 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectCloudinary from "./config/cloudinary.js";
+import bcrypt from "bcryptjs";
+
+import Admin from "./models/Admin.js";
+import adminManagementRoutes from "./routes/adminManagementRoutes.js";
 
 import authRoutes from "./routes/authroutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -30,6 +34,18 @@ if (!mongoose.connection.readyState) {
   });
   console.log("✅ MongoDB connected");
 }
+
+async function ensureSuperAdmin() {
+  const count = await Admin.countDocuments();
+  if (count === 0) {
+    const username = process.env.ADMIN_USERNAME || "superadmin";
+    const password = process.env.ADMIN_PASSWORD || "ChangeMe@123";
+    const hashed = await bcrypt.hash(password, 10);
+    await Admin.create({ username, password: hashed, name: "Super Admin", role: "superadmin" });
+    console.log(`🌟 Seeded initial superadmin "${username}" — log in and change the password.`);
+  }
+}
+await ensureSuperAdmin();
 
 /* Cloudinary */
 connectCloudinary();
@@ -64,7 +80,7 @@ app.use("/api", activityRoutes);
 app.use("/api", galleryRoutes); // moved from activityRoutes.js to avoid circular import
 app.use("/api/logo", logoRouter); // public GET
 app.use("/api/players", playerRoutes);
-
+app.use("/api/admin-management", adminManagementRoutes);
 app.get("/", (req, res) => {
   res.send("✅ Club Membership API running");
 });

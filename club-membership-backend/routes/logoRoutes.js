@@ -1,4 +1,3 @@
-// routes/logo.routes.js
 import express from "express";
 import {
   uploadLogo,
@@ -6,38 +5,35 @@ import {
   deleteLogo,
   getLogo,
 } from "../controller/logoController.js";
-import adminAuth from "../middleware/adminauth.js"; // JWT admin auth middleware
+import adminAuth from "../middleware/adminauth.js";
+import requirePermission from "../middleware/requirePermission.js";
 import upload from "../middleware/cloudinaryUpload.js";
+
 const router = express.Router();
+const guard = [adminAuth, requirePermission("logo")];
 
-// ── Multer: single file, field name "logo", restricted to png/jpg/webp ──────
 const logoUpload = upload.single("logo");
-
-// Wrapper to validate mime type before hitting the controller
 const allowedMimes = ["image/png", "image/jpeg", "image/webp"];
 
 const validateImageType = (req, res, next) => {
   logoUpload(req, res, (err) => {
-    if (err) {
+    if (err)
       return res.status(400).json({ success: false, message: err.message });
-    }
-    // If a file was sent, check its type
     if (req.file && !allowedMimes.includes(req.file.mimetype)) {
-      return res.status(400).json({
-        success: false,
-        message: "Only PNG, JPG/JPEG, and WEBP images are accepted",
-      });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Only PNG, JPG/JPEG, and WEBP images are accepted",
+        });
     }
     next();
   });
 };
 
-/* ─── PUBLIC ────────────────────────────────── */
 router.get("/", getLogo);
-
-/* ─── ADMIN (protected) ──────────────────────── */
-router.post("/", adminAuth, validateImageType, uploadLogo);
-router.patch("/", adminAuth, validateImageType, updateLogo);
-router.delete("/", adminAuth, deleteLogo);
+router.post("/", ...guard, validateImageType, uploadLogo);
+router.patch("/", ...guard, validateImageType, updateLogo);
+router.delete("/", ...guard, deleteLogo);
 
 export default router;

@@ -10,6 +10,7 @@ export default function JuniorList() {
   const [search, setSearch] = useState("");
   const [editingJunior, setEditingJunior] = useState(null);
   const { VITE_BACKEND_URL } = import.meta.env;
+  const token = localStorage.getItem("adminToken");
 
   const fetchJuniors = async () => {
     setLoading(true);
@@ -31,7 +32,9 @@ export default function JuniorList() {
   const deleteJunior = async (id) => {
     if (!window.confirm("Delete this junior permanently?")) return;
     try {
-      await axios.delete(`${VITE_BACKEND_URL}/api/juniors/${id}`);
+      await axios.delete(`${VITE_BACKEND_URL}/api/juniors/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setJuniors((prev) => prev.filter((j) => j._id !== id));
     } catch (err) {
       alert(err.response?.data?.message || "Delete failed");
@@ -142,6 +145,7 @@ export default function JuniorList() {
         <EditModal
           junior={editingJunior}
           backendUrl={VITE_BACKEND_URL}
+          token={token}
           onClose={() => setEditingJunior(null)}
           onSaved={(updated) => {
             updateJunior(updated);
@@ -263,7 +267,7 @@ function JuniorCard({ junior, deleteJunior, onEdit }) {
 }
 
 // ─── EditModal ────────────────────────────────────────────────────────────────
-function EditModal({ junior, backendUrl, onClose, onSaved }) {
+function EditModal({ junior, backendUrl, token, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: junior.name || "",
     fatherName: junior.fatherName || "",
@@ -318,6 +322,7 @@ function EditModal({ junior, backendUrl, onClose, onSaved }) {
       const res = await axios.put(
         `${backendUrl}/api/juniors/${junior._id}`,
         data,
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.data.success) onSaved(res.data.junior);
     } catch (err) {

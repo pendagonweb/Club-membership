@@ -34,6 +34,7 @@ const ActivityDetailPage = lazy(() => import("./pages/ActivityDetailPage"));
 const SingleNewsPage = lazy(() => import("./pages/SingleNewsPage"));
 const NriVoteUpdates = lazy(() => import("./pages/NriVoteUpdates"));
 const BloodBank = lazy(() => import("./pages/BloodBank"));
+const AdminManagement = lazy(() => import("./pages/AdminManagement"));
 
 function PageLoader() {
   return (
@@ -230,6 +231,15 @@ function App() {
           />
 
           {/* ADMIN ROUTES */}
+
+          <Route
+            path="/admins"
+            element={
+              <AdminLayout>
+                <AdminManagement />
+              </AdminLayout>
+            }
+          />
           <Route
             path="/admin"
             element={

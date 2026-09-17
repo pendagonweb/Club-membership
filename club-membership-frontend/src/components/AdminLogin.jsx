@@ -25,6 +25,7 @@ export default function AdminLogin() {
 
       if (res.data.token) {
         localStorage.setItem("adminToken", res.data.token);
+        localStorage.setItem("adminInfo", JSON.stringify(res.data.admin || {}));
         navigate("/admin");
       } else {
         setError("Login failed: No token received");

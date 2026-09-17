@@ -7,22 +7,79 @@ import {
   HiOutlinePhotograph,
   HiOutlineLightningBolt,
   HiOutlineLogout,
+  HiOutlineShieldCheck,
 } from "react-icons/hi";
 
 const DESKTOP_TABS = [
-  { label: "Requests", path: "/admin", icon: HiOutlineDocumentText },
-  { label: "Members", path: "/users", icon: HiOutlineUsers },
-  { label: "Juniors", path: "/juniors", icon: HiOutlineStar },
-  { label: "Panels", path: "/panels", icon: HiOutlineViewGrid },
-  { label: "Gallery", path: "/admingallery", icon: HiOutlinePhotograph },
-  { label: "Activity", path: "/adminactivities", icon: HiOutlineLightningBolt },
+  {
+    label: "Requests",
+    path: "/admin",
+    icon: HiOutlineDocumentText,
+    permission: "requests",
+  },
+  {
+    label: "Members",
+    path: "/users",
+    icon: HiOutlineUsers,
+    permission: "members",
+  },
+  {
+    label: "Juniors",
+    path: "/juniors",
+    icon: HiOutlineStar,
+    permission: "juniors",
+  },
+  {
+    label: "Panels",
+    path: "/panels",
+    icon: HiOutlineViewGrid,
+    permission: "panels",
+  },
+  {
+    label: "Gallery",
+    path: "/admingallery",
+    icon: HiOutlinePhotograph,
+    permission: "gallery",
+  },
+  {
+    label: "Activity",
+    path: "/adminactivities",
+    icon: HiOutlineLightningBolt,
+    permission: "activities",
+  },
+  {
+    label: "Admins",
+    path: "/admins",
+    icon: HiOutlineShieldCheck,
+    superAdminOnly: true,
+  },
 ];
 
 const MOBILE_TABS = [
-  { label: "Requests", path: "/admin", icon: HiOutlineDocumentText },
-  { label: "Panels", path: "/panels", icon: HiOutlineViewGrid },
-  { label: "Gallery", path: "/admingallery", icon: HiOutlinePhotograph },
-  { label: "Activity", path: "/adminactivities", icon: HiOutlineLightningBolt },
+  {
+    label: "Requests",
+    path: "/admin",
+    icon: HiOutlineDocumentText,
+    permission: "requests",
+  },
+  {
+    label: "Panels",
+    path: "/panels",
+    icon: HiOutlineViewGrid,
+    permission: "panels",
+  },
+  {
+    label: "Gallery",
+    path: "/admingallery",
+    icon: HiOutlinePhotograph,
+    permission: "gallery",
+  },
+  {
+    label: "Activity",
+    path: "/adminactivities",
+    icon: HiOutlineLightningBolt,
+    permission: "activities",
+  },
 ];
 
 export default function AdminSidebar({
@@ -32,9 +89,21 @@ export default function AdminSidebar({
   juniorCount = 0,
   registrationCount = 0,
   loading = false,
+  adminInfo,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isSuperAdmin = adminInfo?.role === "superadmin";
+  const canSee = (tab) => {
+    if (!adminInfo) return true; // avoid flashing/hiding tabs while still loading
+    if (tab.superAdminOnly) return isSuperAdmin;
+    if (!tab.permission) return true;
+    return isSuperAdmin || adminInfo.permissions?.includes(tab.permission);
+  };
+
+  const desktopTabs = DESKTOP_TABS.filter(canSee);
+  const mobileTabs = MOBILE_TABS.filter(canSee);
 
   const counts = {
     "/admin": pendingCount,
@@ -51,9 +120,8 @@ export default function AdminSidebar({
       `}</style>
 
       <div className="sidebar-root">
-        {/* ── DESKTOP SIDEBAR ── */}
-        <aside className="hidden md:flex md:flex-col w-64 min-h-screen bg-gradient-to-b from-[#0b1230] via-[#111b45] to-[#182563] relative overflow-hidden flex-shrink-0">
-          {/* dot grid + glow */}
+        {/* DESKTOP SIDEBAR */}
+        <aside className="hidden md:flex md:flex-col w-64 min-h-screen bg-gradient-to-b from-[#0b1230] via-[#111b45] to-[#182563] sticky top-0 overflow-hidden flex-shrink-0">
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.05]"
             style={{
@@ -64,7 +132,6 @@ export default function AdminSidebar({
           />
           <div className="pointer-events-none absolute -top-16 -left-10 w-56 h-56 rounded-full bg-blue-500/20 blur-3xl" />
 
-          {/* Brand */}
           <div className="relative z-10 px-6 pt-8 pb-6">
             <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/15 backdrop-blur flex items-center justify-center mb-4">
               <HiOutlineViewGrid className="text-blue-300" size={20} />
@@ -75,13 +142,22 @@ export default function AdminSidebar({
             <p className="text-white text-xl font-extrabold leading-tight">
               Admin Panel
             </p>
+            {adminInfo && (
+              <p className="text-blue-200/70 text-xs mt-2">
+                {adminInfo.name || adminInfo.username} ·{" "}
+                <span
+                  className={isSuperAdmin ? "text-amber-300 font-semibold" : ""}
+                >
+                  {isSuperAdmin ? "Superadmin" : "Admin"}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="relative z-10 h-px mx-6 mb-4 bg-white/10" />
 
-          {/* Nav */}
           <nav className="relative z-10 flex-1 px-3 flex flex-col gap-1">
-            {DESKTOP_TABS.map((tab, index) => {
+            {desktopTabs.map((tab) => {
               const isActive = location.pathname === tab.path;
               const count = counts[tab.path];
               const Icon = tab.icon;
@@ -100,13 +176,16 @@ export default function AdminSidebar({
                     className={isActive ? "text-blue-600" : "text-blue-200/70"}
                   />
                   <span className="flex-1 text-sm font-bold">{tab.label}</span>
-                  {!loading && count != null && (
+                  {tab.superAdminOnly && (
                     <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                        isActive
-                          ? "bg-blue-600 text-white"
-                          : "bg-white/10 text-blue-200"
-                      }`}
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? "bg-amber-100 text-amber-700" : "bg-amber-500/20 text-amber-300"}`}
+                    >
+                      SUPER
+                    </span>
+                  )}
+                  {!loading && !tab.superAdminOnly && count != null && (
+                    <span
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isActive ? "bg-blue-600 text-white" : "bg-white/10 text-blue-200"}`}
                     >
                       {count}
                     </span>
@@ -116,7 +195,6 @@ export default function AdminSidebar({
             })}
           </nav>
 
-          {/* Footer / logout */}
           <div className="relative z-10 p-4">
             <button
               onClick={onLogout}
@@ -128,10 +206,10 @@ export default function AdminSidebar({
           </div>
         </aside>
 
-        {/* ── MOBILE BOTTOM NAV ── */}
+        {/* MOBILE BOTTOM NAV */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-around px-2 py-2 safe-area-bottom">
-            {MOBILE_TABS.map((tab) => {
+            {mobileTabs.map((tab) => {
               const isActive = location.pathname === tab.path;
               const count = counts[tab.path];
               const Icon = tab.icon;
@@ -154,9 +232,7 @@ export default function AdminSidebar({
                     )}
                   </div>
                   <span
-                    className={`text-[10px] font-bold ${
-                      isActive ? "text-blue-600" : "text-gray-400"
-                    }`}
+                    className={`text-[10px] font-bold ${isActive ? "text-blue-600" : "text-gray-400"}`}
                   >
                     {tab.label}
                   </span>

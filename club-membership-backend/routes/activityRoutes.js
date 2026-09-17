@@ -10,39 +10,32 @@ import {
   toggleActivity,
 } from "../controller/activityController.js";
 import adminAuth from "../middleware/adminauth.js";
+import requirePermission from "../middleware/requirePermission.js";
 
 const router = express.Router();
+const guard = [adminAuth, requirePermission("activities")];
 
-// Reusable single-file upload middleware (field name: "image")
 const uploadActivityImage = (req, res, next) => {
   upload.single("image")(req, res, (err) => {
-    if (err) {
+    if (err)
       return res.status(400).json({ success: false, message: err.message });
-    }
     next();
   });
 };
 
-// Public
 router.get("/activities", getPublicActivities);
 router.get("/activities/:id", getActivityById);
 
-// Admin
-router.get("/admin/activities", adminAuth, getAllActivities);
-router.get("/admin/activities/:id", adminAuth, getActivityById);
-router.post(
-  "/admin/activities",
-  adminAuth,
-  uploadActivityImage,
-  createActivity,
-);
+router.get("/admin/activities", ...guard, getAllActivities);
+router.get("/admin/activities/:id", ...guard, getActivityById);
+router.post("/admin/activities", ...guard, uploadActivityImage, createActivity);
 router.put(
   "/admin/activities/:id",
-  adminAuth,
+  ...guard,
   uploadActivityImage,
   updateActivity,
 );
-router.delete("/admin/activities/:id", adminAuth, deleteActivity);
-router.patch("/admin/activities/:id/toggle", adminAuth, toggleActivity);
+router.delete("/admin/activities/:id", ...guard, deleteActivity);
+router.patch("/admin/activities/:id/toggle", ...guard, toggleActivity);
 
 export default router;
